@@ -119,7 +119,7 @@ def _add_bad_segments(raw, bids_path: BIDSPath, modify_bidspath=True,
     anno_path = _get_annotation_path(bids_path, "events")
     if anno_path is None:
         description = 'uncleaned'
-    elif anno_path.startswith('derivatives/annotations'):
+    elif anno_path.startswith(f'{cfg.BASE_DIR}/derivatives/annotations'):
         description = 'cleaned'
     else:
         raise ValueError(f"No annotations found: {anno_path}")
@@ -186,7 +186,7 @@ def _add_bad_channels(raw, bids_path, only_cleaned=True):
 
 
 def _get_annotation_path(bids_path, suffix):
-    anno_root = join('derivatives', 'annotations')
+    anno_root = cfg.ANNOTATIONS
     bids_path = bids_path.copy().update(run=None)
     session = bids_path.session.strip('01')  # this changed since annotation
     bids_info = dict(subjects=bids_path.subject, sessions=session,
@@ -202,7 +202,7 @@ def _get_annotation_path(bids_path, suffix):
 
 
 def _add_mni_coords(raw, subj_old):
-    lead_path = "sourcedata/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
+    lead_path = f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
     sub_dir = subj_old.replace("subj", "S")
     file_path = join(lead_path, sub_dir, "ea_reconstruction.mat")
     mat_file = loadmat(file_path)["reco"]

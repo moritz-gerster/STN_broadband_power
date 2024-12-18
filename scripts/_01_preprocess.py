@@ -160,7 +160,7 @@ def _distant_bip_from_adjacent_bip(raw):
             ch_names.remove(ch_nme)
     # apply bipolar reference only to selected channels. Single nan channel
     # destroys the whole array. Append back afterward.
-    raw_bip = raw.copy().pick_channels(anodes + cathodes)
+    raw_bip = raw.copy().pick_channels(set(anodes + cathodes))
     bipolar_dic = dict(anode=anodes, cathode=cathodes, ch_name=ch_names)
     set_bipolar_reference(raw_bip, **bipolar_dic, copy=0, verbose=0,
                           on_bad="ignore", drop_refs=True)
@@ -537,12 +537,12 @@ def _lfp_bipolar_names(ch_names,  anodes, cathodes, bip_ch_names,
 
     permutations = list(combinations(nums, 2))
     for num1, num2 in permutations:
-        int1, int2 = re.sub("\D", "", num1 + num2)
+        int1, int2 = re.sub(r"\D", "", num1 + num2)
         if only_neighbors:
             distance = abs(np.diff([int(int1), int(int2)]))
             if distance > 1:
                 continue
-        letters = re.sub("\d", "", num1 + num2)
+        letters = re.sub(r"\d", "", num1 + num2)
         if len(letters) == 1 and int1 in ["2", "3"] and int2 in ["2", "3"]:
             # we don't need e.g. LFP_R_2-3b. Only LFP_R_2-3 or LFP_R_2b-3c.
             continue

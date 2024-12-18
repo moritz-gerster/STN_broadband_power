@@ -127,7 +127,7 @@ def _bidsify_noise():
         fname = listdir(join(amp_root, session))
         fname.remove('Record.xses')
         fname = fname[0]
-        filename =  join(amp_root, session, fname)
+        filename = join(amp_root, session, fname)
         raw = Poly5Reader(filename=filename).read_data_MNE()
         raw.pick_channels([f'Ch{ch}'])
         raws.append(raw)
@@ -307,9 +307,9 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath, modify_bidspath=True,
 
     anno_path = _get_annotation_path(bids_path, location=location,
                                      anno_type="events")
-    if anno_path.startswith('derivatives/annotations'):
+    if anno_path.startswith(f'{cfg.BASE_DIR}/derivatives/annotations'):
         description = 'cleaned'
-    elif anno_path.startswith('sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/'):
+    elif anno_path.startswith(f'{cfg.BASE_DIR}/sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/'):
         description = 'uncleaned'
 
     # read and add annotations
@@ -415,7 +415,7 @@ def _get_annotation_path(bids_path, location="both", anno_type="events",
         descriptions = None
 
     # extract root derivatives
-    anno_root = join('derivatives', 'annotations')
+    anno_root = cfg.ANNOTATIONS
     bids_info = dict(
         subjects=f'Neu{bids_path.subject}',
         sessions=bids_path.session,
@@ -432,8 +432,8 @@ def _get_annotation_path(bids_path, location="both", anno_type="events",
         return str(anno_path[0].fpath)
 
     # extract root Gunnar
-    anno_root = join('sourcedata', 'BIDS_Neumann_ECOG_LFP', 'meta_infos',
-                     'annotationsMoritz')
+    anno_root = join(cfg.BASE_DIR, 'sourcedata', 'BIDS_Neumann_ECOG_LFP',
+                     'meta_infos', 'annotationsMoritz')
     anno_root = join(anno_root, 'annotationsMoritzGunnar')
 
     bids_info = dict(

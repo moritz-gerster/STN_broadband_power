@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import scripts.config as cfg
-from scripts.fooof import FOOOF
+from specparam import SpectralModel
 from scripts.utils import _ignore_warnings
 
 
@@ -1439,8 +1439,8 @@ def _detect_noise_floor(df, show_plots=False, threshold=0.05):
     Important for reliable 1/f fitting."""
     # Fitting each psd in a while loop until convergence turned out to be
     # faster than applying a FOOOFGroup to all psds for all frequency ranges.
-    fm = FOOOF(max_n_peaks=1, min_peak_height=0.05, peak_width_limits=(1, 2),
-               verbose=False)
+    fm = SpectralModel(max_n_peaks=1, min_peak_height=0.05,
+                       peak_width_limits=(1, 2), verbose=False)
     # Frequency ranges: 5 Hz steps starting at 32 to avoid line noise freqs.
     # Plateau onsets above 100 Hz not relevant. (ECoG and EEG sometimes
     # plateaus above 600 Hz). 5 Hz stepsize determines plateu onset resolution.

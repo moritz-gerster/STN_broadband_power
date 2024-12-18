@@ -13,8 +13,7 @@ dependencies:
   - flake8
   - autopep8
   - ipykernel
-  - specparam
-  - statsmodels
+  # - statsmodels
   # - statannotations  # for df stats
   - openpyxl  # to open excel
   # - av  # for animations
@@ -23,5 +22,6 @@ dependencies:
   - pip
   - pip:
     - -e .  # scripts
+    - specparam
     - git+https://github.com/richardkoehler/pte-stats.git@paper-moritz-gerster
     - mat73  # to load Litvak data and PPMI connectome

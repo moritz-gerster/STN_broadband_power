@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 from mne import make_fixed_length_epochs, set_log_level
 from mne.io import read_raw
-from mne_bids import find_matching_paths
+from mne_bids import find_matching_paths, get_entity_vals
 from tqdm import tqdm
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
@@ -35,6 +35,8 @@ def save_spectra(subjects=None, sessions=None, recordings=cfg.RECORDINGS,
     for spec_path in tqdm(spec_paths, desc="Calc Spectra: "):
         spectrum = _calc_psd(spec_path, method=method, freq_res=freq_res,
                              fmax=fmax)
+        if spectrum is None:
+            continue
         if interpolate_line_noise:
             _interpolate_spectrum(spectrum, spec_path, freq_res)
         _smooth_emptyroom(spectrum, spec_path)
@@ -42,8 +44,7 @@ def save_spectra(subjects=None, sessions=None, recordings=cfg.RECORDINGS,
             _fill_up_nans(spectrum)
         _save_spectrum(spectrum, spec_path, description_new=description_new)
     # Copy meta info as is
-    # recordings = get_entity_vals(load_root, "recording")  # does not work yet
-    recordings = [recordings] if isinstance(recordings, str) else recordings
+    recordings = get_entity_vals(root, "recording")  # does not work yet
     for recording in recordings:
         _copy_files_and_dirs(join(root, f"meta_infos_{recording}"),
                              join(cfg.SPECTRA, f"meta_infos_{recording}"),
@@ -178,13 +179,16 @@ def _calc_psd(bids_path, check_srate=True, method='welch', freq_res=1,
     n_fft = int(raw.info["sfreq"] / freq_res)
     fmax = fmax if fmax is not None else raw.info["lowpass"]
     picks = raw.copy().pick(picks="data", exclude=()).ch_names
+    nan_chs = [ch for ch in picks if np.isnan(raw.get_data(ch)).all()]
+    picks = list(set(picks) - set(nan_chs))
+    if not len(picks):
+        return None
     if method == 'welch':
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _ignore_warnings()
             spectrum = raw.compute_psd(method="welch",
                                        n_fft=n_fft,  # numbers per segment
-                                       n_overlap=n_fft // 2,  # 50% overlap
                                        picks=picks,  # include bads
                                        average="mean",
                                        fmax=fmax,

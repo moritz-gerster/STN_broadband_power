@@ -28,4 +28,5 @@ def bidsify_sourcedata(neumann=False, litvak=False, hirschmann=False,
 
 
 if __name__ == "__main__":
-    bidsify_sourcedata()
+    bidsify_sourcedata(neumann=True, litvak=True, hirschmann=True,
+                       tan=True, florin=True)

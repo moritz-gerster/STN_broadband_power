@@ -225,11 +225,13 @@ def _rename_channels(raw, bids_path):
 
 
 def _add_bad_channels(raw: Raw, bids_path: BIDSPath):
-    anno_dic = dict(root='derivatives/annotations', extensions='.json',
+    anno_dic = dict(root=cfg.ANNOTATIONS,
+                    extensions='.json',
                     suffixes='channels', descriptions=None,
                     subjects=bids_path.subject, datatypes=bids_path.datatype,
                     sessions=bids_path.session, tasks=bids_path.task,
-                    acquisitions=bids_path.acquisition, runs=bids_path.run,
+                    acquisitions=bids_path.acquisition,
+                    # runs=bids_path.run,
                     recordings=bids_path.recording)
     anno_path = find_matching_paths(**anno_dic)
     msg = f"More than one annotation file found for {bids_path}"
@@ -247,11 +249,13 @@ def _add_bad_channels(raw: Raw, bids_path: BIDSPath):
 
 
 def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
-    anno_dic = dict(root='derivatives/annotations', extensions='.csv',
+    anno_dic = dict(root=cfg.ANNOTATIONS,
+                    extensions='.csv',
                     suffixes='events', descriptions=None,
                     subjects=bids_path.subject, datatypes=bids_path.datatype,
                     sessions=bids_path.session, tasks=bids_path.task,
-                    acquisitions=bids_path.acquisition, runs=bids_path.run,
+                    acquisitions=bids_path.acquisition,
+                    # runs=bids_path.run,
                     recordings=bids_path.recording)
     anno_path = find_matching_paths(**anno_dic)
     msg = f"More than one annotation file found for {bids_path}"
@@ -272,35 +276,35 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
     bids_path.update(description='cleaned')
 
 
-def _get_annotation_path(bids_path, anno=None, extension=None):
-    # remove run and processing and task since unambigious and was changed
-    # after annotating
-    bids_path = bids_path.copy().update(run=None, processing=None, task=None)
-    anno_root = cfg.ANNOTATIONS
-    bids_info = dict(subjects=bids_path.subject, sessions=bids_path.session,
-                     tasks=bids_path.task, runs=bids_path.run, root=anno_root,
-                     extensions=extension, descriptions=None)
-    anno_path = find_matching_paths(**bids_info)
-    msg = f"More than one annotation file found for {bids_path}"
-    if anno_path:
-        assert len(anno_path) < 2, msg
-        return str(anno_path[0].fpath)
-    # Don't load old annotations. Very messy. Annotate again.
-    elif not anno_path and anno is None:
-        return None
+# def _get_annotation_path(bids_path, anno=None, extension=None):
+#     # remove run and processing and task since unambigious and was changed
+#     # after annotating
+#     bids_path = bids_path.copy().update(run=None, processing=None, task=None)
+#     anno_root = cfg.ANNOTATIONS
+#     bids_info = dict(subjects=bids_path.subject, sessions=bids_path.session,
+#                      tasks=bids_path.task, runs=bids_path.run, root=anno_root,
+#                      extensions=extension, descriptions=None)
+#     anno_path = find_matching_paths(**bids_info)
+#     msg = f"More than one annotation file found for {bids_path}"
+#     if anno_path:
+#         assert len(anno_path) < 2, msg
+#         return str(anno_path[0].fpath)
+#     # Don't load old annotations. Very messy. Annotate again.
+#     elif not anno_path and anno is None:
+#         return None
 
-    if anno is not None:
-        anno_root = join(cfg.SOURCEDATA, "BIDS_Hirschmann_MEG_LFP", anno)
-        subject = bids_path.subject.replace(cfg.SUB_PREFIX_HIR, '')
-        session = bids_path.session.replace('01', '')
-        bids_info.update(root=anno_root, subjects=subject, sessions=session)
-        anno_path = find_matching_paths(**bids_info)
-        if anno_path:
-            msg = f"More than one annotation file found for {bids_path}"
-            assert len(anno_path) < 2, msg
-            return str(anno_path[0].fpath)
-        else:
-            return None
+#     if anno is not None:
+#         anno_root = join(cfg.SOURCEDATA, "BIDS_Hirschmann_MEG_LFP", anno)
+#         subject = bids_path.subject.replace(cfg.SUB_PREFIX_HIR, '')
+#         session = bids_path.session.replace('01', '')
+#         bids_info.update(root=anno_root, subjects=subject, sessions=session)
+#         anno_path = find_matching_paths(**bids_info)
+#         if anno_path:
+#             msg = f"More than one annotation file found for {bids_path}"
+#             assert len(anno_path) < 2, msg
+#             return str(anno_path[0].fpath)
+#         else:
+#             return None
 
 
 if __name__ == "__main__":

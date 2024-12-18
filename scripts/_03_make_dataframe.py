@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 
 import scripts.config as cfg
 from scripts.bidsify_sourcedata import loadmat
-from scripts.fooof import FOOOF
-from scripts.fooof.core.errors import DataError
-from scripts.fooof.utils.io import load_fooof
+from specparam import SpectralModel
+from specparam.core.errors import DataError
+from specparam.utils.io import load_model
 from scripts.utils import (_distant_contacts, _get_ref_from_info,
                            _ignore_warnings, _load_stn_masks, FailedFits)
 from scripts.utils_plot import _save_fig
@@ -1230,7 +1230,7 @@ def _get_sweetspot_chs(mni_locs):
 
 
 def _litvak_mono_coords(subj_old):
-    lead_path = "sourcedata/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
+    lead_path = f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
     sub_dir = subj_old.replace("subj", "S")
     file_path = join(lead_path, sub_dir, "ea_reconstruction.mat")
     mat_file = loadmat(file_path)["reco"]
@@ -1311,7 +1311,6 @@ def _get_dbs_info(info):
     lead_num = info["subject_info"]["middle_name"]
     lead_dic = cfg.DBS_LEADS[int(lead_num)]
     dbs_dic = {"DBS_num": lead_num,
-               # "DBS_manufacturer": lead_dic['DBS_manufacturer'],
                "DBS_model": lead_dic['DBS_model'],
                "DBS_description": lead_dic['DBS_description'],
                "DBS_directional": lead_dic['DBS_directional']}
@@ -1369,7 +1368,7 @@ def _get_fooof(freqs, psd, fname, fit_range, params=None, fit_path=None,
     # Furthermore, changing parameters in spectral computation can lead to
     # inconsistencies.
     if Path(join(fit_path, fname)).exists() and load_fits:
-        fm = load_fooof(fname, file_path=fit_path, regenerate=True)
+        fm = load_model(fname, file_path=fit_path, regenerate=True)
     else:
         fm = _fit_and_save_fooof(freqs, psd, fname, fit_path, params,
                                  fit_range)
@@ -1423,7 +1422,7 @@ def _extract_fooof_params(fm, fname):
     # power due to the nonlinear log-scale. The aperiodic power however
     # can be calculated without the periodic power because it
     # starts from 0 uV**2/Hz.
-    peak_fit_lin = 10**fm.fooofed_spectrum_ - 10**fm._ap_fit
+    peak_fit_lin = 10**fm.modeled_spectrum_ - 10**fm._ap_fit
     peak_fit2 = 10**(fm._peak_fit + fm._ap_fit) - 10**fm._ap_fit
     peak_fit3 = (10**fm._peak_fit - 1) * 10**fm._ap_fit
     assert np.allclose(peak_fit2, peak_fit_lin), 'Not identical'
@@ -1451,8 +1450,8 @@ def _extract_fooof_params(fm, fname):
                  "fm_psd_peak_fit_log": fm._peak_fit,
                  "fm_psd_ap_fit": 10**fm._ap_fit,
                  "fm_psd_ap_fit_log": fm._ap_fit,
-                 "fm_fooofed_spectrum": 10**fm.fooofed_spectrum_,
-                 "fm_fooofed_spectrum_log": fm.fooofed_spectrum_,
+                 "fm_fooofed_spectrum": 10**fm.modeled_spectrum_,
+                 "fm_fooofed_spectrum_log": fm.modeled_spectrum_,
                  "fm_fit_range": fit_range,
                  "fm_freq_res": fm.freq_res,
                  "fm_has_model": fm.has_model,
@@ -1461,15 +1460,16 @@ def _extract_fooof_params(fm, fname):
 
 
 def _fit_and_save_fooof(freqs, psd, fname, fit_path, params, fit_range):
-    fm = FOOOF(**params)
+    fm = SpectralModel(**params)
     failed_fits = FailedFits()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         _ignore_warnings()
         assert freqs[0] == 0, f"First freq must be 0 Hz, is {freqs[0]} Hz."
 
-        psd_fit = psd[1:]
-        freqs_fit = freqs[1:]
+        mask_fit = (freqs >= fit_range[0]) & (freqs <= fit_range[1])
+        psd_fit = psd[mask_fit]
+        freqs_fit = freqs[mask_fit]
         psd_log = np.log10(psd_fit)
         if np.any(np.isnan(psd_log)) or np.any(np.isinf(psd_log)):
             # remove negative PSD values
@@ -1539,7 +1539,7 @@ def _get_per_lin_pwr(fm):
         gauss_lin_pwr = total_gauss_pwr - aperiodic_pwr
         msg = "Linear transformation of log power to linear power is wrong."
         assert np.allclose(aperiodic_pwr + peak_lin_pwr,
-                           10**fm.fooofed_spectrum_[cf_idx]), msg
+                           10**fm.modeled_spectrum_[cf_idx]), msg
 
         peak_lin_pwrs.append(peak_lin_pwr)
         gauss_lin_pwrs.append(gauss_lin_pwr)

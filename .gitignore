@@ -1,0 +1,43 @@
+# Ignore data folders completely including patient info:
+rawdata/
+sourcedata
+derivatives/*
+!derivatives/annotations
+!sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/Berlin_MedOffOn.json
+results/*/*
+!results/plots/analysis_results
+!results/plots/paper_figures
+
+# File types
+*.pyc
+*.mp4
+*.tif
+*.csv
+*.hdf
+*.ai
+*.png
+*.jpg
+*.pdf
+
+# Matlab script Natasha
+*.nii
+*.gz
+*.mat
+*.svg
+*.h5
+*.txt
+
+
+# Mac Stuff
+.DS_Store
+
+# Byte-compiled / optimized / DLL files
+*.egg-info/
+
+# VS Code
+.vscode/
+notebooks/df.pkl
+
+
+# Remove this once figures correctly saved
+scripts/matlab/figures/*
