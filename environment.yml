@@ -1,0 +1,27 @@
+name: aperiodic
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - mne-bids
+  - numba
+  - seaborn
+  # - numpy==2.0.1  # for some reason necessary to provide
+  - pingouin
+  # - pytest  # development
+  - pylint
+  - flake8
+  - autopep8
+  - ipykernel
+  - specparam
+  - statsmodels
+  # - statannotations  # for df stats
+  - openpyxl  # to open excel
+  # - av  # for animations
+  - h5io  # to save mne.Spectrum object
+  - nilearn  # check if mni coords inside stn. Also install nibabel?
+  - pip
+  - pip:
+    - -e .  # scripts
+    - git+https://github.com/richardkoehler/pte-stats.git@paper-moritz-gerster
+    - mat73  # to load Litvak data and PPMI connectome
