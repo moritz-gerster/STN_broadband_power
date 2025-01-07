@@ -1,6 +1,4 @@
-"""
-Module for reading annotations and creating montages.
-"""
+"""Module for reading annotations and creating montages."""
 from json import load
 from os import listdir
 from os.path import basename, isfile, join
@@ -14,10 +12,10 @@ from mne.channels import make_dig_montage, make_standard_montage
 from mne.io import Raw, read_raw
 from mne_bids import BIDSPath, find_matching_paths, read_raw_bids
 from tqdm import tqdm
-from scripts.load_tmsi_data import Poly5Reader
 
 import scripts.config as cfg
 from scripts.bidsify_sourcedata import _add_info
+from scripts.load_tmsi_data import Poly5Reader
 from scripts.utils import _copy_files_and_dirs, _delete_dirty_files, _save_bids
 
 

@@ -1,24 +1,18 @@
 """Bidsify Hirschmann and remove MEG channels."""
+from json import load
 from os.path import basename, join
-from warnings import warn
 
 import pandas as pd
-import numpy as np
-from json import load
-from mne import concatenate_raws, set_log_level, read_annotations
-from mne.io import Raw
-from mne_bids import (BIDSPath, find_matching_paths, make_dataset_description,
-                      read_raw_bids)
+from mne import concatenate_raws
+from mne_bids import BIDSPath, find_matching_paths, read_raw_bids
 from tqdm import tqdm
 
 import scripts.config as cfg
 from scripts.bidsify_sourcedata import _add_info
-from scripts.config.config_paths import BIDS_FILES_TO_COPY
-from scripts.utils import _copy_files_and_dirs, _save_bids, _delete_dirty_files
+from scripts.utils import _copy_files_and_dirs, _delete_dirty_files, _save_bids
 
 
 def bidsify_sourcedata_hirschmann() -> None:
-    set_log_level(False)
     source_root = cfg.SOURCEDATA_HIR
     raw_root = cfg.RAWDATA
 

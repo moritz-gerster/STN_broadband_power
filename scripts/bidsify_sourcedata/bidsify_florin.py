@@ -5,7 +5,7 @@ from pathlib import Path
 from warnings import warn
 
 import numpy as np
-from mne import create_info, read_annotations, set_log_level
+from mne import create_info, read_annotations
 from mne.io import RawArray, read_raw
 from mne_bids import BIDSPath, find_matching_paths, make_dataset_description
 from tqdm import tqdm
@@ -17,8 +17,6 @@ from scripts.utils import _delete_dirty_files, _save_bids
 
 def bidsify_sourcedata_florin(only_cleaned=True) -> None:
     """Read sourcedata, bidsify, and save in rawdata."""
-    set_log_level('error')
-
     bids_path = BIDSPath(suffix="ieeg",
                          extension=".vhdr",  # fif does not work
                          description="uncleaned",

@@ -4,7 +4,7 @@ from pathlib import Path
 from warnings import warn
 
 import numpy as np
-from mne import create_info, read_annotations, set_log_level
+from mne import create_info, read_annotations
 from mne.io import RawArray
 from mne.preprocessing import annotate_amplitude
 from mne_bids import BIDSPath, find_matching_paths, make_dataset_description
@@ -18,7 +18,6 @@ from scripts.utils import _delete_dirty_files, _save_bids
 
 def bidsify_sourcedata_tan(only_cleaned=True, add_dbs_subs=False) -> None:
     """Read sourcedata, bidsify, and save in rawdata."""
-    set_log_level("error")
     raw_root = cfg.RAWDATA
 
     bids_path = BIDSPath(suffix="ieeg",
