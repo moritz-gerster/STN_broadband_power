@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - mne=1.6  # before mne bug introduction (overlapping windows)
   - mne-bids
   - numba
   - seaborn
@@ -13,7 +14,7 @@ dependencies:
   - flake8
   - autopep8
   - ipykernel
-  # - statsmodels
+  - statsmodels
   # - statannotations  # for df stats
   - openpyxl  # to open excel
   # - av  # for animations

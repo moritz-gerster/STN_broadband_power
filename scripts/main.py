@@ -9,9 +9,9 @@ from scripts._03_make_dataframe import psd_fooof_to_dataframe
 from scripts._04_organize_dataframe import organize_df
 from scripts._05_localization_table import export_localization_table
 
-bidsify_sourcedata(neumann=True, litvak=True, hirschmann=True, tan=True,
-                   florin=True)
-preprocess()
+# bidsify_sourcedata(neumann=True, litvak=True, hirschmann=True, tan=True,
+#                    florin=True)
+# preprocess()
 save_spectra()
 psd_fooof_to_dataframe(load_fits=True)
 organize_df()
