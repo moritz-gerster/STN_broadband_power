@@ -2,25 +2,26 @@
 import warnings
 from os.path import basename, join
 from pathlib import Path
+
 import numpy as np
-from mne import make_fixed_length_epochs, set_log_level
+from mne import make_fixed_length_epochs, set_log_level  # , Annotations
+# from mne.time_frequency import psd_array_welch
 from mne.io import read_raw
 from mne_bids import find_matching_paths, get_entity_vals
-from tqdm import tqdm
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
-from scripts.utils import (_copy_files_and_dirs, _delete_dirty_files,
-                           _ignore_warnings)
+from tqdm import tqdm
 
 import scripts.config as cfg
+from scripts.utils import (_copy_files_and_dirs, _delete_dirty_files,
+                           _ignore_warnings)
 
 
 def save_spectra(subjects=None, sessions=None, recordings=cfg.RECORDINGS,
                  verbose="error", processings=None, freq_res=1,
                  acquisitions=None, tasks=None,
                  method='welch', interpolate_line_noise=True, fillnan=True,
-                 fmax=None, description_new=None,
-                 descriptions="cleaned") -> None:
+                 fmax=None, descriptions="cleaned") -> None:
     """Calc PSDs and save in derivatives as hdf5 files."""
     set_log_level(verbose)
     root = cfg.PREPROCESSED
@@ -42,7 +43,7 @@ def save_spectra(subjects=None, sessions=None, recordings=cfg.RECORDINGS,
         _smooth_emptyroom(spectrum, spec_path)
         if fillnan:
             _fill_up_nans(spectrum)
-        _save_spectrum(spectrum, spec_path, description_new=description_new)
+        _save_spectrum(spectrum, spec_path)
     # Copy meta info as is
     recordings = get_entity_vals(root, "recording")  # does not work yet
     for recording in recordings:
@@ -168,6 +169,82 @@ def _smooth_emptyroom(spectrum, bids_path, polyorder=3, win_len_high=100,
     bids_path.processing += 'Smooth'
 
 
+# def extend_bad_segments(raw, min_gap=0.5):
+#     """
+#     Extend durations of bad segments in raw.annotations to fill short gaps
+#     between consecutive bad segments, including gaps at the start and end of the recording if they are shorter than `min_gap`.
+
+#     Parameters
+#     ----------
+#     raw : mne.io.Raw
+#         The raw object whose annotations will be modified.
+#     min_gap : float
+#         Minimum gap (in seconds) between consecutive bad segments. If the gap is
+#         less than this, the bad segments will be merged.
+
+#     Returns
+#     -------
+#     raw : mne.io.Raw
+#         The raw object with updated annotations.
+#     """
+#     # Get existing annotations
+#     annotations = raw.annotations
+
+#     # Adjust annotations to account for raw.first_time
+#     adjusted_onsets = annotations.onset - raw.first_time
+#     bad_segments = [
+#         (onset, onset + duration)
+#         for onset, duration, description in zip(adjusted_onsets,
+#                                                 annotations.duration,
+#                                                 annotations.description)
+#         if description.lower().startswith('bad')
+#     ]
+
+#     # If no bad segments, return raw object unchanged
+#     if not bad_segments:
+#         print("No 'bad' segments found. Returning raw object unchanged.")
+#         return raw
+
+#     # Sort segments by onset time
+#     bad_segments.sort()
+
+#     # Merge overlapping or closely spaced segments
+#     merged_segments = []
+#     current_start, current_end = bad_segments[0]
+
+#     for next_start, next_end in bad_segments[1:]:
+#         if next_start - current_end <= min_gap:  # Merge segments
+#             current_end = max(current_end, next_end)
+#         else:  # Save current segment and start a new one
+#             merged_segments.append((current_start, current_end))
+#             current_start, current_end = next_start, next_end
+#     # Add the last segment
+#     merged_segments.append((current_start, current_end))
+
+#     # Handle edge cases: Extend to start if needed
+#     if merged_segments[0][0] > 0 and merged_segments[0][0] <= min_gap:
+#         merged_segments[0] = (0, merged_segments[0][1])
+
+#     # Handle edge cases: Extend to end if needed
+#     if merged_segments[-1][1] < raw.times[-1] and raw.times[-1] - merged_segments[-1][1] <= min_gap:
+#         merged_segments[-1] = (merged_segments[-1][0], raw.times[-1])
+
+#     # Create updated annotations
+#     new_annotations = Annotations([], [], [])
+#     for onset, end in merged_segments:
+#         new_annotations.append(onset=onset + raw.first_time, duration=end - onset, description='BAD')
+
+#     # Retain non-bad annotations
+#     for onset, duration, description in zip(adjusted_onsets, annotations.duration, annotations.description):
+#         if not description.lower().startswith('bad'):
+#             new_annotations.append(onset=onset + raw.first_time, duration=duration, description=description)
+
+#     # Update raw object with new annotations
+#     new_annotations.onset -= raw.first_time
+#     raw.set_annotations(new_annotations)
+#     return raw
+
+
 def _calc_psd(bids_path, check_srate=True, method='welch', freq_res=1,
               fmax=None):
     """Load concats, calc PSD, change units."""
@@ -187,12 +264,17 @@ def _calc_psd(bids_path, check_srate=True, method='welch', freq_res=1,
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _ignore_warnings()
+
+            # CHANGE ONCE MNE BUG FIXED!!!! (n_overlap)
+            n_overlap = n_fft // 2  # 50% overlap
+            # raw = extend_bad_segments(raw, min_gap=.5)  # 500 ms
             spectrum = raw.compute_psd(method="welch",
-                                       n_fft=n_fft,  # numbers per segment
-                                       picks=picks,  # include bads
-                                       average="mean",
-                                       fmax=fmax,
-                                       verbose=False)
+                                    n_fft=n_fft,  # numbers per segment
+                                    picks=picks,  # include bads
+                                    n_overlap=n_overlap,  # 50% overlap <- MNE BUG
+                                    average="mean",
+                                    fmax=fmax,
+                                    verbose=False)
     elif method == 'multitaper':
         # freq_res=1 make same bins as welch for easier dataframe handling
         epochs = make_fixed_length_epochs(raw, duration=1/freq_res).load_data()
@@ -212,23 +294,10 @@ def _calc_psd(bids_path, check_srate=True, method='welch', freq_res=1,
     return spectrum
 
 
-def _save_spectrum(spectrum, bids_path, description_new=None):
+def _save_spectrum(spectrum, bids_path):
     """Save power spectral densities."""
     Path(bids_path.directory).mkdir(parents=True, exist_ok=True)
     spectrum.save(bids_path.fpath, overwrite=True)
-
-    # PLOT LOW FREQUENCY PSDS #################################################
-    # if description_new is not None:
-    #     bids_path.description = description_new
-    # bip_channels = [ch for ch in spectrum.ch_names if '-' in ch]
-    # fig = spectrum.plot(picks=bip_channels, xscale='log', exclude='bads')
-    # root = f'results/plots/power_spectra/{description_new}'
-    # basename = bids_path.basename
-    # basename = basename.replace('fif', 'pdf')
-    # fig_path = bids_path.copy().update(root=root)
-    # Path(fig_path.root).mkdir(parents=True, exist_ok=True)
-    # fig.savefig(join(fig_path.root, basename))
-    # PLOT LOW FREQUENCY PSDS #################################################
     _delete_dirty_files(bids_path)
 
 
