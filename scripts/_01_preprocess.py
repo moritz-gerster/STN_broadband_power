@@ -15,7 +15,7 @@ from os.path import basename, join
 
 import numpy as np
 from mne import (Info, pick_channels_regexp, pick_types, rename_channels,
-                 set_bipolar_reference, set_eeg_reference)
+                 set_bipolar_reference, set_eeg_reference, set_log_level)
 from mne.channels import combine_channels
 from mne.io import Raw, read_raw
 from mne_bids import find_matching_paths, get_entity_vals
@@ -31,6 +31,7 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
                bipolar_ref=True, bipolar_distant=True,
                bipolar_directional=False):
     """Preprocess data."""
+    set_log_level('error')
     load_root = cfg.RAWDATA
     save_root = cfg.PREPROCESSED
 

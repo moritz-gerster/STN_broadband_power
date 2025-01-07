@@ -4,6 +4,7 @@ from os.path import basename, join
 
 import pandas as pd
 from mne import concatenate_raws
+from mne.io import Raw
 from mne_bids import BIDSPath, find_matching_paths, read_raw_bids
 from tqdm import tqdm
 
