@@ -15,7 +15,7 @@ from os.path import basename, join
 
 import numpy as np
 from mne import (Info, pick_channels_regexp, pick_types, rename_channels,
-                 set_bipolar_reference, set_eeg_reference, set_log_level)
+                 set_bipolar_reference, set_eeg_reference)
 from mne.channels import combine_channels
 from mne.io import Raw, read_raw
 from mne_bids import find_matching_paths, get_entity_vals
@@ -27,11 +27,10 @@ from scripts.utils import (_copy_files_and_dirs, _delete_dirty_files,
 
 
 def preprocess(subjects=None, descriptions=None, sessions=None,
-               recordings=cfg.RECORDINGS, verbose="error", LAR=False,
+               recordings=cfg.RECORDINGS, LAR=False,
                bipolar_ref=True, bipolar_distant=True,
                bipolar_directional=False):
     """Preprocess data."""
-    set_log_level(verbose)
     load_root = cfg.RAWDATA
     save_root = cfg.PREPROCESSED
 
@@ -57,8 +56,7 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
         bids_path_new = bids_path_raw.copy()
         bids_path_new.update(root=save_root, processing='Highpass')
 
-        lowpass = min(raw.info['lowpass'], cfg.LOWPASS)
-        raw.filter(cfg.HIGHPASS, lowpass)
+        raw.filter(cfg.HIGHPASS, cfg.LOWPASS)  # equalize all datasets
 
         # Apply preprocessing functions
         raw.resample(sfreq=cfg.RESAMPLE_FREQ)  # assert same srate across files
