@@ -4,22 +4,22 @@ import warnings
 from os.path import basename, join
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from mne import set_log_level
 from mne.time_frequency import read_spectrum
 from mne_bids import find_matching_paths
 from nilearn import image
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-
-import scripts.config as cfg
-from scripts.bidsify_sourcedata import loadmat
 from specparam import SpectralModel
 from specparam.core.errors import DataError
 from specparam.utils.io import load_model
-from scripts.utils import (_distant_contacts, _get_ref_from_info,
-                           _ignore_warnings, _load_stn_masks, FailedFits)
+from tqdm import tqdm
+
+import scripts.config as cfg
+from scripts.bidsify_sourcedata import loadmat
+from scripts.utils import (FailedFits, _distant_contacts, _get_ref_from_info,
+                           _ignore_warnings, _load_stn_masks)
 from scripts.utils_plot import _save_fig
 
 
@@ -1570,4 +1570,4 @@ def _add_minmax_noise(ch_dics):
 
 
 if __name__ == "__main__":
-    dataframe = psd_fooof_to_dataframe(load_fits=True)
+    dataframe = psd_fooof_to_dataframe(load_fits=False)
