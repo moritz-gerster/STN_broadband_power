@@ -1,5 +1,4 @@
 """Band defintions."""
-import numpy as np
 import seaborn as sns
 
 BANDS = {
@@ -16,11 +15,6 @@ BANDS = {
     "gamma_mid": (45, 60),
     "gamma": (30, 60),
     "full": (1, 60),
-    # "FTG": (np.nan, np.nan),
-    # "HFO": (150, 500),
-    # "HFO_low": (150, 300),
-    # "HFO_high": (300, 400),
-    # "plateau": (100, 150),
     }
 
 NOISE_FLOORS = {

@@ -385,7 +385,7 @@ def get_correlation_df(df_plot, y, total_power=True, average_hemispheres=False,
                        use_peak_power=True, corr_method='spearman', bands=None,
                        band_nmes=None,
                        add_high_beta_cf=False, band_cols=None,
-                       n_perm=10000):
+                       n_perm=10000, output_file=None):
     """Get dataframe to plot barplot."""
     if y == 'UPDRS_III':
         average_hemispheres = True
@@ -454,7 +454,7 @@ def get_correlation_df(df_plot, y, total_power=True, average_hemispheres=False,
             df_corrs.append(dic)
             proj_nme = df_sub.project_nme.unique()[0]
             if proj_nme == 'all':
-                print(f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval:.2f}")
-                print("\n")
+                print(f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval:.2f}",
+                      file=output_file)
     df_corrs = pd.DataFrame(df_corrs)
     return df_corrs
