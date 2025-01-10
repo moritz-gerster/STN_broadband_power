@@ -1082,35 +1082,6 @@ def _exclude_bad_fits(df):
         mask = mask_params & mask_r2
         df.loc[mask, cols_set_nan] = np.nan
 
-    # Exclude unreasonable oscillations based on center frequencies (HFO)
-    mask_param = (df.fm_params == "HFO")
-    columns = ['fm_center_freqs', 'fm_standard_devs', 'fm_powers',
-               'fm_powers_log', 'fm_gauss_powers', 'fm_gauss_powers_log']
-    for project in df.project.unique():
-        f_low, f_high = cfg.FIT_OSCILLATION_EXCLUSION[project]
-        mask = (df.project == project) & mask_param
-        df_proj = df[mask].dropna(subset=["fm_center_freqs"])
-        # Set HFO oscillations outside of range to nan
-        kwargs = dict(freq_low=f_low, freq_high=f_high, axis=1)
-
-        for column in columns:
-            kwargs["column"] = column
-            df.loc[mask, column] = df_proj.apply(_return_fooof_values,
-                                                 **kwargs)
-
-            # Set peak powers to 0 if no peak was found
-            # df[column] = df[column].apply(rmv_empty)
-            # peak_fitted = df.loc[mask_param, column].notna()
-            # no_peak_fit = df.fm_has_model & ~peak_fitted
-
-            no_peak_fit = mask & df.fm_has_model & df[column].isna()
-            df.loc[no_peak_fit, column] = np.zeros(no_peak_fit.sum())
-
-            # Check that number of extracted values is correct
-            num_fitted_exponents = df.loc[mask, "fm_has_model"].sum()
-            num_fitted_cols = df.loc[mask, column].notna().sum()
-            assert num_fitted_exponents == num_fitted_cols
-
 
 def _return_fooof_values(df, column, freq_low=13, freq_high=35,
                          return_val='array'):

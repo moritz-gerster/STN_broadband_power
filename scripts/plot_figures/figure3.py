@@ -14,10 +14,10 @@ from scripts.plot_figures.settings import get_dfs
 def figure3(df_orig):
     dataframes = get_dfs(df_orig, ch_choice='ch_dist_sweet')
     df_abs = dataframes['df_abs']
-    df_abs = df_abs[(df_abs.cond == 'off') & (df_abs.project != 'all')]
+    df_abs = df_abs[(df_abs.project != 'all')]
 
     df_per = dataframes['df_per']
-    df_per = df_per[(df_per.cond == 'off') & (df_per.project != 'all')]
+    df_per = df_per[(df_per.project != 'all')]
     with sns.axes_style('darkgrid'):
         figure3a(df_abs)
         figure3b_g()
@@ -78,6 +78,7 @@ def figure3e2(df_abs):
     X = ['theta_abs_mean_log',
          'beta_low_abs_mean_log',
          'gamma_low_abs_mean_log']
+    df_abs = df_abs[(df_abs.cond == 'off')]
     output_file_path = join(FIG_PAPER, 'Figure3', "E2___output.txt")
     with open(output_file_path, "w") as output_file:
         plot_all(df_abs, X, 'UPDRS_III', 'absolute', fig_dir='Figure3',
@@ -98,6 +99,7 @@ def figure3j1(dataframes):
 def figure3j2(df_per):
     """Correlation by frequency bin."""
     X = ['fm_offset_log', 'beta_low_fm_mean_log', 'gamma_low_fm_mean_log']
+    df_per = df_per[(df_per.cond == 'off')]
     output_file_path = join(FIG_PAPER, 'Figure3', "J2___output.txt")
     with open(output_file_path, "w") as output_file:
         plot_all(df_per, X, 'UPDRS_III', 'periodic', fig_dir='Figure3',

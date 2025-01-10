@@ -5,7 +5,6 @@ derivatives/*
 !derivatives/annotations
 !sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/Berlin_MedOffOn.json
 results/*/*
-!results/plots/analysis_results
 !results/plots/paper_figures
 
 # File types
@@ -36,8 +35,3 @@ results/*/*
 
 # VS Code
 .vscode/
-notebooks/df.pkl
-
-
-# Remove this once figures correctly saved
-scripts/matlab/figures/*
