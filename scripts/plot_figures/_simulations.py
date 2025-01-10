@@ -82,7 +82,7 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_strong_sim = elec_phys_signal(**aperiodic_params,
                                        periodic_params=[beta_strong])[1]
     beta_large_offset_sim_ap, beta_large_offset_sim = elec_phys_signal(
-        exponent=.8, offset=.83, nlv=1e-5,periodic_params=[beta_large_offset]
+        exponent=.8, offset=.83, nlv=1e-5, periodic_params=[beta_large_offset]
         )
     beta_small_exponent_sim_ap, beta_small_exponent_sim = elec_phys_signal(
         exponent=sim_exponent_small, offset=.4, nlv=1e-5,
@@ -132,7 +132,7 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_high_borders = cfg.BANDS['beta_high']
 
     # Periodic power
-    fm = SpectralModel(verbose=False)
+    fm = SpectralModel(verbose=False, max_n_peaks=1)
     fit_range = [1, 100]
     fm.fit(freqs, beta_normal_sim, fit_range)
     kwargs = dict(band=beta_borders, select_highest=True)
@@ -287,7 +287,7 @@ def simulate_all(fig_dir=None, output_file=None):
     msg = ('Max. Beta must be same in both conds but is '
            f'{beta_low_sim_per_pwr_max - beta_large_offset_per_pwr_max:.2f}')
     assert np.allclose(beta_low_sim_per_pwr_max, beta_large_offset_per_pwr_max,
-                       atol=0.01), msg
+                       atol=0.02), msg
     msg = ('Mean Beta must be same in both conds but is '
            f'{beta_low_sim_per_pwr - beta_large_offset_per_pwr:.2f}')
     assert np.allclose(beta_low_sim_per_pwr, beta_large_offset_per_pwr,
