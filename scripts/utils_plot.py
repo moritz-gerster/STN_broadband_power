@@ -1,6 +1,7 @@
 """Helping functions."""
 from os.path import join
 from pathlib import Path
+import warnings
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
@@ -8,6 +9,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from itertools import product
+from statannotations.Annotator import Annotator
+from scipy.stats import wilcoxon
 from scripts import config as cfg
 from scripts.cluster_stats import lineplot_compare
 from scripts.corr_stats import (corr_freq_pvals, p_value_df, sample_size_df,
@@ -1081,11 +1084,12 @@ def plot_rm_corr(
                     **scatter_kws
                     )
     scatter_kws['zorder'] = zorder_scatter_special
-    sns.scatterplot(x=x, y=y, data=data[data.subs_special], ax=ax,
-                    hue=subject, palette=palette, s=point_size_special,
-                    style='subject', markers=markers,
-                    **scatter_kws
-                    )
+    if not data[data.subs_special].empty:
+        sns.scatterplot(x=x, y=y, data=data[data.subs_special], ax=ax,
+                        hue=subject, palette=palette, s=point_size_special,
+                        style='subject', markers=markers,
+                        **scatter_kws
+                        )
     ax.legend().remove()
     return ax
 
@@ -1562,8 +1566,8 @@ def _dataset_dbs_models(df, save_dir=None, save=None):
         plt.show()
 
 
-def _dataset_dbs_models_leads(df, save_dir=None, save=None):
-    df = df.dropna(subset='DBS_model')
+def _dataset_dbs_models_leads(df, save_dir=None, save=None, prefix=''):
+    df = df.dropna(subset='DBS_model').copy()
     df = df.drop_duplicates(subset=['subject'])
 
     df.loc[df.DBS_directional, 'ch_dir'] = 'Yes'
@@ -1606,7 +1610,7 @@ def _dataset_dbs_models_leads(df, save_dir=None, save=None):
     ax.set_xlabel('DBS directional')
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=0))
     ax.set_ylabel(None)
-    ax.legend().remove()
+    ax.legend([], []).remove()
     ax = axes[1]
     sns.histplot(ax=ax, data=df, hue_order=hue_order, palette=palette,
                  hue="project_nme", multiple='stack', x='DBS_model',
@@ -1629,10 +1633,89 @@ def _dataset_dbs_models_leads(df, save_dir=None, save=None):
     if save:
         if save_dir is None:
             save_dir = cfg.FIG_RESULTS
-        _save_fig(fig, 'DBSleads_models', save_dir, close=False,
+        _save_fig(fig, f'{prefix}DBSleads_models', save_dir, close=False,
                   bbox_inches=None)
     else:
         plt.show()
+
+
+def _mni_coords_datasets(fig_dir=None, prefix=''):
+    df = pd.read_excel(join(cfg.DF_PATH, 'localization_powers.xlsx'))
+    # load dataframe with flipped mni coordinates
+    df = df[['subject', 'project', 'ch_nme', 'mni_xr', 'mni_yr', 'mni_zr']]
+    df['project'] = df['project'].map(cfg.PROJECT_DICT)
+    df['ch'] = df['ch_nme'].str.replace('_L_', '_').str.replace('_R_', '_')
+
+    rename = {'mni_xr': 'mni X', 'mni_yr': 'mni Y', 'mni_zr': 'mni Z'}
+    df.rename(columns=rename, inplace=True)
+    values = rename.values()
+
+    bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
+    # bip_chs = ['LFP_1-3', 'LFP_2-4']  # dist channels don't exist in excel sheet
+    df = df[df.ch.isin(bip_chs)]
+    # rename channels
+    rename = {'LFP_1-2': '1-2', 'LFP_2-3': '2-3', 'LFP_3-4': '3-4'}
+    df['ch'] = df['ch'].map({'LFP_1-2': '1-2', 'LFP_2-3': '2-3', 'LFP_3-4': '3-4'})
+    order = [rename[ch] for ch in bip_chs]
+
+    hue_order = [proj for proj in cfg.PROJECT_NAMES if proj in df.project.unique()]
+    palette = cfg.COLOR_DIC
+
+    x = 'ch'
+    # y = 'mni_xr'
+    hue = 'project'
+
+    pairs=[(('1-2', 'Berlin'), ('1-2', 'London')),
+           (('1-2', 'Berlin'), ('1-2', 'Düsseldorf1')),
+           (('1-2', 'London'), ('1-2', 'Düsseldorf1')),
+           (('2-3', 'Berlin'), ('2-3', 'London')),
+           (('2-3', 'Berlin'), ('2-3', 'Düsseldorf1')),
+           (('2-3', 'London'), ('2-3', 'Düsseldorf1')),
+           (('3-4', 'Berlin'), ('3-4', 'London')),
+           (('3-4', 'Berlin'), ('3-4', 'Düsseldorf1')),
+           (('3-4', 'London'), ('3-4', 'Düsseldorf1'))]
+    # pairs=[(('LFP_1-2', 'Berlin'), ('LFP_1-2', 'London')),
+    #        (('LFP_1-2', 'Berlin'), ('LFP_1-2', 'Düsseldorf1')),
+    #        (('LFP_1-2', 'London'), ('LFP_1-2', 'Düsseldorf1')),
+    #        (('LFP_2-3', 'Berlin'), ('LFP_2-3', 'London')),
+    #        (('LFP_2-3', 'Berlin'), ('LFP_2-3', 'Düsseldorf1')),
+    #        (('LFP_2-3', 'London'), ('LFP_2-3', 'Düsseldorf1')),
+    #        (('LFP_3-4', 'Berlin'), ('LFP_3-4', 'London')),
+    #        (('LFP_3-4', 'Berlin'), ('LFP_3-4', 'Düsseldorf1')),
+    #        (('LFP_3-4', 'London'), ('LFP_3-4', 'Düsseldorf1'))]
+
+    # pairs = [
+    #     (('LFP_1-3', 'Berlin'), ('LFP_1-3', 'London')),
+    #     (('LFP_1-3', 'Berlin'), ('LFP_1-3', 'Düsseldorf1')),
+    #     (('LFP_1-3', 'London'), ('LFP_1-3', 'Düsseldorf1')),
+    #     (('LFP_2-4', 'Berlin'), ('LFP_2-4', 'London')),
+    #     (('LFP_2-4', 'Berlin'), ('LFP_2-4', 'Düsseldorf1')),
+    #     (('LFP_2-4', 'London'), ('LFP_2-4', 'Düsseldorf1'))
+    # ]
+
+    stat_params = dict(test='Mann-Whitney', text_format='star', loc='outside',
+                       verbose=False, show_test_name=False, line_width=0.3)
+    params = dict(data=df, x=x, order=order, hue=hue, hue_order=hue_order,
+                  fliersize=0.1, saturation=1, linewidth=0.2)
+
+    fig, axes = plt.subplots(1, 3, figsize=(3.5, 1.6), sharex=True)
+
+    for i, y in enumerate(values):
+        ax = axes[i]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            sns.boxplot(ax=ax, palette=palette, y=y, **params)
+
+        annotator = Annotator(ax=ax, pairs=pairs, y=y, **params)
+        annotator.configure(**stat_params)
+        annotator.apply_and_annotate()
+        ax.set_xlabel(None)
+        ax.legend_.remove()
+    # fig.supxlabel('DBS channel')
+    sns.despine(bottom=True)
+    plt.tight_layout()
+    _save_fig(fig, f'{prefix}dataset_mniCoords', join(cfg.FIG_PAPER, fig_dir),
+              close=False, bbox_inches=None)
 
 
 def _dataset_comparison(df, save_dir=None, save=None):
@@ -1790,7 +1873,7 @@ def _dataset_comparison(df, save_dir=None, save=None):
         plt.show()
 
 
-def _dataset_comparison_divided(df, save_dir=None, save=None):
+def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
     # Prepare df
     df = df.copy()
     hue_order = [proj for proj in cfg.PROJECT_NAMES
@@ -1836,6 +1919,7 @@ def _dataset_comparison_divided(df, save_dir=None, save=None):
                   multiple='stack', x='prepost', hue_order=hue_order,
                   stat='count', legend=False, shrink=0.8)
     sns.histplot(ax=ax, data=df_long, **kwargs)
+    ax.set_xticks([0, 1])
     ax.set_xticklabels(['Pre', 'Post'])
     ax.set_ylabel(None)
     ax.set_xlabel('Pre/post surgery')
@@ -1859,7 +1943,7 @@ def _dataset_comparison_divided(df, save_dir=None, save=None):
     if save:
         if save_dir is None:
             save_dir = join(cfg.FIG_RESULTS, 'patients', 'DBSleads')
-        _save_fig(fig, 'multicenter_comparison1', save_dir, close=False,
+        _save_fig(fig, 'D1__multicenter_comparison', save_dir, close=False,
                   transparent=True, bbox_inches=None)
     else:
         plt.show()
@@ -1871,7 +1955,7 @@ def _dataset_comparison_divided(df, save_dir=None, save=None):
 
     # don't plot unknown sex because not informative
     df_sub_gender = df_sub[df_sub.patient_sex.isin(['male', 'female'])]
-    df_sub_gender['patient_sex'] = df_sub_gender['patient_sex'].map({'male': 'M', 'female': 'F'})
+    df_sub_gender.loc[:, 'patient_sex'] = df_sub_gender['patient_sex'].map({'male': 'M', 'female': 'F'})
 
     kwargs = dict(hue='project_nme', palette=cfg.COLOR_DIC,
                   legend=False,
@@ -1909,7 +1993,7 @@ def _dataset_comparison_divided(df, save_dir=None, save=None):
     if save:
         if save_dir is None:
             save_dir = join(cfg.FIG_RESULTS, 'patients', 'DBSleads')
-        _save_fig(fig, 'multicenter_comparison2', save_dir, close=False,
+        _save_fig(fig, 'D2__multicenter_comparison', save_dir, close=False,
                   transparent=True, bbox_inches=None)
     else:
         plt.show()
@@ -1948,10 +2032,60 @@ def _dataset_comparison_divided(df, save_dir=None, save=None):
     if save:
         if save_dir is None:
             save_dir = join(cfg.FIG_RESULTS, 'patients', 'DBSleads')
-        _save_fig(fig, 'multicenter_comparison3', save_dir, close=False,
+        _save_fig(fig, f'D3__multicenter_comparison', save_dir, close=False,
                   transparent=True, bbox_inches=None)
     else:
         plt.show()
+
+
+def _dataset_overview(df_n, fig_dir=None, prefix=''):
+    mask = (df_n.UPDRS_exists & df_n.has_model )
+    mask_off = (mask & df_n.asymmetric_off & df_n.both_hemis_off_available)
+    mask_on = (mask & df_n.asymmetric_on & df_n.both_hemis_on_available
+               & df_n.dominant_side_consistent)
+    # sort projects in df_n according to cfg.PROJECT_NAMES
+    df_n['project_nme'] = pd.Categorical(df_n['project_nme'], categories=cfg.PROJECT_NAMES, ordered=True)
+
+    fig, ax = plt.subplots(1, 1, figsize=(1.55, 1.5), sharey=True)
+
+    # Full data
+    sns.histplot(data=df_n, x='project_nme', discrete=True, stat="count", ax=ax,
+                label='Original')
+
+    # Iterate through each bar and set the color based on the project name
+    for i, patch in enumerate(ax.patches):
+        project = cfg.PROJECT_NAMES[i]
+        patch.set_facecolor(cfg.COLOR_DIC[project])
+        patch.set_alpha(0.2)
+
+    # Filtered data Off
+    sns.histplot(data=df_n[mask_off], x='project_nme', discrete=True, stat="count",
+                ax=ax, label=f'Asymmetric {cfg.COND_DICT["off"]}')
+    for i, patch in enumerate(ax.patches[5:]):
+        project = cfg.PROJECT_NAMES[i]
+        patch.set_facecolor(cfg.COLOR_DIC[project])
+        patch.set_alpha(0.4)
+
+
+    # Filtered data On
+    sns.histplot(data=df_n[mask_on], x='project_nme', discrete=True, stat="count",
+                ax=ax, label=f'Asymmetric {cfg.COND_DICT["on"]}')
+    for i, patch in enumerate(ax.patches[10:]):
+        project = cfg.PROJECT_NAMES[i]
+        patch.set_facecolor(cfg.COLOR_DIC[project])
+
+    ax.legend()
+    ax.set_xlabel(None)
+    ax.set_xticks(range(len(cfg.PROJECT_NAMES)))
+    ax.set_xticklabels(cfg.PROJECT_NAMES, rotation=40, ha='right')
+    ax.tick_params(axis='x', pad=0.5)
+    ax.set_ylabel(r'$n_{\text{sub}}$')
+
+    plt.tight_layout()
+    fpath = join(cfg.FIG_PAPER, fig_dir)
+    _save_fig(fig, f'{prefix}patients_sample_size_asymmetric', fpath,
+              close=False, bbox_inches=None)
+
 
 
 def correlations_offon(df, redundancies=[], save_name=None):
@@ -2571,8 +2705,8 @@ def _patient_symptoms(df, save=True, conds=['off', 'on', 'offon_abs'],
         plt.show()
 
 
-def _patient_symptoms_flat(df, save=True, conds=['off', 'on', 'offon_abs'],
-                      save_dir=None, show_yticks=False):
+def _patient_symptoms_flat(df, conds=['off', 'on', 'offon_abs'],
+                           fig_dir=None, show_yticks=False, prefix=''):
     """Plot histogram of bradyrigid and tremor for all datasets."""
     df = df.drop_duplicates(subset=['project', 'subject', 'cond',
                                     'ch_hemisphere'])
@@ -2614,15 +2748,10 @@ def _patient_symptoms_flat(df, save=True, conds=['off', 'on', 'offon_abs'],
         fig.subplots_adjust(left=.1)  # Adjust left side by increments
 
     plt.tight_layout()
-    if save:
-        if save_dir is None:
-            save_dir = join(cfg.FIG_RESULTS, 'patients', 'UPDRS')
-        cond_str = '_'.join(conds)
-        _save_fig(fig, f'patients_UPDRS_{cond_str}', save_dir, close=False,
-                  transparent=True,
-                  bbox_inches=None)
-    else:
-        plt.show()
+    cond_str = '_'.join(conds)
+    _save_fig(fig, f'{prefix}patients_UPDRS_{cond_str}',
+              join(cfg.FIG_PAPER, fig_dir), close=False,
+              transparent=True, bbox_inches=None)
 
 
 def _patient_demographics(df, save=True, save_dir=None, show_yticks=False):
@@ -2888,3 +3017,33 @@ def convert_pvalue_to_asterisks(pvalue,
         return "ns"
     else:
         return ""
+
+
+def _stat_anno(ax, df, x, y, groupby='subject', alternative='two-sided',
+               y_line=None, fontsize=7):
+    ymin, ymax = ax.get_ylim()
+    yscale = np.abs(ymax - ymin)
+    y_buffer = 0.05*yscale
+
+    # Draw the line connecting the two bars
+    x1, x2 = ax.get_xticks()
+    if y_line is None:
+        y_line = ymax + y_buffer
+    ax.plot([x1, x1, x2, x2],
+            [y_line, y_line + y_buffer/2, y_line + y_buffer/2, y_line],
+            color='black')
+
+    # Get the significance text based on the p-value
+    vals = df.copy().sort_values([groupby, x]).groupby(groupby)[y]
+    xy_diff = vals.diff().dropna()
+    pvalue = wilcoxon(xy_diff, alternative=alternative)[1]
+    # print(pvalue)
+    text = convert_pvalue_to_asterisks(pvalue, print_ns=True)
+
+    # Place the text above the line
+    y_text = y_line + y_buffer/2  # Add a little more offset for the asterisks
+    ax.text((x1 + x2) / 2, y_text, text, ha='center', va='bottom',
+            fontsize=fontsize)
+
+    if y_line is None:
+        ax.set_ylim([ymin-y_buffer, ymax+4*y_buffer])
