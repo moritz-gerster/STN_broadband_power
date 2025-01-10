@@ -4,8 +4,7 @@ from os.path import basename, join
 from pathlib import Path
 
 import numpy as np
-from mne import make_fixed_length_epochs, set_log_level  # , Annotations
-# from mne.time_frequency import psd_array_welch
+from mne import make_fixed_length_epochs, set_log_level
 from mne.io import read_raw
 from mne_bids import find_matching_paths, get_entity_vals
 from scipy.interpolate import interp1d
@@ -264,17 +263,14 @@ def _calc_psd(bids_path, check_srate=True, method='welch', freq_res=1,
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             _ignore_warnings()
-
-            # CHANGE ONCE MNE BUG FIXED!!!! (n_overlap)
             n_overlap = n_fft // 2  # 50% overlap
-            # raw = extend_bad_segments(raw, min_gap=.5)  # 500 ms
             spectrum = raw.compute_psd(method="welch",
-                                    n_fft=n_fft,  # numbers per segment
-                                    picks=picks,  # include bads
-                                    n_overlap=n_overlap,  # 50% overlap <- MNE BUG
-                                    average="mean",
-                                    fmax=fmax,
-                                    verbose=False)
+                                       n_fft=n_fft,  # numbers per segment
+                                       picks=picks,  # include bads
+                                       n_overlap=n_overlap,
+                                       average="mean",
+                                       fmax=fmax,
+                                       verbose=False)
     elif method == 'multitaper':
         # freq_res=1 make same bins as welch for easier dataframe handling
         epochs = make_fixed_length_epochs(raw, duration=1/freq_res).load_data()

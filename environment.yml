@@ -7,9 +7,7 @@ dependencies:
   - mne-bids
   - numba
   - seaborn
-  # - numpy==2.0.1  # for some reason necessary to provide
   - pingouin
-  # - pytest  # development
   - pylint
   - flake8
   - autopep8
@@ -17,7 +15,6 @@ dependencies:
   - statsmodels
   - statannotations  # for df stats
   - openpyxl  # to open excel
-  # - av  # for animations
   - h5io  # to save mne.Spectrum object
   - nilearn  # check if mni coords inside stn. Also install nibabel?
   - pip
