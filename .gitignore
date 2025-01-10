@@ -6,6 +6,7 @@ derivatives/*
 !sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/Berlin_MedOffOn.json
 results/*/*
 !results/plots/paper_figures
+.vscode/
 
 # File types
 *.pyc
