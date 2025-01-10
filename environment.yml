@@ -15,7 +15,7 @@ dependencies:
   - autopep8
   - ipykernel
   - statsmodels
-  # - statannotations  # for df stats
+  - statannotations  # for df stats
   - openpyxl  # to open excel
   # - av  # for animations
   - h5io  # to save mne.Spectrum object
