@@ -1642,6 +1642,8 @@ def _dataset_dbs_models_leads(df, save_dir=None, save=None, prefix=''):
 def _mni_coords_datasets(fig_dir=None, prefix=''):
     df = pd.read_excel(join(cfg.DF_PATH, 'localization_powers.xlsx'))
     # load dataframe with flipped mni coordinates
+    msg = 'Run save_heatmaps.m first!'
+    assert 'mni_xr' in df.columns, msg
     df = df[['subject', 'project', 'ch_nme', 'mni_xr', 'mni_yr', 'mni_zr']]
     df['project'] = df['project'].map(cfg.PROJECT_DICT)
     df['ch'] = df['ch_nme'].str.replace('_L_', '_').str.replace('_R_', '_')
