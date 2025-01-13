@@ -61,18 +61,7 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
 
         # Apply preprocessing functions
         raw.resample(sfreq=cfg.RESAMPLE_FREQ)  # assert same srate across files
-        if bids_path_new.recording == "Neumann":
-            assert raw.info["proj_name"] == "Neumann"
-        elif bids_path_new.recording == "Litvak":
-            assert raw.info["proj_name"] == "Litvak"
-        elif bids_path_new.recording == "Hirschmann":
-            assert raw.info["proj_name"] == "Hirschmann"
-        elif bids_path_new.recording == "Hirschmann2":
-            assert raw.info["proj_name"] == "Hirschmann2"
-        elif bids_path_new.recording == "Tan":
-            assert raw.info["proj_name"] == "Tan"
-        elif bids_path_new.recording == "Florin":
-            assert raw.info["proj_name"] == "Florin"
+        assert raw.info["proj_name"] == bids_path_new.recording
         ref_kwargs = dict(raw=raw, LAR=LAR, bipolar=bipolar_ref,
                           bipolar_directional=bipolar_directional,
                           bipolar_distant=bipolar_distant)
