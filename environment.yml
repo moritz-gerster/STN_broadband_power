@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - mne=1.6  # before mne bug introduction (overlapping windows)
-  - mne-bids
+  - mne-bids  # = x.xx <- specify version
   - numba
   - seaborn
   - pingouin
