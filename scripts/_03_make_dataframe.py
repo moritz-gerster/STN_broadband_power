@@ -349,7 +349,7 @@ def _get_patient_dic(bids_path):
         patient_table = pd.read_excel(fpath)
         # filter for subject
         sub_old = cfg.FLORIN_SUBJECT_MAP_REV[bids_path.subject]
-        mask_sub = (patient_table['Subject '] == sub_old + '_PD')
+        mask_sub = patient_table['Subject '] == sub_old + '_PD'
         patient_table = patient_table[mask_sub]
         # drop columns
         drop = ['Subject ', 'MMSE pre', 'BDI pre ', 'UPDRS_peri',
@@ -714,30 +714,28 @@ def _mni_inside_stn(mni_coords):
     mask_location = (round(idx[0]), round(idx[1]), round(idx[2]))
     # Check whether mni coords are within binary mask stn_mask_LR
     mask_value = stn_mask_LR.get_fdata()[mask_location]
-    mni_inside_stn = (mask_value == 1)
+    mni_inside_stn = mask_value == 1
     return mni_inside_stn
 
 
 def _indicate_wiest_picks(info):
     if info['proj_name'] != 'Tan':
         return {ch_name: False for ch_name in info.ch_names}
-    else:
-        ch_names = info.ch_names
-        ch_types = info.get_channel_types()
-        wiest_pick = {}
-        for idx, ch in enumerate(ch_names):
-            if ch_types[idx] == 'dbs':
-                wiest_pick[ch] = True
-            elif ch_types[idx] == 'ecog':
-                wiest_pick[ch] = False
-            else:
-                raise ValueError(f"Unknown channel type {ch_types[idx]}")
-        return wiest_pick
+    ch_names = info.ch_names
+    ch_types = info.get_channel_types()
+    wiest_pick = {}
+    for idx, ch in enumerate(ch_names):
+        if ch_types[idx] == 'dbs':
+            wiest_pick[ch] = True
+        elif ch_types[idx] == 'ecog':
+            wiest_pick[ch] = False
+        else:
+            raise ValueError(f"Unknown channel type {ch_types[idx]}")
+    return wiest_pick
 
 
 def _add_fooof_to_dic(ch_dics, bids_path, load_fits=True):
-    """
-    Fit fooof and append results to dics and save plots.
+    """Fit fooof and append results to dics and save plots.
 
     Save all plots in the same folder for fast visual inspection.
     """
@@ -841,7 +839,7 @@ def _get_updrs_dic(bids_path, multiple_scores="average_sessions"):
         updrs_table = pd.read_csv(fname, sep="\t")
         # filter for subject
         sub = cfg.SUB_MAPPING_HIR_REV[bids_path.subject]
-        sub_mask = (updrs_table['participant_id'] == f'sub-{sub}')
+        sub_mask = updrs_table['participant_id'] == f'sub-{sub}'
         updrs_table = updrs_table[sub_mask]
 
         if not len(updrs_table.dropna(axis=1)):
@@ -1206,8 +1204,8 @@ def _get_sweetspot_chs(mni_locs):
     stn_motor_R = np.array([12.5, -12.72, -5.38])
     stn_motor_L = np.array([-12.68, -13.53, -5.38])
 
-    cond_L = (df.ch_hemisphere == "L")
-    cond_R = (df.ch_hemisphere == "R")
+    cond_L = df.ch_hemisphere == "L"
+    cond_R = df.ch_hemisphere == "R"
 
     df_L = df[cond_L]
     df_R = df[cond_R]
@@ -1280,19 +1278,19 @@ def _normalize_psd(psds, freqs, method="Neumann"):
     """Normalize PSDs according to Neumann et al. 2017 Clin. Neurophys."""
     if method == "Neumann":
         # mask = ((freqs >= 5) & (freqs <= 45)) | ((freqs >= 55) & (freqs <= 95))
-        mask = ((freqs >= 5) & (freqs <= 95))  # simplify
+        mask = (freqs >= 5) & (freqs <= 95)  # simplify
         factor = 100  # percentage
     elif method == "Litvak":
-        mask = ((freqs >= 4) & (freqs <= 48))
+        mask = (freqs >= 4) & (freqs <= 48)
         factor = 1
     elif method == "Tan":
         mask = ((freqs >= 1) & (freqs <= 47)) | ((freqs >= 53) & (freqs <= 90))
         factor = 100  # percentage
     elif method == "Ince":
-        mask = ((freqs >= 120) & (freqs <= 160))
+        mask = (freqs >= 120) & (freqs <= 160)
         factor = 100  # percentage
     elif method == "Plateau":
-        mask = ((freqs >= 100) & (freqs <= 200))
+        mask = (freqs >= 100) & (freqs <= 200)
         mini = psds[:, mask].min(1)
         avoid_zero = 1e-16  # add 10 nV/sqrt(Hz) to avoid 0
         psds_norm = psds - mini[:, None] + avoid_zero
