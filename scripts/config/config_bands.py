@@ -15,7 +15,7 @@ BANDS = {
     "gamma_mid": (45, 60),
     "gamma": (30, 60),
     "full": (1, 60),
-    }
+}
 
 NOISE_FLOORS = {
     "Neumann": (95, 295),
@@ -23,7 +23,7 @@ NOISE_FLOORS = {
     "Litvak": (95, 595),
     "Hirschmann": (95, 495),
     "Tan": (95, 250)
-    }
+}
 
 BAND_NAMES_GREEK = {
     'delta': r'$\delta$',
@@ -80,7 +80,7 @@ BAND_COLORS = {
     "gamma_mid": c7,
     "gamma": c7,
     "FTG": c7,
-    }
+}
 
 BAND_LOCALIZATION = [
     'alpha_beta',  # reproduce Shreve 2017

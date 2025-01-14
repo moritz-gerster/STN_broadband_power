@@ -10,7 +10,7 @@ subjects_old = [
                 'G33', 'G34', 'K6', 'K7', 'K8', 'K11', 'XG37', 'XG39',
                 # exclude DBS only subjects
                 # 'G1', 'G22', 'G4', 'G5', 'K4', 'M5', 'M6'
-                ]
+]
 subjects_new = [f"TanL{sub:03d}" for sub in range(1, len(subjects_old) + 1)]
 TAN_SUBJECT_MAP = dict(zip(subjects_old, subjects_new))
 TAN_SUBJECT_MAP_REV = dict(zip(subjects_new, subjects_old))
@@ -352,7 +352,7 @@ TIME_SELECTION_OWN = {
                 'K8_riSTN_OFF.mat': {'time': (0, None)},
                 'XG37_leSTN_OFF.mat': {'time': (0, None)},
                 'XG39_riSTN_OFF.mat': {'time': (0, None)}
-                }
+}
 
 #%% BIDS meta data
 TAN_META = dict(

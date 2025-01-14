@@ -55,7 +55,7 @@ DBS_LEADS = {
         'DBS_model': np.nan,
         'DBS_description': np.nan,
         'DBS_directional': np.nan}
-    }
+}
 
 LINE_NOISE_BROAD = [
     'sub-TanL004_ses-LfpMedOn01_task-RestLdopa_acq-StimOnLeft_run-01_proc-HighpassWelch_rec-Tan_desc-cleaned_ieeg.fif',
@@ -77,7 +77,7 @@ LINE_NOISE_BROAD = [
     'sub-LitML013_ses-MegLfpMedOff01_task-Rest_acq-StimOff_run-01_proc-HighpassWelch_rec-Litvak_desc-cleaned_ieeg.fif',
     'sub-LitML014_ses-MegLfpMedOff01_task-Rest_acq-StimOff_run-01_proc-HighpassWelch_rec-Litvak_desc-cleaned_ieeg.fif',
     'sub-FloML028_ses-LfpMedOff01_task-Rest_acq-StimOff_run-01_proc-HighpassWelch_rec-Florin_desc-cleaned_ieeg.fif'
-                     ]
+]
 
 LINE_NOISE_FREQS = {
     'sub-TanL006_ses-LfpMedOn01_task-RestLdopa_acq-StimOnLeft_run-01_proc-HighpassWelch_rec-Tan_desc-cleaned_ieeg.fif': [50, 847],
@@ -89,4 +89,4 @@ LINE_NOISE_FREQS = {
     'sub-TanEmptyroom_ses-TMSiSAGA20240212_task-noise_run-01_proc-HighpassWelch_rec-Tan_desc-cleaned_ieeg.fif': [50, 240, 800, 855, 880, 885, 946],
     'sub-TanEmptyroom_ses-TMSiPorti20240212_task-noise_run-01_proc-HighpassWelch_rec-Tan_desc-cleaned_ieeg.fif': [50, 486, 535, 558, 567, 612, 674, 711, 717, 763, 770, 780, 785, 790, 830, 836, 840, 865, 871, 874, 882, 888, 944, 957, 962, 967, 1000,
                                                                                                                   522, 528, 544, 508, 513, 532, 492]
-    }
+}

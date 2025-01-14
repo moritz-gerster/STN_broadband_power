@@ -42,4 +42,4 @@ LITVAK_META = dict(
         acknowledgements=None,
         funding=None,
         doi=None
-                )
+)

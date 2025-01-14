@@ -63,7 +63,7 @@ POSSIBLE_CH_NAMES = {
     "ACC_R_X_D2_AO", "ACC_R_Y_D2_AO", "ACC_R_Z_D2_AO",
     "ACC_L_X_D2_AO", "ACC_L_Y_D2_AO", "ACC_L_Z_D2_AO",
 
-    "ANALOG",  "UNI_33", "TRIGGERS", # no idea
+    "ANALOG", "UNI_33", "TRIGGERS", # no idea
 
     # Refs
     "REF_EARLOBE", "REF_MASTOID", "REF_COMMONAVG", "REF_GREF",
