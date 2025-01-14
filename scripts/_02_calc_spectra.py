@@ -365,3 +365,4 @@ def _interpolate_line_noise(spectrum, line_freqs=50, line_width=3):
 
 if __name__ == "__main__":
     save_spectra()
+    
