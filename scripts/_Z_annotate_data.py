@@ -403,8 +403,7 @@ def _get_transition_segments(dbs_segments, transition=1,
 def _get_dbs_segments(raw, picks=None, threshold=10, ch_type=None,
                       min_length_good=0.1, filter_freq=(110, 140),
                       dbs_bad=False):
-    """
-    MODIFIED from mne.preprocessing.annotate_muscle_zscore.
+    """MODIFIED from mne.preprocessing.annotate_muscle_zscore.
 
     Detects data segments containing activity in the frequency range given by
     ``filter_freq`` whose envelope magnitude exceeds the specified
@@ -427,7 +426,7 @@ def _get_dbs_segments(raw, picks=None, threshold=10, ch_type=None,
     min_length_good : float | None
         The shortest allowed duration of "good data" (in seconds) between
         adjacent annotations; shorter segments will be incorporated into the
-        surrounding annotations.``None`` is equivalent to ``0``.
+        surrounding annotations. ``None`` is equivalent to ``0``.
         Default is ``0.1``.
     filter_freq : array-like, shape (2,)
         The lower and upper frequencies of the band-pass filter.
@@ -440,7 +439,7 @@ def _get_dbs_segments(raw, picks=None, threshold=10, ch_type=None,
     -------
     annot : mne.Annotations
         Periods with muscle artifacts annotated as BAD_muscle.
-    scores_muscle : array
+    scores_dbs : array
         Z-score values averaged across channels for each sample.
     """
     from mne.annotations import _adjust_onset_meas_date
