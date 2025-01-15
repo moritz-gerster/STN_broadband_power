@@ -125,7 +125,7 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
     df = df[~df.ch_bad & df.cond.isin(['on', 'off'])
             & df.mni_x.notna() & df.ch.isin(bip_chs)
             & df.project.isin(['all'])]
-    df_norm = df[(df.psd_kind == 'normalized') & (df.fm_params == False)]
+    df_norm = df[(df.psd_kind == 'normalized') & (df.fm_params is False)]
     df_abs = df[(df.psd_kind == 'standard') & (df.fm_params == 'broad')
                 & df.fm_exponent.notna()]
     # equalize subjects for comparison

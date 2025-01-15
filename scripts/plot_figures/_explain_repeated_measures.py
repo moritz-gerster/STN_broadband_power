@@ -26,9 +26,9 @@ def repeated_measures_toy_example(fig_dir='Figure6', prefix=''):
 
     df1 = pd.DataFrame({'beta_power': beta_powers, 'UPDRS': updrs_scores,
                         'subject': patient_list,
-                    'marker': markers,
-                    'ch_hemisphere': hemispheres,
-                    'color': colors})
+                        'marker': markers,
+                        'ch_hemisphere': hemispheres,
+                        'color': colors})
 
     # calc repeated measures correlation
     x = 'beta_power'

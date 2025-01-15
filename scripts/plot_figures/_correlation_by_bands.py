@@ -34,7 +34,7 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
 
     plot_kwargs = {'ax': ax, 'x': 'band_nme', 'y': 'rho', "order": band_cols,
                    'legend': False}
-    plot_single = {'data': df_single,'hue': 'project',
+    plot_single = {'data': df_single, 'hue': 'project',
                    'palette': palette, 'alpha': 1, 'width': 0.4}
 
     sns.barplot(**plot_all, **plot_kwargs)
@@ -72,7 +72,7 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
         ylabel = r"$r_{rm}$"
     elif corr_method == 'withinRank':
         ylabel = r"$r_{\text{rank rm}}$"
-    if title == True:
+    if title:
         ax.set_title(ylabel)
         unit_alone = r"$\rho$"
         ax.set_ylabel(unit_alone)
@@ -84,7 +84,10 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
     updrs = df_all.y.unique()[0]
     pwr_kind = df_all.pwr_kind.unique()[0]
     n_perm = df_corrs.n_perm.unique()[0]
-    fname = f'{prefix}band_UPDRS_{kind}_{cond}_{updrs}_{corr_method}_{pwr_kind}_nperm={n_perm}'
+    fname = (
+        f'{prefix}band_UPDRS_{kind}_{cond}_{updrs}_{corr_method}_{pwr_kind}_'
+        f'nperm={n_perm}'
+    )
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/{fname}', cfg.FIG_PAPER,
               transparent=True, bbox_inches=None)
@@ -151,9 +154,9 @@ def export_legend(save_dir, band_cols, palette, fname):
     labels = [band_nme for band_nme in band_cols]
     legend = plt.legend(handles, labels, loc=3, framealpha=1,
                             frameon=True, ncol=1)
-    fig  = legend.figure
+    fig = legend.figure
     fig.canvas.draw()
-    bbox  = legend.get_window_extent().transformed(
+    bbox = legend.get_window_extent().transformed(
         fig.dpi_scale_trans.inverted())
     filename = join(cfg.FIG_PAPER, save_dir, f'{fname}_legend.pdf')
     fig.savefig(filename, dpi="figure", bbox_inches=bbox, transparent=True)

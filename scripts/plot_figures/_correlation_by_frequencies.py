@@ -270,9 +270,9 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
 
     # bar plot
     asymmetric_subjects = df_corrs.asymmetric_subjects.unique()[0]
-    if asymmetric_subjects == True:
+    if asymmetric_subjects:
         consistent_str = '_consistent'
-    elif asymmetric_subjects == False:
+    elif asymmetric_subjects is False:
         consistent_str = '_inconsistent'
     elif asymmetric_subjects is None:
         consistent_str = ''
@@ -377,7 +377,7 @@ def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
             elif kind == 'normalizedInce':
                 df_plot = dataframes['df_normInce']
                 x = 'psd_log'
-            elif kind  == 'absolute':
+            elif kind == 'absolute':
                 df_plot = dataframes['df_abs']
 
                 x = 'psd_log'
@@ -394,10 +394,10 @@ def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
                                                  band_cols=band_cols,
                                                  corr_method=corr_method)
                 df_corr_bar['kind'] = kind
-            elif kind  == 'periodic':
+            elif kind == 'periodic':
                 df_plot = dataframes['df_per']
                 x = 'fm_psd_peak_fit_log'
-            elif kind  == 'periodicAP':
+            elif kind == 'periodicAP':
                 df_plot = dataframes['df_per']
                 x = 'fm_psd_peak_fit_log'
                 data = df_plot[(df_plot.cond == cond)
@@ -409,7 +409,7 @@ def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
                                                  bands=[],
                                                  corr_method=corr_method)
                 df_corr_bar['kind'] = kind
-            elif kind  == 'periodicFULL':
+            elif kind == 'periodicFULL':
                 df_plot = dataframes['df_per']
                 x = 'fm_fooofed_spectrum_log'
                 xmax = 40  # max for fm Litvak
@@ -489,7 +489,7 @@ rename_periodic = {'fm_freqs': 'psd_freqs',
 
 def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
                                      xlabel=None,
-                                     legend=False,  band_annos=None, xmin=2,
+                                     legend=False, band_annos=None, xmin=2,
                                      info_title=False, prefix='',
                                      ylim=None):
     assert df_corrs.project.nunique() == 1
@@ -521,7 +521,7 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
         c = '2' if cond == 'on' else ''
         color = cfg.COLOR_DIC[kind + c]
         sns.lineplot(data=df_plot, ax=ax, x=x_plot, lw=1, y=y_plot,
-                    label=label, color=color)
+                     label=label, color=color)
 
         # horizontal lines for significance - do at the end for correct axis
         # limits
@@ -631,13 +631,13 @@ def get_corrs_kinds(dataframes, kinds, conds, n_perm=N_PERM_CORR, xmax=60,
                 x = 'psd'
             elif kind == 'normalizedInce':
                 x = 'psd'
-            elif kind  == 'absolute':
+            elif kind == 'absolute':
                 x = 'psd'
-            elif kind  == 'periodic':
+            elif kind == 'periodic':
                 x = 'fm_psd_peak_fit'
-            elif kind  == 'periodicAP':
+            elif kind == 'periodicAP':
                 x = 'fm_psd_ap_fit'
-            elif kind  == 'periodicFULL':
+            elif kind == 'periodicFULL':
                 x = 'fm_fooofed_spectrum'
 
             if 'offon' in cond:

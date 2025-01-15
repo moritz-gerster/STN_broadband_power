@@ -95,7 +95,7 @@ def plot_psd_df_annotated(df, freqs="psd_freqs", psd="asd", hue="cond",
         else:
             ylabel = "Normalized PSD [%]"
     if xlim:
-        xmask = ((df[freqs] >= xlim[0]) & (df[freqs] <= xlim[1]))
+        xmask = (df[freqs] >= xlim[0]) & (df[freqs] <= xlim[1])
         df = df.loc[xmask]
     global c_off, c_on
     if kind == 'normalized':
@@ -142,10 +142,10 @@ def plot_psd_df_annotated(df, freqs="psd_freqs", psd="asd", hue="cond",
     annotate_peaks(df, ax, xscale, kind, use_peak_power=use_peak_power)
     if add_band_colors:
         _add_band(bands, g)
-    if (xscale == 'linear'):
+    if xscale == 'linear':
         _add_band_annotations(bands, g)
     else:
-        if (kind == 'periodic'):
+        if kind == 'periodic':
             _add_band_annotations(bands, g, short=True)
         else:
             _add_band_annotations(bands[1:], g, short=True)
@@ -284,7 +284,7 @@ def _annotate_lin_per(df, ax, textcolor, z_front, z_back_middle, text_kwargs,
         band_borders = cfg.BANDS[band]
         x_arrow = band_borders[1]
 
-    freq_mask = (fm_freqs == peak_freq)
+    freq_mask = fm_freqs == peak_freq
     arr_pwr = dict(facecolor=textcolor, shrinkA=0, shrinkB=1.5,
                    edgecolor=textcolor, arrowstyle='-|>',
                    mutation_scale=3)
@@ -370,7 +370,7 @@ def _annotate_log_periodic(df, ax, textcolor, text_box, z_front, dotted_line):
                     arrowprops=arr_exponent, **kwargs_text)
         ax.hlines(ap_fit[fm_freqs == 22], 14, 22, **dotted_line)
         ax.vlines(14, ap_fit[fm_freqs == 14], ap_fit[fm_freqs == 22],
-                    **dotted_line)
+                  **dotted_line)
         kwargs_text2 = dict(fontsize=FONTSIZE_S-2, color=textcolor)
         ax.text(14, ap_fit[fm_freqs == 20], r'$\Delta y$',
                 **kwargs_text2, va='center', ha='right')
@@ -396,7 +396,7 @@ def add_integral_str(df, freqs, psd, ax, kind, xscale, c_off, c_on):
         return None
     if kind == 'periodic':
         return None
-    freq_mask = ((df[freqs] >= 5) & (df[freqs] <= 95))
+    freq_mask = (df[freqs] >= 5) & (df[freqs] <= 95)
     units = '%' if kind == 'normalized' else r' $\mu V^2$'
     int_off = df[(df.cond == 'off') & freq_mask][psd].sum()
     int_on = df[(df.cond == 'on') & freq_mask][psd].sum()

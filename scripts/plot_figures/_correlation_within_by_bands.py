@@ -20,7 +20,9 @@ def _correct_sample_size(df, x, repeated_m="subject"):
     hemi_both = hemis_subject == df_copy.ch_hemisphere.nunique()
     df_copy = df_copy.set_index(group)[hemi_both].reset_index()
     # assert no subjects with only one hemisphere
-    enough_subs = (df_copy.groupby(repeated_m).ch_hemisphere.nunique() == 2).all()
+    enough_subs = (
+        df_copy.groupby(repeated_m).ch_hemisphere.nunique() == 2
+    ).all()
     if not enough_subs:
         return None
 
@@ -72,7 +74,6 @@ def get_correlation_df_multi(dataframes,
         if kind == 'normalized':
             df = dataframes['df_norm'].copy()
             df = df[(df.project == 'all')]
-
             band_cols = [f'{band}_abs_mean_log' for band in bands]
             band_nmes = [band_dic[band] for band in bands]
         elif kind == 'absolute':
@@ -142,7 +143,7 @@ def get_correlation_df_multi(dataframes,
                                        n_perm=n_perm)
                     rho, sample_size, label, _, _ = _corr_results(
                         **corr_kwargs
-                        )
+                    )
                     if rho is None:
                         msg = f'No correlation found for {corr_kwargs}'
                         raise ValueError(msg)
