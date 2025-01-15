@@ -10,8 +10,10 @@ import scripts.config as cfg
 def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
                               keep_zero=False, add_normalized=True,
                               add_absolute=True):
-    """
-    Export df for localization plotting.
+    """Export df for localization plotting.
+
+    Parameters
+    ----------
     bands: list
         List of bands to include in the table.
     only_maxima: bool
@@ -24,7 +26,7 @@ def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
         Gives much better results than total but worse than fooof.
     add_absolute: bool
         Seems to not work due to not-normalized log scale across patients.
-        """
+    """
     df = pd.read_pickle(join(cfg.DF_PATH, cfg.DF_FOOOF))
 
     # filter df
