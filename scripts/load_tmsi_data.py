@@ -38,13 +38,14 @@ import tkinter as tk
 from tkinter import filedialog
 
 class Poly5Reader:
-    def __init__(self, filename=None, readAll = True):
-        if filename==None:
+    def __init__(self, filename=None, readAll=True):
+        if filename is None:
             root = tk.Tk()
 
-            filename = filedialog.askopenfilename(title = 'Select poly5-file',
-                                    filetypes = (('poly5-files', '*.poly5'),
-                                                ('All files', '*.*')))
+            filename = filedialog.askopenfilename(
+                title='Select poly5-file',
+                filetypes=(('poly5-files', '*.poly5'), ('All files', '*.*'))
+            )
             root.withdraw()
 
         self.filename = filename
@@ -59,7 +60,6 @@ class Poly5Reader:
         -------
         mne.io.RawArray
         """
-
 
         fs = self.sample_rate
         labels = self.ch_names
@@ -97,7 +97,7 @@ class Poly5Reader:
         info = mne.create_info(ch_names=labels, sfreq=fs, ch_types=types_clean)
 
         # convert from microvolts to volts if necessary
-        scale = np.array([1e-6 if (u == "µVolt" or u == "uVolt") else 1
+        scale = np.array([1e-6 if u in ["µVolt", "uVolt"] else 1
                           for u in units])
 
         raw = mne.io.RawArray(self.samples * np.expand_dims(scale, axis=1),
@@ -125,8 +125,8 @@ class Poly5Reader:
                             _final_block_size = self.num_samples / self.num_data_blocks
                             if _final_block_size % self.num_samples_per_block != 0:
                                 data_block = self._readSignalBlock(file_obj,
-                                                                   buffer_size = (self.num_samples%self.num_samples_per_block) * self.num_channels,
-                                                                   myfmt = 'f' * (self.num_samples%self.num_samples_per_block) * self.num_channels)
+                                                                   buffer_size=(self.num_samples%self.num_samples_per_block) * self.num_channels,
+                                                                   myfmt='f' * (self.num_samples%self.num_samples_per_block) * self.num_channels)
                             else:
                                 data_block = self._readSignalBlock(file_obj, self._buffer_size, self._myfmt)
                         else:
@@ -137,13 +137,12 @@ class Poly5Reader:
                         i2 = (i+1) * self.num_samples_per_block * self.num_channels
 
                         # Correct for final data block if this is not fully filled
-                        if i2 >= self.num_samples * self.num_channels:
-                            i2 = self.num_samples * self.num_channels
+                        i2 = min(i2, self.num_samples * self.num_channels)
 
                         # Insert the read data_block into the sample_buffer array
                         sample_buffer[i1:i2] = data_block
 
-                    samples=np.transpose(np.reshape(sample_buffer, [self.num_samples, self.num_channels]))
+                    samples = np.transpose(np.reshape(sample_buffer, [self.num_samples, self.num_channels]))
 
                     ch_names = [s._Channel__name for s in self.channels]
                     self.ch_unit_names = [s._Channel__unit_name for s in self.channels]
@@ -153,12 +152,11 @@ class Poly5Reader:
                     print('Done reading data.')
                     self.file_obj.close()
 
-            except Exception as e:
+            except Exception:
                 print('Reading data failed, because of the following error:\n')
                 raise
         except OSError:
             print('Could not open file. ')
-
 
     def _readHeader(self, f):
         header_data = struct.unpack("=31sH81phhBHi4xHHHHHHHiHHH64x",
@@ -176,13 +174,12 @@ class Poly5Reader:
         self.num_samples_per_block = header_data[16]
         if magic_number !="b'POLY SAMPLE FILEversion 2.03\\r\\n\\x1a'":
             print('This is not a Poly5 file.')
-        elif  version_number != 203:
+        elif version_number != 203:
             print('Version number of file is invalid.')
         else:
             print('\t Number of samples:  %s ' %self.num_samples)
             print('\t Number of channels:  %s ' % self.num_channels)
             print('\t Sample rate: %s Hz' %self.sample_rate)
-
 
     def _readSignalDescription(self, f):
         chan_list = []
@@ -196,8 +193,6 @@ class Poly5Reader:
             f.read(136)
         return chan_list
 
-
-
     def _readSignalBlock(self, f, buffer_size, myfmt):
         f.read(86)
         sampleData = f.read(buffer_size*4)
@@ -207,14 +202,14 @@ class Poly5Reader:
 
     def _reorder_grid(self, samples, ch_names):
         # Reordering textile grid channels
-        channel_conversion_list = np.arange(0,len(ch_names), dtype = int)
+        channel_conversion_list = np.arange(0, len(ch_names), dtype=int)
 
         # Detect row and column number based on channel name
         RCch = []
         for i, ch in enumerate(ch_names):
             if ch.find('R') == 0 and ch.find('C') == 2:
-                R,C = ch[1:].split('C')
-                RCch.append((R,str(C).zfill(2),i))
+                R, C = ch[1:].split('C')
+                RCch.append((R, str(C).zfill(2), i))
             elif ch == 'CREF':
                 RCch.append(('0', '0', i))
 
@@ -224,18 +219,19 @@ class Poly5Reader:
             channel_conversion_list[ch] = RCch[ch][2]
 
         # Change the ordering of channels on the textile grid
-        samples = samples[channel_conversion_list,:]
+        samples = samples[channel_conversion_list, :]
         ch_names = [ch_names[i] for i in channel_conversion_list]
 
         return samples, ch_names
 
 
 class Channel:
-    """ 'Channel' represents a device channel. It has the next properties:
+    """'Channel' represents a device channel. It has the next properties:
 
         name : 'string' The name of the channel.
 
-        unit_name : 'string' The name of the unit (e.g. 'μVolt)  of the sample-data of the channel.
+        unit_name : 'string' The name of the unit (e.g. 'μVolt)  of the
+                    sample-data of the channel.
     """
 
     def __init__(self, name, unit_name):
