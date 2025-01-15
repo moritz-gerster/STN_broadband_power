@@ -130,11 +130,10 @@ def _add_bad_segments(raw, bids_path: BIDSPath, modify_bidspath=True,
         msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
         if only_cleaned:
             raise FileNotFoundError(msg)
-        else:
-            warn(msg)
-            if modify_bidspath:
-                bids_path.update(description="uncleaned")
-            return None
+        warn(msg)
+        if modify_bidspath:
+            bids_path.update(description="uncleaned")
+        return None
     except IndexError:
         # this just means that there are no annotations, this is fine
         annotations = None
@@ -157,8 +156,7 @@ def _add_bad_channels(raw, bids_path, only_cleaned=True):
         if only_cleaned:
             msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
             raise FileNotFoundError(msg)
-        else:
-            return None
+        return None
     ch_mismatch = set(bad_chs) - set(raw.ch_names)
     if ch_mismatch:
         # bad channels could be bipolar channels such as STN_R_12 while the
@@ -197,12 +195,13 @@ def _get_annotation_path(bids_path, suffix):
         msg = f"More than one annotation file found for {bids_path}"
         assert len(anno_path) < 2, msg
         return str(anno_path[0].fpath)
-    else:
-        return None
+    return None
 
 
 def _add_mni_coords(raw, subj_old):
-    lead_path = f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
+    lead_path = (
+        f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
+    )
     sub_dir = subj_old.replace("subj", "S")
     file_path = join(lead_path, sub_dir, "ea_reconstruction.mat")
     mat_file = loadmat(file_path)["reco"]

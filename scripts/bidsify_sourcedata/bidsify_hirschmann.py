@@ -259,14 +259,18 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
     try:
         anno_path = str(anno_path[0].fpath)
     except (IndexError):
-        raise FileNotFoundError(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
+        raise FileNotFoundError(
+            f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
+        )
     try:
         annotations = read_annotations(anno_path)
     except IndexError:
         # no annotations present
         annotations = None
     except (FileNotFoundError, TypeError):
-        raise FileNotFoundError(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
+        raise FileNotFoundError(
+            f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
+        )
     raw.set_annotations(annotations)
     bids_path.update(description='cleaned')
 
