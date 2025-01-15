@@ -109,7 +109,7 @@ def plot_corrs(df, X, Y, hue=None, corr_method="spearman", figsize=None,
         if len(projects) == 5:
             projects = ['all']
     except AttributeError:
-        title = title
+        pass
     else:
         if hue == 'cond':
             add_cond = ''
@@ -147,8 +147,6 @@ def plot_corrs(df, X, Y, hue=None, corr_method="spearman", figsize=None,
             title = ""
         elif title is True:
             title = f'{add_cond} {add_kind} {add_project}'
-        elif isinstance(title, str):
-            title = title
     plt.suptitle(title)
     plt.tight_layout()
     if fig_name:
@@ -200,7 +198,7 @@ def plot_clouds(df, Y, x='cond', order=['off', 'ON'], col=None,
                 dispersion=False):
     """Plot rainclouds subplots. Don't enable hue, use separate subplot
     for each project."""
-    if any(['abs' in y for y in Y]):
+    if any('abs' in y for y in Y):
         assert len(df.psd_kind.unique()) == 1, "Dont mix psd kinds!"
     kind = df.psd_kind.unique()[0]
     if x == "cond":
@@ -328,9 +326,9 @@ def _units_from_y_kind(y, kind):
         return r'[log10$(\mu V^2) - 1$]'
     elif y.endswith('fm_auc'):
         return r'[$\mu V^2$]'
-    elif any([y.endswith(log_pwr) for log_pwr in log_powers]):
+    elif any(y.endswith(log_pwr) for log_pwr in log_powers):
         return pwr_log_units
-    elif any([y.endswith(lin_pwr) for lin_pwr in lin_powers]):
+    elif any(y.endswith(lin_pwr) for lin_pwr in lin_powers):
         return pwr_lin_units
     elif y.endswith('_fm_powers_log_max'):
         return r'[log10$(\mu V^2/Hz) - 1$]'
@@ -360,10 +358,10 @@ def stacked_bar_chart(df, bands, fig_name=None):
 
     # Separating data for 'standard' and 'normalized' conditions,
     # for both 'off' and 'on' conditions
-    stand = (data['psd_kind'] == 'standard')
-    norm = (data['psd_kind'] == 'normalized')
-    on = (data['cond'] == 'on')
-    off = (data['cond'] == 'off')
+    stand = data['psd_kind'] == 'standard'
+    norm = data['psd_kind'] == 'normalized'
+    on = data['cond'] == 'on'
+    off = data['cond'] == 'off'
     drop = ['psd_kind', 'cond']
     data_standard_off = data[stand & off].drop(columns=drop).squeeze(axis=0)
     data_normalized_off = data[norm & off].drop(columns=drop).squeeze(axis=0)
@@ -931,7 +929,8 @@ def plot_rm_corr(
     kwargs_line : dict
         Optional keyword arguments passed to :py:class:`matplotlib.pyplot.plot`
     kwargs_scatter : dict
-        Optional keyword arguments passed to :py:class:`matplotlib.pyplot.scatter`
+        Optional keyword arguments passed to
+        :py:class:`matplotlib.pyplot.scatter`
 
     Returns
     -------
@@ -1200,7 +1199,7 @@ def plot_psd_df(df, freqs="psd_freqs", psd="asd", hue="cond",
         else:
             col_order = None
     elif col_order is not None:
-        col_order = col_order
+        pass
     else:
         col_order = None
     if ylabel is None:
@@ -1212,7 +1211,7 @@ def plot_psd_df(df, freqs="psd_freqs", psd="asd", hue="cond",
         else:
             ylabel = "Normalized PSD [%]"
     if xlim:
-        xmask = ((df[freqs] >= xlim[0]) & (df[freqs] <= xlim[1]))
+        xmask = (df[freqs] >= xlim[0]) & (df[freqs] <= xlim[1])
         df = df.loc[xmask]
     g = sns.relplot(data=df, x=freqs, y=psd, hue=hue, hue_order=hue_order,
                     kind="line", palette=palette, col=col, col_order=col_order,
@@ -1246,7 +1245,7 @@ def plot_psd_df(df, freqs="psd_freqs", psd="asd", hue="cond",
         g.fig.suptitle(f"n={n_hemispheres} hemispheres", fontsize=18, y=1.05)
     else:
         g.fig.suptitle(title, fontsize=18, y=1.05)
-    close = False if show else True
+    close = not show
     if save_name:
         _save_fig(g, save_name, save_dir, transparent=True, close=close)
     else:
@@ -1271,7 +1270,7 @@ def _get_sample_sizes(df, project, x, y):
 def _add_band(bands, g, alpha=.3, labels=False):
     if not bands:
         return None
-    elif isinstance(bands, str):
+    if isinstance(bands, str):
         colors = [cfg.BAND_COLORS[bands]]
         band_ranges = [cfg.BANDS[bands]]
         if labels:
@@ -1354,7 +1353,6 @@ def _leg_titles(rhos, sample_sizes, title=None, corr_comparison=False,
             title = r'$p_{\text{off vs on}}$'f"={p_cond:.2f}"
         title_fontproperties = {'weight': weight}
     else:
-        title = title
         title_fontproperties = None
     return title, title_fontproperties
 
@@ -1409,11 +1407,11 @@ def _dataset_ch_distribution(df, hist_kwargs=None, save=None, save_dir=None):
 
 
 def _dataset_chs_inside_STN(df, hist_kwargs=None, save=None, save_dir=None):
-    noMNI = (df.ch_choice & df.mni_x.isna())
+    noMNI = df.ch_choice & df.mni_x.isna()
     bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
     mask = ~df.ch_bip_distant & df.ch.isin(bip_chs)
-    inside_chs = (mask & df.ch_inside_stn)
-    outside_chs = (mask & ~df.ch_inside_stn & df.mni_x.notna())
+    inside_chs = mask & df.ch_inside_stn
+    outside_chs = mask & ~df.ch_inside_stn & df.mni_x.notna()
     df_inside = df[inside_chs & ~df.ch_directional]
     df_outside = df[(outside_chs | noMNI) & ~df.ch_directional]
     df_outside.loc[noMNI, 'ch'] = 'MNI not\navailable'
@@ -1448,9 +1446,9 @@ def _dataset_chs_inside_STN(df, hist_kwargs=None, save=None, save_dir=None):
 
 def _dataset_sweetspot_inside_stn(df, hist_kwargs=None, save=None,
                                   save_dir=None):
-    noMNI = (df.ch_choice & df.mni_x.isna())
+    noMNI = df.ch_choice & df.mni_x.isna()
     df_sweet = df[(df.ch_sweetspot | noMNI) & ~df.ch_directional]
-    mask = (df.ch_sweetspot & ~df.ch_inside_stn)
+    mask = df.ch_sweetspot & ~df.ch_inside_stn
     df_sweet.loc[mask, 'ch'] = 'sweetspot\noutside STN'
     df_sweet.loc[noMNI, 'ch'] = 'MNI n/a'
 
@@ -1475,7 +1473,7 @@ def _dataset_max_beta_chs(df, hist_kwargs=None, save=None, save_dir=None):
     bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
     tan_chs = ['LFP_1-3', 'LFP_2-4']
 
-    beta_standard = (df.ch_beta_max & df.ch.isin(bip_chs))
+    beta_standard = df.ch_beta_max & df.ch.isin(bip_chs)
     beta_tan = ((df.project == 'Tan') & df.ch_wiestpick
                 & ~df.ch.isin(['LFP_WIEST']))
     df_beta = df[(beta_standard | beta_tan) & ~df.ch_directional]
@@ -1542,7 +1540,7 @@ def _dataset_dbs_models(df, save_dir=None, save=None):
            r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
        'Boston Scientific Vercise Cartesia HX':
            r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
-       }
+    }
     df['DBS_model'] = df['DBS_model'].map(dbs_model_dic)
 
     hue_order = [proj for proj in cfg.PROJECT_NAMES
@@ -1590,7 +1588,7 @@ def _dataset_dbs_models_leads(df, save_dir=None, save=None, prefix=''):
            r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
        'Boston Scientific Vercise Cartesia HX':
            r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
-       }
+    }
     df['DBS_model'] = df['DBS_model'].map(dbs_model_dic)
 
     hue_order = [proj for proj in cfg.PROJECT_NAMES
@@ -1653,29 +1651,32 @@ def _mni_coords_datasets(fig_dir=None, prefix=''):
     values = rename.values()
 
     bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
-    # bip_chs = ['LFP_1-3', 'LFP_2-4']  # dist channels don't exist in excel sheet
+    # bip_chs = ['LFP_1-3', 'LFP_2-4']  # dist channels don't exist in excel
+    # sheet
     df = df[df.ch.isin(bip_chs)]
     # rename channels
     rename = {'LFP_1-2': '1-2', 'LFP_2-3': '2-3', 'LFP_3-4': '3-4'}
     df['ch'] = df['ch'].map({'LFP_1-2': '1-2', 'LFP_2-3': '2-3', 'LFP_3-4': '3-4'})
     order = [rename[ch] for ch in bip_chs]
 
-    hue_order = [proj for proj in cfg.PROJECT_NAMES if proj in df.project.unique()]
+    hue_order = [
+        proj for proj in cfg.PROJECT_NAMES if proj in df.project.unique()
+    ]
     palette = cfg.COLOR_DIC
 
     x = 'ch'
     # y = 'mni_xr'
     hue = 'project'
 
-    pairs=[(('1-2', 'Berlin'), ('1-2', 'London')),
-           (('1-2', 'Berlin'), ('1-2', 'Düsseldorf1')),
-           (('1-2', 'London'), ('1-2', 'Düsseldorf1')),
-           (('2-3', 'Berlin'), ('2-3', 'London')),
-           (('2-3', 'Berlin'), ('2-3', 'Düsseldorf1')),
-           (('2-3', 'London'), ('2-3', 'Düsseldorf1')),
-           (('3-4', 'Berlin'), ('3-4', 'London')),
-           (('3-4', 'Berlin'), ('3-4', 'Düsseldorf1')),
-           (('3-4', 'London'), ('3-4', 'Düsseldorf1'))]
+    pairs = [(('1-2', 'Berlin'), ('1-2', 'London')),
+             (('1-2', 'Berlin'), ('1-2', 'Düsseldorf1')),
+             (('1-2', 'London'), ('1-2', 'Düsseldorf1')),
+             (('2-3', 'Berlin'), ('2-3', 'London')),
+             (('2-3', 'Berlin'), ('2-3', 'Düsseldorf1')),
+             (('2-3', 'London'), ('2-3', 'Düsseldorf1')),
+             (('3-4', 'Berlin'), ('3-4', 'London')),
+             (('3-4', 'Berlin'), ('3-4', 'Düsseldorf1')),
+             (('3-4', 'London'), ('3-4', 'Düsseldorf1'))]
     # pairs=[(('LFP_1-2', 'Berlin'), ('LFP_1-2', 'London')),
     #        (('LFP_1-2', 'Berlin'), ('LFP_1-2', 'Düsseldorf1')),
     #        (('LFP_1-2', 'London'), ('LFP_1-2', 'Düsseldorf1')),
@@ -1803,7 +1804,9 @@ def _dataset_comparison(df, save_dir=None, save=None):
 
     # don't plot unknown sex because not informative
     df_sub_gender = df_sub[df_sub.patient_sex.isin(['male', 'female'])]
-    df_sub_gender['patient_sex'] = df_sub_gender['patient_sex'].map({'male': 'M', 'female': 'F'})
+    df_sub_gender['patient_sex'] = df_sub_gender['patient_sex'].map(
+        {'male': 'M', 'female': 'F'}
+    )
 
     kwargs = dict(hue='project_nme', palette=cfg.COLOR_DIC,
                   legend=False,
@@ -1860,7 +1863,9 @@ def _dataset_comparison(df, save_dir=None, save=None):
             sns.kdeplot(ax=ax, data=df_updrs[mask], x=symptom, **kwargs)
             ax.set_xlabel(None)
             ax.set_ylabel(None)
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+            ax.yaxis.set_major_formatter(mtick.PercentFormatter(
+                xmax=1, decimals=0)
+            )
             ax.set_xlabel(xlabels[i])
             ax.set_yticks([])
     ###########################################################################
@@ -1957,7 +1962,9 @@ def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
 
     # don't plot unknown sex because not informative
     df_sub_gender = df_sub[df_sub.patient_sex.isin(['male', 'female'])]
-    df_sub_gender.loc[:, 'patient_sex'] = df_sub_gender['patient_sex'].map({'male': 'M', 'female': 'F'})
+    df_sub_gender.loc[:, 'patient_sex'] = df_sub_gender['patient_sex'].map(
+        {'male': 'M', 'female': 'F'}
+    )
 
     kwargs = dict(hue='project_nme', palette=cfg.COLOR_DIC,
                   legend=False,
@@ -2025,7 +2032,9 @@ def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
             sns.kdeplot(ax=ax, data=df_updrs[mask], x=symptom, **kwargs)
             ax.set_xlabel(None)
             ax.set_ylabel(None)
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+            ax.yaxis.set_major_formatter(mtick.PercentFormatter(
+                xmax=1, decimals=0
+            ))
             ax.set_xlabel(xlabels[i])
             ax.set_yticks([])
     ###########################################################################
@@ -2041,18 +2050,22 @@ def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
 
 
 def _dataset_overview(df_n, fig_dir=None, prefix=''):
-    mask = (df_n.UPDRS_exists & df_n.has_model )
+    mask = (df_n.UPDRS_exists & df_n.has_model)
     mask_off = (mask & df_n.asymmetric_off & df_n.both_hemis_off_available)
     mask_on = (mask & df_n.asymmetric_on & df_n.both_hemis_on_available
                & df_n.dominant_side_consistent)
     # sort projects in df_n according to cfg.PROJECT_NAMES
-    df_n['project_nme'] = pd.Categorical(df_n['project_nme'], categories=cfg.PROJECT_NAMES, ordered=True)
+    df_n['project_nme'] = pd.Categorical(
+        df_n['project_nme'], categories=cfg.PROJECT_NAMES, ordered=True
+    )
 
     fig, ax = plt.subplots(1, 1, figsize=(1.55, 1.5), sharey=True)
 
     # Full data
-    sns.histplot(data=df_n, x='project_nme', discrete=True, stat="count", ax=ax,
-                label='Original')
+    sns.histplot(
+        data=df_n, x='project_nme', discrete=True, stat="count", ax=ax,
+        label='Original'
+    )
 
     # Iterate through each bar and set the color based on the project name
     for i, patch in enumerate(ax.patches):
@@ -2061,8 +2074,10 @@ def _dataset_overview(df_n, fig_dir=None, prefix=''):
         patch.set_alpha(0.2)
 
     # Filtered data Off
-    sns.histplot(data=df_n[mask_off], x='project_nme', discrete=True, stat="count",
-                ax=ax, label=f'Asymmetric {cfg.COND_DICT["off"]}')
+    sns.histplot(
+        data=df_n[mask_off], x='project_nme', discrete=True, stat="count",
+        ax=ax, label=f'Asymmetric {cfg.COND_DICT["off"]}'
+    )
     for i, patch in enumerate(ax.patches[5:]):
         project = cfg.PROJECT_NAMES[i]
         patch.set_facecolor(cfg.COLOR_DIC[project])
@@ -2070,8 +2085,10 @@ def _dataset_overview(df_n, fig_dir=None, prefix=''):
 
 
     # Filtered data On
-    sns.histplot(data=df_n[mask_on], x='project_nme', discrete=True, stat="count",
-                ax=ax, label=f'Asymmetric {cfg.COND_DICT["on"]}')
+    sns.histplot(
+        data=df_n[mask_on], x='project_nme', discrete=True, stat="count",
+        ax=ax, label=f'Asymmetric {cfg.COND_DICT["on"]}'
+    )
     for i, patch in enumerate(ax.patches[10:]):
         project = cfg.PROJECT_NAMES[i]
         patch.set_facecolor(cfg.COLOR_DIC[project])
@@ -2087,7 +2104,6 @@ def _dataset_overview(df_n, fig_dir=None, prefix=''):
     fpath = join(cfg.FIG_PAPER, fig_dir)
     _save_fig(fig, f'{prefix}patients_sample_size_asymmetric', fpath,
               close=False, bbox_inches=None)
-
 
 
 def correlations_offon(df, redundancies=[], save_name=None):
@@ -2147,7 +2163,9 @@ def correlations_offon(df, redundancies=[], save_name=None):
     # set redundant correlations to nan
     for redundant in redundancies:
         redundant_indices = df_corr.index.str.contains(redundant)
-        redundant_indices = redundant_indices[:, None] * redundant_indices[None]
+        redundant_indices = (
+            redundant_indices[:, None] * redundant_indices[None]
+        )
         df_corr.values[redundant_indices] = np.nan
         df_pval.values[redundant_indices] = np.nan
         df_n.values[redundant_indices] = np.nan
@@ -2686,8 +2704,8 @@ def _patient_symptoms(df, save=True, conds=['off', 'on', 'offon_abs'],
     [ax.set_xlabel(None) for ax in axes.flatten()]
     [ax.set_ylabel(None) for ax in axes.flatten()]
     if show_yticks:
-        [ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
-        for ax in axes.flatten()]
+        [ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1,
+         decimals=0)) for ax in axes.flatten()]
     else:
         [ax.set_yticks([]) for ax in axes.flatten()]
         [ax.set_ylabel(f'Density {cfg.COND_DICT[conds[i]]}')
@@ -2730,15 +2748,15 @@ def _patient_symptoms_flat(df, conds=['off', 'on', 'offon_abs'],
                   common_grid=True, bw_method=0.5, cut=0.1)
     conds_symptoms = list(product(conds, symptoms))
     for i, (cond, symptom) in enumerate(conds_symptoms):
-            no_tremor = ['Tan', 'Litvak'] if 'tremor' in symptom else []
-            mask = (df.cond == cond) & ~df.project.isin(no_tremor)
-            ax = axes[0, i]
-            sns.kdeplot(ax=ax, data=df[mask], x=symptom, **kwargs)
-            ax.set_xlabel(symptom_dic[symptom])
-            ax.set_ylabel(None)
+        no_tremor = ['Tan', 'Litvak'] if 'tremor' in symptom else []
+        mask = (df.cond == cond) & ~df.project.isin(no_tremor)
+        ax = axes[0, i]
+        sns.kdeplot(ax=ax, data=df[mask], x=symptom, **kwargs)
+        ax.set_xlabel(symptom_dic[symptom])
+        ax.set_ylabel(None)
     if show_yticks:
-        [ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
-        for ax in axes.flatten()]
+        [ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1,
+         decimals=0)) for ax in axes.flatten()]
     else:
         [ax.set_yticks([]) for ax in axes.flatten()]
         [ax.set_ylabel(f'Density {cfg.COND_DICT[conds[i]]}')
@@ -2918,7 +2936,6 @@ def _cohen_stats(df_sub, y, hue):
 
 
 def plot_psd_units(raw, title='Amplifier'):
-    import matplotlib.pyplot as plt
     import scipy.signal as sig
     fmax = raw.info["lowpass"]
     freqs, psd = sig.welch(raw.get_data(), fs=raw.info["sfreq"],
@@ -2971,7 +2988,9 @@ def plot_psd_units(raw, title='Amplifier'):
             axes[2].loglog(freqs_amp, asd_amp[idx], label=ch_nme + ' dir-dir')
         # dir-nondir
         elif ch_splits[2] in ['1-2', '3-4']:
-            axes[3].loglog(freqs_amp, asd_amp[idx], label=ch_nme + ' dir-nondir')
+            axes[3].loglog(
+                freqs_amp, asd_amp[idx], label=ch_nme + ' dir-nondir'
+            )
 
     axes[0].set_title('monopolar')
     axes[1].set_title('bipolar non-directional')
@@ -3017,8 +3036,7 @@ def convert_pvalue_to_asterisks(pvalue,
             return "*"
     if print_ns:
         return "ns"
-    else:
-        return ""
+    return ""
 
 
 def _stat_anno(ax, df, x, y, groupby='subject', alternative='two-sided',
