@@ -3,23 +3,19 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - mne=1.6  # before mne bug introduction (overlapping windows)
-  - mne-bids
-  - numba
-  - seaborn
-  - pingouin
-  - pylint
-  - flake8
-  - autopep8
-  - ipykernel
-  - statsmodels
-  - statannotations  # for df stats
-  - openpyxl  # to open excel
-  - h5io  # to save mne.Spectrum object
-  - nilearn  # check if mni coords inside stn. Also install nibabel?
+  - mne=1.6.1  # before mne bug introduction (issue #13039)
+  - mne-bids=0.15
+  - numba=0.60
+  - seaborn=0.13.2
+  - pingouin=0.5.5
+  - statsmodels=0.14.4
+  - statannotations=0.7.1  # for df stats
+  - openpyxl=3.1.5  # to open excel
+  - h5io=0.2.4  # to save mne.Spectrum object
+  - nilearn=0.11.1  # check if mni coords inside stn
   - pip
   - pip:
     - -e .  # scripts
-    - specparam
+    - specparam==2.0.0rc2
     - git+https://github.com/richardkoehler/pte-stats.git@paper-moritz-gerster
-    - mat73  # to load Litvak data and PPMI connectome
+    - mat73==0.65  # to load London data
