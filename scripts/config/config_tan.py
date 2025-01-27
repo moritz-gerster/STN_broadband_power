@@ -56,7 +56,7 @@ DBS_MATRIX_INFO = ['G10LOFF',
 # channel starts with "0" use CH_NME_MAP_TAN_IDX0 to rename channels. If one
 # channels ends with "4" use CH_NME_MAP_TAN_IDX1 to rename channels. If one
 # channel starts with 'Virtual' use CH_NME_MAP_TAN_FNAME to rename channels
-# which have been figured out. These files remain amibguous:
+# which have been figured out. These files remain ambiguous:
 # ['G27_leSTN_ON.mat', 'G27_riSTN_ON.mat',
 # 'G31_leSTN_ON.mat', 'G31_riSTN_ON.mat', 'G32_riSTN_ON.mat',
 # 'XG39_ERNA_riSTN_ON.mat']. Here, I simply assume that the index starts at 1

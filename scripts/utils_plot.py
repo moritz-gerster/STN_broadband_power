@@ -379,7 +379,7 @@ def stacked_bar_chart(df, bands, fig_name=None):
     inner_pie_data = pd.concat([data_standard_on, data_normalized_on[::-1]])
 
     # Labels and colors
-    # this needs to be automized to avoid erros of labels and colors
+    # this needs to be automized to avoid errors of labels and colors
     colors_off = ['#377eb8', '#4daf4a', '#e41a1c',
                   '#e41a1c', '#4daf4a', '#377eb8']
     colors_on = ['#8da0cb', '#b3de69', '#fb8072',
@@ -624,7 +624,7 @@ def equalize_x_and_y(df, x, y) -> tuple[pd.DataFrame, int]:
         df = df[df.cond.isin(['off', 'on', 'off', 'ON'])]
     # ch_hemisphere seems more reasonable in case of channel switching on ON
     # and OFF condition. Can be problematic though when all contacts are
-    # evaluted.
+    # evaluated.
     # group = ["subject", 'ch_hemisphere']
     group = ["subject", 'ch_nme']
     hemi_both_conds = df.groupby(group)[x].nunique() == df[x].nunique()
@@ -962,7 +962,7 @@ def plot_rm_corr(
 
     Examples
     --------
-    Default repeated mesures correlation plot
+    Default repeated measures correlation plot
 
     .. plot::
 
@@ -2226,7 +2226,7 @@ def correlations_offon(df, redundancies=[], save_name=None):
 
 
 def band_power_channel_choice(df, save=True):
-    """Atention: I add as many channels as possible. When MNI are missing for
+    """Attention: I add as many channels as possible. When MNI are missing for
     Neumann, I will not add them to sweetspot but I will add them to max. beta.
     This means, the cohorts used for the comparisons are not identical.
 

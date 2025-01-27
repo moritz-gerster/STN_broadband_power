@@ -122,8 +122,8 @@ def p_value_df(corr_method="spearman", stat_method=None, n_perm=None):
         Which method to use for the p-values.
         Options: "pearson", "spearman", "kendall", "perm".
     rmethod : string
-        Which corelation method to choose if permutation is applied to the
-        correlation coefficent. Options: "pearson", "spearman", or "kendall".
+        Which correlation method to choose if permutation is applied to the
+        correlation coefficient. Options: "pearson", "spearman", or "kendall".
 
     Returns
     -------
@@ -203,7 +203,7 @@ def independent_corr(r1, r2, n, n2=None, twotailed=True, conf_level=0.95,
     converting the Spearman coefficients to Pearson equivalents prior to
     transformation.
     -> It is statistically OK to not use permutation testing for the p-values
-    of correlation coefficents.
+    of correlation coefficients.
 
     ... from the abstract of
 

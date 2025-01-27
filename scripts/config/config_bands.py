@@ -1,4 +1,4 @@
-"""Band defintions."""
+"""Band definitions."""
 import seaborn as sns
 
 BANDS = {

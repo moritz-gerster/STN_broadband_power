@@ -1,4 +1,4 @@
-"""Config File setting all paramters and paths."""
+"""Config File setting all parameters and paths."""
 import numpy as np
 
 # Task and conds

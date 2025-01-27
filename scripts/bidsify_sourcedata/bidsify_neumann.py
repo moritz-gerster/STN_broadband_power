@@ -65,7 +65,7 @@ def bidsify_sourcedata_neumann(subjects=None, only_cleaned=True) -> None:
         _check_channel_names(raw, bids_path)
 
         # Correct montage. Otherwise MNE BIDS bug ValueError (CapTrak)
-        # The electrode.tsv files aren't read and written correclty.
+        # The electrode.tsv files aren't read and written correctly.
         _correct_coord_frame(raw)
 
         # Add infos to raw.info
@@ -166,7 +166,7 @@ def _remove_bad_end(raw):
 
 def _clean_electrodes_tsv(bids_path):
     """
-    Remove nan values from electrodes tsv files becauses it causes errors.
+    Remove nan values from electrodes tsv files because it causes errors.
 
     Subject 7 has fused LFP coords LFP_020304_STN_MT. Therefore, mni
     coordinates are not correctly read from electrodes.tsv file. Correct file.
@@ -467,7 +467,7 @@ def _get_annotation_path(bids_path, location="both", anno_type="events",
         return None
     else:
         # extract root Thomas: cannot use "find_matching_paths" because files
-        # are not correctly saved in "ieeg" folder acoording to BIDS
+        # are not correctly saved in "ieeg" folder according to BIDS
         root = join(anno_root, 'artifact_annotation_main')
         bids_thomas = dict(root=root, description=None, processing=None,
                            recording=None)

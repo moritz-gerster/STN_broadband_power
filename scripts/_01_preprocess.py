@@ -4,7 +4,7 @@ Save to derivatives folder.
 
 Important: If directional leads 2a, 2b, 2c are averaged to ring electrode 2,
 leads 2b and 2c are ignored if they are bad or flat. This means, bipolar
-channel 2-3 is "good" eventhough its in reality 2a-3.
+channel 2-3 is "good" even though its in reality 2a-3.
 2a will be averaged (summing would be wrong because two sums would be missing
 channel 3 would be emphasized due to larger power).
 """
@@ -128,7 +128,7 @@ def _add_bad_directional_amplifier_channels(raw):
 
 
 def _distant_bip_from_adjacent_bip(raw):
-    """Get distant bipolar reference from alreay bipolar referenced data."""
+    """Get distant bipolar reference from already bipolar referenced data."""
     anodes = ['LFP_L_1-2_STN_MT', 'LFP_L_2-3_STN_MT',
               'LFP_R_1-2_STN_MT', 'LFP_R_2-3_STN_MT']
     cathodes = ['LFP_L_2-3_STN_MT', 'LFP_L_3-4_STN_MT',

@@ -1,4 +1,4 @@
-"""Change format of the sourcedata to make BIDS complient."""
+"""Change format of the sourcedata to make BIDS compliant."""
 from os.path import basename
 
 from mne import set_log_level

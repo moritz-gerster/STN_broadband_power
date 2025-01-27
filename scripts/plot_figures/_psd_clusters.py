@@ -410,7 +410,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
                 cluster_str = 'across_' + hemispheres.replace(' ', '_')
                 hemisphere_str = '_' + hemispheres.replace(' ', '_')
 
-        # Extract cluster varible
+        # Extract cluster variable
         cluster_conds = df_cond[hue].unique()
         assert len(cluster_conds) == 2
 
@@ -737,7 +737,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                         df_cond[y] = group[y].transform("mean")
                     df_cond = df_cond.drop_duplicates(subset=["subject"])
 
-            # Extract cluster varible
+            # Extract cluster variable
             cluster_conds = df_cond[hue].unique()
             assert len(cluster_conds) == 2
 

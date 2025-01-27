@@ -86,7 +86,7 @@ def _pval_correction_lineplot(ax: axes.Axes, x: np.ndarray,
                               plot_clusters=True,
                               stat_label=True,
                               ) -> list[tuple[float, float]]:
-    """Perform p-value correction for singe lineplot."""
+    """Perform p-value correction for single lineplot."""
     cluster_times = []
     if onesample_xy:
         data_a = x - y

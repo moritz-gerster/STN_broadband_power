@@ -21,7 +21,7 @@ def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
         -> Only Maxima gives much more reasonable results and simpler stats.
     keep_zero: bool
         Whether to keep periodic zero power values when FOOOF was not fitted
-        or replace with np.nan. Setting nan gives more resonable results.
+        or replace with np.nan. Setting nan gives more reasonable results.
     add_normalized: bool
         Gives much better results than total but worse than fooof.
     add_absolute: bool

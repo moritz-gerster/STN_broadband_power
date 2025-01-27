@@ -1,4 +1,4 @@
-"""Config File setting all paramters and paths."""
+"""Config File setting all parameters and paths."""
 
 from os.path import join
 from scripts.config import SOURCEDATA

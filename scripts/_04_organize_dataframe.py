@@ -592,10 +592,10 @@ def _brady_severity(df, updrs_kinds=['UPDRS_bradyrigid_contra', 'UPDRS_III']):
         labels_median = ['mild_half', 'severe_half']
         labels_thirds = ['lower_third', 'moderate_third', 'upper_third']
         labels_quantiles = ['Q1', 'Q2', 'Q3', 'Q4']
-        halfs = pd.qcut(df[updrs_kind], q=2, labels=labels_median)
+        halves = pd.qcut(df[updrs_kind], q=2, labels=labels_median)
         thirds = pd.qcut(df[updrs_kind], q=3, labels=labels_thirds)
         quants = pd.qcut(df[updrs_kind], q=4, labels=labels_quantiles)
-        df[f'{updrs_kind}_severity_median'] = halfs
+        df[f'{updrs_kind}_severity_median'] = halves
         df[f'{updrs_kind}_severity_thirds'] = thirds
         df[f'{updrs_kind}_severity_quartiles'] = quants
         return df.drop(columns=col)  # drop for later merge
@@ -697,7 +697,7 @@ def _sweetest_adjacent_chs(df):
 
     Attention: Distant sweetspot channels are selected in _03_make_dataframe.py
     to enable closest single channel distance. Here, for adjacent channels,
-    the artihmetic mean is selected."""
+    the arithmetic mean is selected."""
     # Get closest STN contact for each subject, hemisphere, reference,
     # and condition. Distance measured from arithmetic mean of bipolar chs.
     no_duplicates = ["subject", "ch_hemisphere", "cond", "fm_params",
@@ -1414,9 +1414,9 @@ def _detect_noise_floor(df, show_plots=False, threshold=0.05):
                        peak_width_limits=(1, 2), verbose=False)
     # Frequency ranges: 5 Hz steps starting at 32 to avoid line noise freqs.
     # Plateau onsets above 100 Hz not relevant. (ECoG and EEG sometimes
-    # plateaus above 600 Hz). 5 Hz stepsize determines plateu onset resolution.
-    # 50 Hz frequency range seems sufficiently long while avoiding several
-    # line noise peaks within one fit.
+    # plateaus above 600 Hz). 5 Hz stepsize determines plateau onset
+    # resolution. 50 Hz frequency range seems sufficiently long while avoiding
+    # several line noise peaks within one fit.
     frange_starts = list(range(32, 100, 5))
     frange_len = 50
     f_ranges = [(f_start, f_start+frange_len) for f_start in frange_starts]

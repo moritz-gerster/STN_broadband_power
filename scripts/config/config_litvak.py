@@ -6,7 +6,7 @@ SOURCEDATA_LIT = join(SOURCEDATA, 'BIDS_Litvak_MEG_LFP')
 # dictionary mapping conditions to session BIDS names
 LITVAK_SESSION_MAP = dict(zip(["on", "off"],
                               ["MegLfpMedOn01", "MegLfpMedOff01"]))
-# dictioanry for renaming subjects
+# dictionary for renaming subjects
 subjects_old = [f"subj{sub}" for sub in range(1, 15)]
 SUB_PREFIX_LIT = "LitML"
 subjects_new = [f"{SUB_PREFIX_LIT}{sub:03d}" for sub in range(1, 15)]

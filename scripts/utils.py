@@ -278,14 +278,14 @@ def elec_phys_signal(exponent: float,
     duration : float, optional
         Duration of the signal in seconds. The default is 180s.
     seed : int, optional
-        Seed for reproducability. The default is 1.
+        Seed for reproducibility. The default is 1.
 
     Returns
     -------
     aperiodic_signal : ndarray
-        Aperiodic 1/f activitiy without oscillations.
+        Aperiodic 1/f activity without oscillations.
     full_signal : ndarray
-        Aperiodic 1/f activitiy with added oscillations.
+        Aperiodic 1/f activity with added oscillations.
     """
     if seed:
         np.random.seed(seed)
@@ -293,7 +293,7 @@ def elec_phys_signal(exponent: float,
     n_samples = int(duration * sample_rate)
     amps = np.ones(n_samples//2, complex) * offset
     freqs = rfftfreq(n_samples, d=1/sample_rate)
-    freqs = freqs[1:]  # avoid divison by 0
+    freqs = freqs[1:]  # avoid division by 0
 
     # Create random phases
     fixed_phases = np.exp(1j * 1)

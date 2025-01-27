@@ -35,7 +35,7 @@ def simulate_all(fig_dir=None, output_file=None):
     c_per = cfg.COLOR_DIC['periodic']
     plot_peak_power = False
 
-    # %% Simulation paramaters
+    # %% Simulation parameters
 
     # Aperiodic params
     sim_exponent = 1.5
