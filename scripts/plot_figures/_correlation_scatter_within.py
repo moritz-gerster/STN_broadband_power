@@ -25,12 +25,12 @@ def _rank_df(df, x, y, repeated_m="subject", remove_ties=True):
 
     if remove_ties:
         # Function to filter out tied ranks
-        def remove_ties(df, rank_column):
+        def remove_tied_ranks(df, rank_column):
             return df[df[rank_column] == df[rank_column].astype(int)]
 
         # Remove ties
-        df = remove_ties(df, x + '_rank')
-        df = remove_ties(df, y + '_rank')
+        df = remove_tied_ranks(df, x + '_rank')
+        df = remove_tied_ranks(df, y + '_rank')
     return df
 
 
