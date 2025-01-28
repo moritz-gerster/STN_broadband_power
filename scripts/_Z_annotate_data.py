@@ -417,6 +417,8 @@ def _get_dbs_segments(raw, picks=None, threshold=10, ch_type=None,
     ----------
     raw : instance of Raw
         Data to estimate segments with muscle artifacts.
+    picks : list of str | None
+        Channels to include. If None, all channels are used.
     threshold : float
         The threshold in uV for marking segments as containing DBS
         activity artifacts.
