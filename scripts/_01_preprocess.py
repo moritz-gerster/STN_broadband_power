@@ -839,7 +839,6 @@ def _combine_dir_leads_florin(raw):
             # Average directional leads to ring electrode
             average = {ch_name_new: dir_ch_indices}
             drop_bad = bool(not all_bad)
-            # Important: don't average directional leads, sum them!
             comb_dic = dict(inst=raw, groups=average,
                             method='mean',
                             drop_bad=drop_bad, verbose=False)
