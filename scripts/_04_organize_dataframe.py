@@ -1,4 +1,4 @@
-"""Apply functions to df."""
+"""Apply functions to dataframe."""
 import warnings
 from os.path import basename, join
 
@@ -17,7 +17,9 @@ CH_CHOICES = ['ch_choice_amp', 'ch_dist_sweet_inside', 'ch_adj_sweet_inside',
 
 
 def organize_df(bands=cfg.BANDS.keys()):
-    """Modify df."""
+    """Apply multiple functions to power spectrum dataframe.
+
+    Patient demographics and symptoms, band powers, channel selection, etc."""
     df = pd.read_pickle(join(cfg.DF_PATH, cfg.DF_FOOOF_RAW))
     _correct_types(df)
     _correct_sex(df)

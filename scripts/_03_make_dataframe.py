@@ -1,4 +1,4 @@
-"""Create Pandas Dataframe with PSDs, and 1/f slopes."""
+"""Create Pandas Dataframe with PSDs and FOOOF data."""
 import re
 import warnings
 from os.path import basename, join
@@ -30,7 +30,7 @@ def psd_fooof_to_dataframe(root="derivatives/spectra",
                            normalizations=['Neumann'],
                            subtract_amplifier=False,
                            smooth_amp=False, save_plots=False) -> pd.DataFrame:
-    """Load BIDS data, calculate PSDs, fit fooof, and save to dataframe."""
+    """Load PSDs, normalize, fit fooof, and save as a dataframe."""
     set_log_level(verbose)
 
     # important that "SpectrumWelchEmpty" is excluded

@@ -5,7 +5,7 @@ used to 1) annotate recording for the first time or to 2) review annotations.
 
 1) to annotate for the first time:
     - select (descriptions='uncleaned')
-    - will be saveed to derivatives/annotations
+    - will be saved to derivatives/annotations
 2) review annotations:
     - select (descriptions='cleaned')
     - if annotations are modified, changes will be saved to

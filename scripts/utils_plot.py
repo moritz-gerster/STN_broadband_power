@@ -1,4 +1,4 @@
-"""Helping functions."""
+"""Helping plotting functions."""
 from os.path import join
 from pathlib import Path
 import warnings

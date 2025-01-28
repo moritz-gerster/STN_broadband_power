@@ -1,13 +1,4 @@
-"""Donwsample and rereference.
-
-Save to derivatives folder.
-
-Important: If directional leads 2a, 2b, 2c are averaged to ring electrode 2,
-leads 2b and 2c are ignored if they are bad or flat. This means, bipolar
-channel 2-3 is "good" even though its in reality 2a-3.
-2a will be averaged (summing would be wrong because two sums would be missing
-channel 3 would be emphasized due to larger power).
-"""
+"""Preprocessing script."""
 import re
 from itertools import combinations
 from json import dump, load
@@ -30,7 +21,9 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
                recordings=cfg.RECORDINGS, LAR=False,
                bipolar_ref=True, bipolar_distant=True,
                bipolar_directional=False):
-    """Preprocess data."""
+    """Preprocessing pipeline.
+
+    Filter, resample, standardize DBS leads, rereference."""
     set_log_level('error')
     load_root = cfg.RAWDATA
     save_root = cfg.PREPROCESSED

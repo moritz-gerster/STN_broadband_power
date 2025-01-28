@@ -12,6 +12,7 @@ from scripts.plot_figures import (figure1, figure2, figure3, figure4, figure5,
 
 
 def all_figures():
+    """Plot all figures for the publication."""
     df_orig = pd.read_pickle(join(cfg.DF_PATH, cfg.DF_FOOOF))
     figure1(df_orig)
     figure2(df_orig)
