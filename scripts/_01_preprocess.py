@@ -54,7 +54,8 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
 
         # Apply preprocessing functions
         raw.resample(sfreq=cfg.RESAMPLE_FREQ)  # assert same srate across files
-        assert raw.info["proj_name"] == bids_path_new.recording
+        msg = 'Recording info mismatch between raw object and BIDS path.'
+        assert raw.info["proj_name"] == bids_path_new.recording, msg
         ref_kwargs = dict(raw=raw, LAR=LAR, bipolar=bipolar_ref,
                           bipolar_directional=bipolar_directional,
                           bipolar_distant=bipolar_distant)
