@@ -233,6 +233,11 @@ def _match_ch_to_amp(spectrum, spectrum_clean, spectrum_amp):
 
 def _plot_amp_subtraction(spectrum, spectrum_clean, spectrum_amp,
                           file_dic, ch_amp_dic, smooth_amp=False):
+    # do not modify originals
+    spectrum = spectrum.copy()
+    spectrum_clean = spectrum_clean.copy()
+    spectrum_amp = spectrum_amp.copy()
+
     # Convert to ASD in nV/sqrt(Hz)
     spectrum._data = (spectrum._data**.5) * 1e9
     spectrum_clean._data = (spectrum_clean._data**.5) * 1e9
