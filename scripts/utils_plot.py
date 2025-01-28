@@ -1521,25 +1521,7 @@ def _dataset_dbs_models(df, save_dir=None, save=None):
     df = df.dropna(subset='DBS_model')
     df = df.drop_duplicates(subset=['subject'])
 
-    dbs_model_dic = {
-       'St. Jude Infinity directional':
-           r'$\bf{St. Jude}$''\nInfinity directional',
-       'Boston Scientific Vercise Cartesia':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia',
-       'Medtronic 3389':
-           r'$\bf{Medtronic}$''\n3389',
-       'Boston Scientific Vercise Standard':
-           r'$\bf{Boston Scientific}$''\nVercise Standard',
-       'St. Jude Infinity':
-           r'$\bf{St. Jude}$''\nInfinity',
-       'Medtronic SenSight Short':
-           r'$\bf{Medtronic}$''\nSenSight Short',
-       'Boston Scientific Vercise Cartesia X':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
-       'Boston Scientific Vercise Cartesia HX':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
-    }
-    df['DBS_model'] = df['DBS_model'].map(dbs_model_dic)
+    df['DBS_model'] = df['DBS_model'].map(cfg.DBS_MODEL_DIC)
 
     hue_order = [proj for proj in cfg.PROJECT_NAMES
                  if proj in df.project_nme.unique()]
@@ -1569,25 +1551,7 @@ def _dataset_dbs_models_leads(df, save_dir=None, save=None, prefix=''):
     df.loc[df.DBS_directional, 'ch_dir'] = 'Yes'
     df.loc[~df.DBS_directional, 'ch_dir'] = 'No'
 
-    dbs_model_dic = {
-       'St. Jude Infinity directional':
-           r'$\bf{St. Jude}$''\nInfinity directional',
-       'Boston Scientific Vercise Cartesia':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia',
-       'Medtronic 3389':
-           r'$\bf{Medtronic}$''\n3389',
-       'Boston Scientific Vercise Standard':
-           r'$\bf{Boston Scientific}$''\nVercise Standard',
-       'St. Jude Infinity':
-           r'$\bf{St. Jude}$''\nInfinity',
-       'Medtronic SenSight Short':
-           r'$\bf{Medtronic}$''\nSenSight Short',
-       'Boston Scientific Vercise Cartesia X':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
-       'Boston Scientific Vercise Cartesia HX':
-           r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
-    }
-    df['DBS_model'] = df['DBS_model'].map(dbs_model_dic)
+    df['DBS_model'] = df['DBS_model'].map(cfg.DBS_MODEL_DIC)
 
     hue_order = [proj for proj in cfg.PROJECT_NAMES
                  if proj in df.project_nme.unique()]

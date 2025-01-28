@@ -347,3 +347,22 @@ def get_channel_plot_colors(long=False):
 
 CHANNEL_PLOT_COLORS = get_channel_plot_colors()
 CHANNEL_PLOT_COLORS_LONG = get_channel_plot_colors(long=True)
+
+DBS_MODEL_DIC = {
+    'St. Jude Infinity directional':
+        r'$\bf{St. Jude}$''\nInfinity directional',
+    'Boston Scientific Vercise Cartesia':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia',
+    'Medtronic 3389':
+        r'$\bf{Medtronic}$''\n3389',
+    'Boston Scientific Vercise Standard':
+        r'$\bf{Boston Scientific}$''\nVercise Standard',
+    'St. Jude Infinity':
+        r'$\bf{St. Jude}$''\nInfinity',
+    'Medtronic SenSight Short':
+        r'$\bf{Medtronic}$''\nSenSight Short',
+    'Boston Scientific Vercise Cartesia X':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
+    'Boston Scientific Vercise Cartesia HX':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
+        }
