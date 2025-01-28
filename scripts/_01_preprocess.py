@@ -130,8 +130,10 @@ def _distant_bip_from_adjacent_bip(raw):
     ch_names = ['LFP_L_1-3_STN_MT', 'LFP_L_2-4_STN_MT',
                 'LFP_R_1-3_STN_MT', 'LFP_R_2-4_STN_MT']
 
-    # remove channels that are all nan (causes silent error)
+    # check if channel has data
     all_nan = lambda raw, anode: np.isnan(raw.get_data(anode)).all()
+
+    # remove channels that do not exist or are all nan (causes silent error)
     for anode, cathode, ch_nme in list(zip(anodes, cathodes, ch_names)):
         anode_exists = anode in raw.ch_names and not all_nan(raw, anode)
         cathode_exists = cathode in raw.ch_names and not all_nan(raw, cathode)
