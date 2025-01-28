@@ -485,7 +485,7 @@ def _add_raincloud_and_stats_single(df, ax, x, y, test="Wilcoxon", order=None,
     annotator.configure(test=test, text_format='simple', loc='inside',
                         verbose=False, show_test_name=False)
     annotator.apply_test()
-    _custom_annotations(annotator, effect_sizes, n)
+    _custom_annotations(annotator, effect_sizes, n, n)
 
     ax.set_title(title)
     ax.spines[['right', 'top']].set_visible(False)
