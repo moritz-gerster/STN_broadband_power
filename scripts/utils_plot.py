@@ -1382,10 +1382,10 @@ def channel_choice_histograms(df, save=True):
     _dataset_max_beta_chs(df, hist_kwargs, save, save_dir)
 
     # Directional leads
-    _dataset_lead_directionality(df, hist_kwargs, save, save_dir)
+    _dataset_lead_directionality(df, save, save_dir)
 
     # DBS models
-    _dataset_dbs_models(df[df.ch_choice], hist_kwargs, save_dir, save)
+    _dataset_dbs_models(df[df.ch_choice], save_dir, save)
 
 
 def _dataset_ch_distribution(df, hist_kwargs=None, save=None, save_dir=None):
@@ -1505,9 +1505,7 @@ def _dataset_lead_directionality(df, save=None, save_dir=None):
 
     fig, ax = plt.subplots(1, 1, figsize=(5, 3))
     sns.histplot(ax=ax, data=df, hue_order=hue_order, palette=palette,
-                 hue="project_nme",
-                 multiple='stack',
-                 x="ch", stat='count')
+                 hue="project_nme", multiple='stack', x="ch", stat='count')
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), title=None)
     ax.set_title('Directional vs non-directional DBS leads')
     ax.set_xlabel('')
