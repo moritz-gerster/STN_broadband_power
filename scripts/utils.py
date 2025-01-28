@@ -61,7 +61,7 @@ def _delete_dirty_files(bids_path):
         dirty_file.fpath.unlink()  # delete file
 
 
-def _save_bids(raw: Raw, bids_path: PathLike, overwrite: bool = True) -> None:
+def _save_bids(raw: Raw, bids_path: PathLike) -> None:
     """Save files both using save_raw_bids and raw.save to get the best of
     both worlds: save_raw_bids creates necessary meta files such as
     participants.tsv whereas raw.save saves the raw file correctly including
@@ -268,6 +268,8 @@ def elec_phys_signal(exponent: float,
                 [(center_frequency1, peak_amplitude1, peak_width1),
                 (center_frequency2, peak_amplitude2, peak_width2)]
         for two oscillations.
+    offset : float
+        Offset of the aperiodic signal. The default is 1.
     nlv : float, optional
         Level of white noise. The default is None.
     highpass : bool, optional
@@ -277,6 +279,10 @@ def elec_phys_signal(exponent: float,
         Sample rate of the signal. The default is 2400Hz.
     duration : float, optional
         Duration of the signal in seconds. The default is 180s.
+    random_ap_phases : bool, optional
+        Whether to add random phases to aperiodic signal. The default is True.
+    random_per_phases : bool, optional
+        Whether to add random phases to periodic signal. The default is True.
     seed : int, optional
         Seed for reproducibility. The default is 1.
 
