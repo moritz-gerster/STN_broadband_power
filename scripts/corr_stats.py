@@ -116,20 +116,28 @@ def p_value_df(corr_method="spearman", stat_method=None, n_perm=None):
 
         df.corr(p_value_df("spearman", "spearman"))
 
+        or for permutation testing
+
+        df.corr(p_value_df("spearman", "perm_parallel", n_perm=10000))
+
     Parameters
     ----------
-    pmethod : string
-        Which method to use for the p-values.
-        Options: "pearson", "spearman", "kendall", "perm".
-    rmethod : string
-        Which correlation method to choose if permutation is applied to the
-        correlation coefficient. Options: "pearson", "spearman", or "kendall".
+    corr_method : string
+        Which correlation method to choose for p-value calculation.
+        Options: "pearson", "spearman", or "kendall".
+    stat_method : string or None
+        Calculate p-values parameterically (e.g., "pearson") or with
+        (parallel) permutation testing (e.g., "perm_parallel").
+    n_perm : int or None
+        Number of permutations.
 
     Returns
     -------
     lambda function
         Function to calculate p-value.
     """
+    if stat_method is None:
+        stat_method = corr_method
     if stat_method == "pearson":
         return lambda x, y: pearsonr(x, y)[1]
     elif stat_method == "spearman":
