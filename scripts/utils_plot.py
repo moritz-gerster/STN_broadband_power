@@ -477,7 +477,7 @@ def _add_raincloud_and_stats_single(df, ax, x, y, test="Wilcoxon", order=None,
         n = len(df[y].dropna()) // len(df[x].dropna().unique())
     plotting_parameters = {'ax': ax, 'data': df, 'x': x, 'y': y, "hue": hue,
                            'order': order, "hue_order": hue_order,
-                           'palette': None}
+                           'palette': palette}
     pt.RainCloud(width_viol=.3, width_box=.25, **plotting_parameters,
                  dodge=True, alpha=.5)
     pairs = [[(proj, 'off'), (proj, 'on')] for proj in order]
