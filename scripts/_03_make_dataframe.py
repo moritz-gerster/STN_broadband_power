@@ -807,7 +807,7 @@ def _get_updrs_dic(bids_path, multiple_scores="average_sessions"):
         # filter for subject
         sub = int(bids_path.subject.replace('LitML', ''))
         updrs_table = updrs_table[(updrs_table.Subject == sub)]
-        # filter for condition: the first 5 columns are OFF, the last 5 are ON
+        # filter for condition: columns 2-6 are OFF, the last 5 cols are ON
         if cond_path == 'off':
             mask_cond = [True, True, True, True, True, True, False,
                          False, False, False, False, False]
@@ -1573,4 +1573,4 @@ def _add_minmax_noise(ch_dics):
 
 
 if __name__ == "__main__":
-    dataframe = psd_fooof_to_dataframe(load_fits=False)
+    dataframe = psd_fooof_to_dataframe(recordings='Litvak')
