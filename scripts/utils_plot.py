@@ -2725,10 +2725,7 @@ def _patient_symptoms_flat(df, conds=['off', 'on', 'offon_abs'],
          for i, ax in enumerate(axes[:, 0])]
     axes[0, 0].set_ylabel('Density')
 
-    # Add extra space between groups (1-3, 4-6, 7-9)
-    for idx in [2, 5]:  # Indices after each group
-        fig.subplots_adjust(left=.1)  # Adjust left side by increments
-
+    fig.subplots_adjust(left=.1)  # Adjust left side by increments
     plt.tight_layout()
     cond_str = '_'.join(conds)
     _save_fig(fig, f'{prefix}patients_UPDRS_{cond_str}',
@@ -2871,7 +2868,7 @@ def _patient_sample_size(df, save=True, save_dir=None):
 
 
 def _wilcoxon_stats(df_sub, y, hue, ch_selection=None, mask=None):
-    from statannotations.stats.StatTest import wilcoxon
+    from statannotations.stats.StatTest import wilcoxon_anno
     if not len(df_sub) or df_sub[hue].nunique() < 2:
         return np.nan, 0
     if ch_selection == 'Max. Beta':
@@ -2883,7 +2880,7 @@ def _wilcoxon_stats(df_sub, y, hue, ch_selection=None, mask=None):
     df_sub, n_wil = equalize_x_and_y(df_sub, hue, y)
     x1 = df_sub[(df_sub.cond == 'off')][y]
     x2 = df_sub[(df_sub.cond == 'on')][y]
-    pval = wilcoxon(x1, x2).pvalue
+    pval = wilcoxon_anno(x1, x2).pvalue
     return pval, n_wil
 
 
@@ -2974,8 +2971,7 @@ def plot_psd_units(raw, title='Amplifier'):
     plt.close()
 
 
-def convert_pvalue_to_asterisks(pvalue,
-                                stack_vertically=False,
+def convert_pvalue_to_asterisks(pvalue, stack_vertically=False,
                                 underline=False, print_ns=False):
     if pvalue <= 0.001:
         if stack_vertically:
