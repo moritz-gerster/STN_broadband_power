@@ -1,4 +1,4 @@
-'''Config paths.'''
+"""Set paths."""
 from os.path import join
 
 BASE_DIR = '../BIDS_STN_LFP'

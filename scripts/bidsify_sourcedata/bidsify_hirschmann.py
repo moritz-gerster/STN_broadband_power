@@ -146,10 +146,10 @@ def get_raw_condition(raw, conds):
         segments_duration = raw.annotations.duration[
             raw.annotations.description == task]
 
-        # substract the first_sample delay in the onset
+        # subtract the first_sample delay in the onset
         segments_onset = segments_onset - (raw.first_samp / raw.info['sfreq'])
 
-        # loop trough the onset and duration to get only part of the raw that
+        # loop through the onset and duration to get only part of the raw that
         # are in the task
         for i, (onset, duration) in enumerate(zip(segments_onset,
                                                   segments_duration)):
@@ -259,20 +259,24 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
     try:
         anno_path = str(anno_path[0].fpath)
     except (IndexError):
-        raise FileNotFoundError(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
+        raise FileNotFoundError(
+            f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
+        )
     try:
         annotations = read_annotations(anno_path)
     except IndexError:
         # no annotations present
         annotations = None
     except (FileNotFoundError, TypeError):
-        raise FileNotFoundError(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
+        raise FileNotFoundError(
+            f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
+        )
     raw.set_annotations(annotations)
     bids_path.update(description='cleaned')
 
 
 # def _get_annotation_path(bids_path, anno=None, extension=None):
-#     # remove run and processing and task since unambigious and was changed
+#     # remove run and processing and task since unambiguous and was changed
 #     # after annotating
 #     bids_path = bids_path.copy().update(run=None, processing=None, task=None)
 #     anno_root = cfg.ANNOTATIONS

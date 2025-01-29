@@ -25,7 +25,7 @@ def p_perm(x, y, corr_method="spearman", n_perm=10000):
         x variable.
     y : np.ndarray
         y variable.
-    method : string, optional
+    corr_method : string, optional
         Correlation method. Options: "pearson", "spearman", or "kendall".
     p : integer, optional
         Number of permutations. The default is 10000.
@@ -109,28 +109,35 @@ def compare_corrs_perm(x1, y1, x2, y2, corr_method="spearman", n_perm=10000,
 
 
 def p_value_df(corr_method="spearman", stat_method=None, n_perm=None):
-    """
-    Return lambda function to create a p-value dataframe.
+    """Return lambda function to create a p-value dataframe.
 
     To use this function, use pandas .corr method and give p_value_df as
     method argument. Example:
 
         df.corr(p_value_df("spearman", "spearman"))
 
+        or for permutation testing
+
+        df.corr(p_value_df("spearman", "perm_parallel", n_perm=10000))
+
     Parameters
     ----------
-    pmethod : string
-        Which method to use for the p-values.
-        Options: "pearson", "spearman", "kendall", "perm".
-    rmethod : string
-        Which corelation method to choose if permutation is applied to the
-        correlation coefficent. Options: "pearson", "spearman", or "kendall".
+    corr_method : string
+        Which correlation method to choose for p-value calculation.
+        Options: "pearson", "spearman", or "kendall".
+    stat_method : string or None
+        Calculate p-values parameterically (e.g., "pearson") or with
+        (parallel) permutation testing (e.g., "perm_parallel").
+    n_perm : int or None
+        Number of permutations.
 
     Returns
     -------
     lambda function
         Function to calculate p-value.
     """
+    if stat_method is None:
+        stat_method = corr_method
     if stat_method == "pearson":
         return lambda x, y: pearsonr(x, y)[1]
     elif stat_method == "spearman":
@@ -146,8 +153,7 @@ def p_value_df(corr_method="spearman", stat_method=None, n_perm=None):
 
 
 def sample_size_df():
-    """
-    Return lambda function to create a sample size dataframes.
+    """Return lambda function to create a sample size dataframes.
 
     To use this function, use pandas .corr method and give p_value_df as
     method argument. Example:
@@ -163,8 +169,7 @@ def sample_size_df():
 
 
 def p_perm_cond(real, perm, p):
-    """
-    Calc p-value between two conditions based on real and permuted values.
+    """Calc p-value between two conditions based on real and permuted values.
 
     Parameters
     ----------
@@ -193,8 +198,7 @@ def rz_ci(r, n, conf_level=0.95):
 
 def independent_corr(r1, r2, n, n2=None, twotailed=True, conf_level=0.95,
                      method='fisher'):
-    """
-    Calc p-values of correlation coefficients using fisher's method.
+    """Calc p-values of correlation coefficients using fisher's method.
 
     ___________________
     Regarding Fisher Method:
@@ -207,11 +211,11 @@ def independent_corr(r1, r2, n, n2=None, twotailed=True, conf_level=0.95,
     converting the Spearman coefficients to Pearson equivalents prior to
     transformation.
     -> It is statistically OK to not use permutation testing for the p-values
-    of correlation coefficents.
+    of correlation coefficients.
 
     ... from the abstract of
 
-    Myers, Leann, and Maria J. Sirois. "S pearman correlation coefficients,
+    Myers, Leann, and Maria J. Sirois. "Spearman correlation coefficients,
     differences between." Encyclopedia of statistical sciences (2004).
     ___________________
 
@@ -236,7 +240,7 @@ def independent_corr(r1, r2, n, n2=None, twotailed=True, conf_level=0.95,
         se_diff_r = np.sqrt(1/(n - 3) + 1/(n2 - 3))
         diff = xy_z - ab_z
         z = abs(diff / se_diff_r)
-        p = (1 - norm.cdf(z))
+        p = 1 - norm.cdf(z)
         if twotailed:
             p *= 2
         return z, p
@@ -261,7 +265,7 @@ def _get_freqs_correlation_stats(df, x, y, average_hemispheres=False,
     assert len(df.project.unique()) == 1, "More than one project"
     # Averaging only possible across subjects, not within
     if corr_method .startswith('within'):
-        assert average_hemispheres == False, "No averaging for within"
+        assert not average_hemispheres, "No averaging for within"
 
     df_corr = _get_freqs_correlation(df, x, y, x_max=xmax,
                                      remove_ties=remove_ties,
@@ -458,7 +462,7 @@ def corr_over_freq_pvals(ax, df_both, X, Y, y_height=1):
     # condition difference
     if df_both.cond.unique().size == 2:
         column = Y + "_cond"
-        cond_significant = (df_both[df_both.cond == "on"][column] < 0.05)
+        cond_significant = df_both[df_both.cond == "on"][column] < 0.05
         ax.plot(freqs[cond_significant], pval_sig[cond_significant], "x",
                 c="g")
 
@@ -481,7 +485,6 @@ def _corr_results(df_rho, x, y, corr_method, row_idx=None,
         row_idx = slice(None)
         hue_str = ''
     else:
-        row_idx = row_idx
         hue_str = None
     df_rho = df_rho.loc[row_idx].dropna(subset=[x, y]).copy()
     if not len(df_rho):
@@ -558,7 +561,7 @@ def _within_corr_from_df(df_rho, x, y, corr_method, repeated_m='subject',
         df_rho = _rank_df(df_rho, x, y, repeated_m=repeated_m,
                           remove_ties=remove_ties)
     sample_size = len(df_rho[repeated_m].unique())
-    xy_nonzero = ((df_rho[x] != 0) & (df_rho[y] != 0))
+    xy_nonzero = (df_rho[x] != 0) & (df_rho[y] != 0)
     if df_rho[xy_nonzero].subject.nunique() < 3:
         # within requires at least 3 finite subjects
         rho = 0
@@ -608,7 +611,9 @@ def _correct_sample_size(df, x, y, repeated_m="subject", remove_ties=False):
     df_copy = df_copy.reset_index()
 
     # assert no subjects with only one hemisphere
-    enough_subs = (df_copy.groupby(repeated_m).ch_hemisphere.nunique() == 2).all()
+    enough_subs = (
+        df_copy.groupby(repeated_m).ch_hemisphere.nunique() == 2
+    ).all()
     if not enough_subs:
         return None
 

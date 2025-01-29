@@ -40,8 +40,7 @@ def _check_duplicated_df_rows(df):
 
 
 def _delete_dirty_files(bids_path):
-    """
-    Files without annotations are saved in rawdata/ with the descriptions
+    """Files without annotations are saved in rawdata/ with the descriptions
     tag 'uncleaned'. Once annotations are added and bidsify_sourcedata is run
     again, this function automatically checks whether an uncleaned version is
     present and deletes it to save up space and to avoid duplicate processing
@@ -62,7 +61,7 @@ def _delete_dirty_files(bids_path):
         dirty_file.fpath.unlink()  # delete file
 
 
-def _save_bids(raw: Raw, bids_path: PathLike, overwrite: bool = True) -> None:
+def _save_bids(raw: Raw, bids_path: PathLike) -> None:
     """Save files both using save_raw_bids and raw.save to get the best of
     both worlds: save_raw_bids creates necessary meta files such as
     participants.tsv whereas raw.save saves the raw file correctly including
@@ -258,8 +257,7 @@ def elec_phys_signal(exponent: float,
                      random_ap_phases=True,
                      random_per_phases=True,
                      seed: int = 1):
-    """
-    Generate 1/f noise with optionally added oscillations.
+    """Generate 1/f noise with optionally added oscillations.
 
     Parameters
     ----------
@@ -270,6 +268,8 @@ def elec_phys_signal(exponent: float,
                 [(center_frequency1, peak_amplitude1, peak_width1),
                 (center_frequency2, peak_amplitude2, peak_width2)]
         for two oscillations.
+    offset : float
+        Offset of the aperiodic signal. The default is 1.
     nlv : float, optional
         Level of white noise. The default is None.
     highpass : bool, optional
@@ -279,15 +279,19 @@ def elec_phys_signal(exponent: float,
         Sample rate of the signal. The default is 2400Hz.
     duration : float, optional
         Duration of the signal in seconds. The default is 180s.
+    random_ap_phases : bool, optional
+        Whether to add random phases to aperiodic signal. The default is True.
+    random_per_phases : bool, optional
+        Whether to add random phases to periodic signal. The default is True.
     seed : int, optional
-        Seed for reproducability. The default is 1.
+        Seed for reproducibility. The default is 1.
 
     Returns
     -------
     aperiodic_signal : ndarray
-        Aperiodic 1/f activitiy without oscillations.
+        Aperiodic 1/f activity without oscillations.
     full_signal : ndarray
-        Aperiodic 1/f activitiy with added oscillations.
+        Aperiodic 1/f activity with added oscillations.
     """
     if seed:
         np.random.seed(seed)
@@ -295,7 +299,7 @@ def elec_phys_signal(exponent: float,
     n_samples = int(duration * sample_rate)
     amps = np.ones(n_samples//2, complex) * offset
     freqs = rfftfreq(n_samples, d=1/sample_rate)
-    freqs = freqs[1:]  # avoid divison by 0
+    freqs = freqs[1:]  # avoid division by 0
 
     # Create random phases
     fixed_phases = np.exp(1j * 1)
@@ -454,7 +458,9 @@ def get_correlation_df(df_plot, y, total_power=True, average_hemispheres=False,
             df_corrs.append(dic)
             proj_nme = df_sub.project_nme.unique()[0]
             if proj_nme == 'all':
-                print(f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval:.2f}",
-                      file=output_file)
+                print(
+                    f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval:.2f}",
+                    file=output_file
+                )
     df_corrs = pd.DataFrame(df_corrs)
     return df_corrs

@@ -144,12 +144,11 @@ def _get_saga_noise(amp_root):
             raise ValueError("Wrong number of annotations")
         raw.crop(tmin=tmin, tmax=tmax)
         raws.append(raw)
-    flat_segments, _ = annotate_amplitude(raw, flat=1e-20,
-                                        min_duration=1,
-                                        bad_percent=99.9)
+    flat_segments, _ = annotate_amplitude(
+        raw, flat=1e-20, min_duration=1, bad_percent=99.9
+    )
     assert not len(flat_segments.onset)
     return raws
-
 
 
 def bidsify_onoff(bids_path, pick_wiest=False, only_cleaned=True):
@@ -265,8 +264,7 @@ def _add_bad_channels(raw, bids_path, pick_wiest=False, only_cleaned=True):
     except (FileNotFoundError, TypeError):
         if only_cleaned:
             raise FileNotFoundError(f"No annotations found: {anno_path}")
-        else:
-            return None
+        return None
     if pick_wiest:
         #  drop ecog (non-picked dbs channels)
         bad_chs = set(bad_chs).intersection(set(raw.ch_names))
@@ -290,11 +288,10 @@ def _add_bad_segments(raw, bids_path, modify_bidspath=True, only_cleaned=True):
         msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
         if only_cleaned:
             raise FileNotFoundError(msg)
-        else:
-            warn(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
-            if modify_bidspath:
-                bids_path.update(description="uncleaned")
-            return None
+        warn(f"\n\n{bids_path.basename} has not been annotated yet!\n\n")
+        if modify_bidspath:
+            bids_path.update(description="uncleaned")
+        return None
     except IndexError:
         # this just means that there are no annotations, this is fine
         annotations = None
@@ -400,7 +397,7 @@ def _rename_channels(raw, fname):
     channel starts with "0" use CH_NME_MAP_TAN_IDX0 to rename channels. If one
     channels ends with "4" use CH_NME_MAP_TAN_IDX1 to rename channels. If one
     channel starts with 'Virtual' use CH_NME_MAP_TAN_FNAME to rename channels
-    which have been figured out. These files remain amibguous:
+    which have been figured out. These files remain ambiguous:
     ['G27_leSTN_ON.mat', 'G27_riSTN_ON.mat',
     'G31_leSTN_ON.mat', 'G31_riSTN_ON.mat', 'G32_riSTN_ON.mat',
     'XG39_ERNA_riSTN_ON.mat']. Here, I simply assume that the index starts at 1

@@ -1,5 +1,4 @@
-# %%
-"""Runs all scripts necessary for hypothesis 1.1."""
+"""Runs all scripts from standadizing raw data to creating figures."""
 from os.path import basename
 
 from scripts._00_bidsify_sourcedata import bidsify_sourcedata

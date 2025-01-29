@@ -1,4 +1,4 @@
-"""Change format of the sourcedata to make BIDS complient."""
+"""Change format of the sourcedata to make BIDS compliant."""
 from os.path import basename
 
 from mne import set_log_level
@@ -12,6 +12,7 @@ from scripts.bidsify_sourcedata import (bidsify_sourcedata_hirschmann,
 
 def bidsify_sourcedata(neumann=False, litvak=False, hirschmann=False,
                        tan=False, florin=False, verbose="error"):
+    """Load data in various formats and save it in BIDS format."""
     set_log_level(verbose)
     if neumann:
         bidsify_sourcedata_neumann()

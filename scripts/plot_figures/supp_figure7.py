@@ -55,7 +55,7 @@ def supp_figure7c(df_per):
 
 
 def supp_figure7d(dataframes):
-    """Figure 7 for nomalized data."""
+    """Figure 7 for normalized data."""
     kinds = ['normalized']
     conds = ['off', 'on']
     fig_dir = 'Figure_S7'

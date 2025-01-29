@@ -80,7 +80,7 @@ COLOR_DIC = dict(
     all=to_rgb('k'),
     all2=to_rgb('grey'),
     all3=get_mean_color(to_rgb('k'), to_rgb('grey')),
-                 )
+)
 
 KIND_DICT = dict(normalized='Relative', absolute='Absolute',
                  periodic='Periodic', periodicAP='Aperiodic',
@@ -295,7 +295,7 @@ def get_channel_plot_colors(long=False):
 
     monopolar_lfp_left = ['LFP_L_1', 'LFP_L_2', 'LFP_L_3', 'LFP_L_4']
 
-    monopolar_lfp_right = ['LFP_R_1', 'LFP_R_2',  'LFP_R_3', 'LFP_R_4']
+    monopolar_lfp_right = ['LFP_R_1', 'LFP_R_2', 'LFP_R_3', 'LFP_R_4']
 
     left_chs = [bipolar_lfp_left, bipolar_lfp_left_distant,
                 monopolar_lfp_left, bipolar_amp_left, bipolar_amp_left_distant]
@@ -347,3 +347,22 @@ def get_channel_plot_colors(long=False):
 
 CHANNEL_PLOT_COLORS = get_channel_plot_colors()
 CHANNEL_PLOT_COLORS_LONG = get_channel_plot_colors(long=True)
+
+DBS_MODEL_DIC = {
+    'St. Jude Infinity directional':
+        r'$\bf{St. Jude}$''\nInfinity directional',
+    'Boston Scientific Vercise Cartesia':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia',
+    'Medtronic 3389':
+        r'$\bf{Medtronic}$''\n3389',
+    'Boston Scientific Vercise Standard':
+        r'$\bf{Boston Scientific}$''\nVercise Standard',
+    'St. Jude Infinity':
+        r'$\bf{St. Jude}$''\nInfinity',
+    'Medtronic SenSight Short':
+        r'$\bf{Medtronic}$''\nSenSight Short',
+    'Boston Scientific Vercise Cartesia X':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia X',
+    'Boston Scientific Vercise Cartesia HX':
+        r'$\bf{Boston Scientific}$''\nVercise Cartesia HX'
+        }

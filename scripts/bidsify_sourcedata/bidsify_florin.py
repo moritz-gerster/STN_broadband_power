@@ -82,7 +82,7 @@ def _bidsify_noise():
         raws.append(raw)
 
     # concat to shortest time
-    duration_min = min([raw.times[-1] for raw in raws])
+    duration_min = min(raw.times[-1] for raw in raws)
     raws = [raw.crop(tmax=duration_min) for raw in raws]
 
     raw = raws[0].add_channels(raws[1:])  # concat recordings as single file
@@ -191,8 +191,7 @@ def _add_bad_channels(raw, bids_path, only_cleaned=True):
     except (FileNotFoundError, TypeError):
         if only_cleaned:
             raise FileNotFoundError(f"No annotations found: {anno_path}")
-        else:
-            return None
+        return None
     bad_chs = set(bad_chs).intersection(set(raw.ch_names))
     bad_chs = list(bad_chs)
     raw.info["bads"] = bad_chs
@@ -214,11 +213,10 @@ def _add_bad_segments(raw, bids_path, modify_bidspath=True, only_cleaned=True):
         msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
         if only_cleaned:
             raise FileNotFoundError(msg)
-        else:
-            warn(msg)
-            if modify_bidspath:
-                bids_path.update(description="uncleaned")
-            return None
+        warn(msg)
+        if modify_bidspath:
+            bids_path.update(description="uncleaned")
+        return None
     except IndexError:
         # this just means that there are no annotations, this is fine
         annotations = None

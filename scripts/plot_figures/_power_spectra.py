@@ -159,7 +159,7 @@ def _mean_psds_ax(ax, df_proj, x, y, kind, hue,
 
     # Cluster statistics
 
-    # Extract cluster varible
+    # Extract cluster variable
     cluster_conds = df_proj[hue].unique()
     msg = f'Only two conds supported got {cluster_conds}'
     assert len(cluster_conds) == 2, msg

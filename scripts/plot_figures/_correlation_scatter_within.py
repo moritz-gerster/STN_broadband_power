@@ -25,12 +25,12 @@ def _rank_df(df, x, y, repeated_m="subject", remove_ties=True):
 
     if remove_ties:
         # Function to filter out tied ranks
-        def remove_ties(df, rank_column):
+        def remove_tied_ranks(df, rank_column):
             return df[df[rank_column] == df[rank_column].astype(int)]
 
         # Remove ties
-        df = remove_ties(df, x + '_rank')
-        df = remove_ties(df, y + '_rank')
+        df = remove_tied_ranks(df, x + '_rank')
+        df = remove_tied_ranks(df, y + '_rank')
     return df
 
 
@@ -117,7 +117,7 @@ def periodic_gamma_within(df_per, fig_dir='Figure7', prefix='',
         ylabel=ylabel,
         add_sample_size=True,
         subs_special=exemplary_subs,
-        )
+    )
 
     # figsize_single = (1.7, 1.34)
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=figsize)
@@ -151,13 +151,13 @@ def absolute_gamma_within(df_abs, fig_dir='Figure8', prefix=''):
         xlabel=cfg.PLOT_LABELS[x],
         add_sample_size=False,
         subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
-        )
+    )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
     plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
-            **plot_kwargs)
+              **plot_kwargs)
     plot_corr(axes[1], df_abs_on, x, Y, leg_kws=leg_kws2,
-            **plot_kwargs)
+              **plot_kwargs)
     axes[1].set_ylabel(None)
     plt.tight_layout()
     _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
@@ -188,7 +188,7 @@ def aperiodic_within(df_per, fig_dir='Figure8', prefix=''):
         xlabel='Aperiodic power (1-60 Hz)',
         add_sample_size=False,
         subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
-        )
+    )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
     plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,

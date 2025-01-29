@@ -113,9 +113,9 @@ def _indicate_reference_channel(raw: Raw, bids_path) -> str:
     """Set eeg reference to make reference channel explicit."""
     if bids_path is None:
         return "1 kOhm"
-    elif bids_path.subject == "emptyroom":
+    if bids_path.subject == "emptyroom":
         return "1.5 kOhm"
-    elif "Litvak" in str(bids_path.root):
+    if "Litvak" in str(bids_path.root):
         return "forehead/mastoid"
     fname = bids_path.copy().update(suffix="channels", extension=".tsv").fpath
     table = pd.read_csv(fname, sep='\t')
@@ -154,8 +154,7 @@ def _correct_units(raw):
 
 
 def loadmat(filename):
-    '''
-    this function should be called instead of direct spio.loadmat
+    '''This function should be called instead of direct spio.loadmat
     as it cures the problem of not properly recovering python dictionaries
     from mat files. It calls the function check keys to cure all entries
     which are still mat-objects
@@ -168,8 +167,7 @@ def loadmat(filename):
 
 
 def _check_keys(dict):
-    '''
-    checks if entries in dictionary are mat-objects. If yes
+    '''Checks if entries in dictionary are mat-objects. If yes
     todict is called to change them to nested dictionaries
     '''
     for key in dict:
@@ -179,8 +177,8 @@ def _check_keys(dict):
 
 
 def _todict(matobj):
-    '''
-    A recursive function which constructs from matobjects nested dictionaries
+    '''A recursive function which constructs from matobjects nested
+    dictionaries
     '''
     dict = {}
     for strg in matobj._fieldnames:

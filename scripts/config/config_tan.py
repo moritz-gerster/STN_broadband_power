@@ -10,7 +10,7 @@ subjects_old = [
                 'G33', 'G34', 'K6', 'K7', 'K8', 'K11', 'XG37', 'XG39',
                 # exclude DBS only subjects
                 # 'G1', 'G22', 'G4', 'G5', 'K4', 'M5', 'M6'
-                ]
+]
 subjects_new = [f"TanL{sub:03d}" for sub in range(1, len(subjects_old) + 1)]
 TAN_SUBJECT_MAP = dict(zip(subjects_old, subjects_new))
 TAN_SUBJECT_MAP_REV = dict(zip(subjects_new, subjects_old))
@@ -56,7 +56,7 @@ DBS_MATRIX_INFO = ['G10LOFF',
 # channel starts with "0" use CH_NME_MAP_TAN_IDX0 to rename channels. If one
 # channels ends with "4" use CH_NME_MAP_TAN_IDX1 to rename channels. If one
 # channel starts with 'Virtual' use CH_NME_MAP_TAN_FNAME to rename channels
-# which have been figured out. These files remain amibguous:
+# which have been figured out. These files remain ambiguous:
 # ['G27_leSTN_ON.mat', 'G27_riSTN_ON.mat',
 # 'G31_leSTN_ON.mat', 'G31_riSTN_ON.mat', 'G32_riSTN_ON.mat',
 # 'XG39_ERNA_riSTN_ON.mat']. Here, I simply assume that the index starts at 1
@@ -352,7 +352,7 @@ TIME_SELECTION_OWN = {
                 'K8_riSTN_OFF.mat': {'time': (0, None)},
                 'XG37_leSTN_OFF.mat': {'time': (0, None)},
                 'XG39_riSTN_OFF.mat': {'time': (0, None)}
-                }
+}
 
 #%% BIDS meta data
 TAN_META = dict(

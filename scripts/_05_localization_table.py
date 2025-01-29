@@ -1,4 +1,4 @@
-"""Apply some functions on df."""
+"""Oscillation localization."""
 from os.path import basename, join
 
 import numpy as np
@@ -8,10 +8,11 @@ import scripts.config as cfg
 
 
 def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
-                              keep_zero=False, add_normalized=True,
-                              add_absolute=True):
-    """
-    Export df for localization plotting.
+                              keep_zero=False):
+    """Export dataframe for localization plotting.
+
+    Parameters
+    ----------
     bands: list
         List of bands to include in the table.
     only_maxima: bool
@@ -19,12 +20,12 @@ def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
         -> Only Maxima gives much more reasonable results and simpler stats.
     keep_zero: bool
         Whether to keep periodic zero power values when FOOOF was not fitted
-        or replace with np.nan. Setting nan gives more resonable results.
+        or replace with np.nan. Setting nan gives more reasonable results.
     add_normalized: bool
         Gives much better results than total but worse than fooof.
     add_absolute: bool
         Seems to not work due to not-normalized log scale across patients.
-        """
+    """
     df = pd.read_pickle(join(cfg.DF_PATH, cfg.DF_FOOOF))
 
     # filter df
@@ -47,10 +48,10 @@ def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
     per_pwr = '_fm_powers_max_log'
     pwr_cols = []
     fm_cols = [f'{band}{per_pwr}' for band in bands]
-    if add_absolute:
-        abs_cols = [f'{band}{total_pwr}' for band in bands]
-        keep_cols += abs_cols
-        pwr_cols += abs_cols
+    # add absolute
+    abs_cols = [f'{band}{total_pwr}' for band in bands]
+    keep_cols += abs_cols
+    pwr_cols += abs_cols
     keep_cols += fm_cols
     pwr_cols += fm_cols
     keep_cols = list(set(keep_cols).intersection(set(df_tot.columns)))
@@ -59,23 +60,21 @@ def export_localization_table(bands=cfg.BAND_LOCALIZATION, only_maxima=True,
                    keep_zero=keep_zero)
     df_tot = df_tot[keep_cols]
 
-    if add_normalized:
-        keep_cols = info_cols.copy()
-        abs_cols = [f'{band}{total_pwr}' for band in bands]
-        keep_cols += abs_cols
-        keep_cols = list(set(keep_cols).intersection(set(df_norm.columns)))
-        _select_maxima(df_norm, abs_cols, only_maxima=only_maxima,
-                       keep_zero=keep_zero)
-        df_norm = df_norm[keep_cols]
+    # add normalized
+    keep_cols = info_cols.copy()
+    abs_cols = [f'{band}{total_pwr}' for band in bands]
+    keep_cols += abs_cols
+    keep_cols = list(set(keep_cols).intersection(set(df_norm.columns)))
+    _select_maxima(df_norm, abs_cols, only_maxima=only_maxima,
+                   keep_zero=keep_zero)
+    df_norm = df_norm[keep_cols]
 
-        # rename columns
-        rename = {f'{band}{total_pwr}': f'{band}_normalized{total_pwr}'
-                  for band in bands}
-        pwr_cols += list(rename.values())
-        df_norm.rename(columns=rename, inplace=True)
-        df = pd.merge(df_tot, df_norm, on=info_cols)
-    else:
-        df = df_tot
+    # rename columns
+    rename = {f'{band}{total_pwr}': f'{band}_normalized{total_pwr}'
+              for band in bands}
+    pwr_cols += list(rename.values())
+    df_norm.rename(columns=rename, inplace=True)
+    df = pd.merge(df_tot, df_norm, on=info_cols)
 
     # if log scale causes negative values, shift all values to positive range
     # to prohibit negative values while keeping a normal distribution

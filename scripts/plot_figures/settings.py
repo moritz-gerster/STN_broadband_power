@@ -12,7 +12,7 @@ def get_dfs(df, ch_choice=None, chs=None, equalize_subjects_norm_abs=False):
     df.loc[:, 'sub_hemi_cond'] = df.sub_hemi + '_' + df.cond  # add column
 
     # Select dataframes
-    df_norm = df[(df.psd_kind == "normalized") & (df.fm_params == False)]
+    df_norm = df[(df.psd_kind == "normalized") & (df.fm_params is False)]
     df_abs = df[(df.psd_kind == "standard") & (df.fm_params == 'broad')]
     df_per = df_abs.copy()
     df_per = df_per[df_per.fm_exponent.notna()]

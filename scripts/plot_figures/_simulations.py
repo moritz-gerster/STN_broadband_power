@@ -35,7 +35,7 @@ def simulate_all(fig_dir=None, output_file=None):
     c_per = cfg.COLOR_DIC['periodic']
     plot_peak_power = False
 
-    # %% Simulation paramaters
+    # %% Simulation parameters
 
     # Aperiodic params
     sim_exponent = 1.5
@@ -73,24 +73,24 @@ def simulate_all(fig_dir=None, output_file=None):
 
     beta_normal_sim_ap, beta_normal_sim = elec_phys_signal(
         **aperiodic_params, periodic_params=[beta_normal]
-        )
+    )
     beta_theta_broad_sim = elec_phys_signal(
         **aperiodic_params, periodic_params=[theta, beta_normal]
-        )[1]
+    )[1]
     beta_narrow_sim = elec_phys_signal(**aperiodic_params,
                                        periodic_params=[beta_narrow])[1]
     beta_strong_sim = elec_phys_signal(**aperiodic_params,
                                        periodic_params=[beta_strong])[1]
     beta_large_offset_sim_ap, beta_large_offset_sim = elec_phys_signal(
         exponent=.8, offset=.83, nlv=1e-5, periodic_params=[beta_large_offset]
-        )
+    )
     beta_small_exponent_sim_ap, beta_small_exponent_sim = elec_phys_signal(
         exponent=sim_exponent_small, offset=.4, nlv=1e-5,
         periodic_params=[beta_small_exponent]
-        )
+    )
     beta_low_sim_ap, beta_low_sim = elec_phys_signal(
         exponent=.8, offset=.4, nlv=1e-5, periodic_params=[beta_low]
-        )
+    )
 
     # Create reasonable uV^2/Hz units
     scaling_factor = 50000
@@ -241,10 +241,10 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_strong_sim_norm_pwr = func(beta_strong_sim_norm[beta_mask])
     beta_large_offset_sim_norm_pwr = func(
         beta_large_offset_sim_norm[beta_mask]
-        )
+    )
     beta_small_exponent_sim_norm_pwr = func(
         beta_small_exponent_sim_norm[beta_mask]
-        )
+    )
 
     beta_low_sim_norm_pwr = func(beta_low_sim_norm[beta_low_mask])
     beta_normal_sim_per_pwr = (10**(beta_normal_sim_per_pwr + ap_pwr)
@@ -294,7 +294,7 @@ def simulate_all(fig_dir=None, output_file=None):
                        atol=0.01), msg
 
     diff = beta_low_sim_per_pwr_max - beta_small_exponent_sim_per_pwr_max
-    msg = (f'Max Beta must be same in both conds but is {diff:.2f}')
+    msg = f'Max Beta must be same in both conds but is {diff:.2f}'
     assert np.allclose(beta_low_sim_per_pwr_max,
                        beta_small_exponent_sim_per_pwr_max, atol=0.01), msg
     msg = ('Mena Beta must be same in both conds but is '
@@ -380,7 +380,7 @@ def simulate_all(fig_dir=None, output_file=None):
     ax.tick_params(axis='y', length=0, pad=1)
 
     # Annotation
-    beta_rel_diff = (beta_normal_sim_norm_pwr - beta_theta_broad_sim_norm_pwr)
+    beta_rel_diff = beta_normal_sim_norm_pwr - beta_theta_broad_sim_norm_pwr
     text = r'$\Delta \beta=$'f'{beta_rel_diff:.1f}'
     print(text, file=output_file)
 
@@ -455,7 +455,7 @@ def simulate_all(fig_dir=None, output_file=None):
     ax.tick_params(axis='y', length=0, pad=1)
 
     # Annotation
-    beta_rel_diff = (beta_narrow_sim_norm_pwr - beta_strong_sim_norm_pwr)
+    beta_rel_diff = beta_narrow_sim_norm_pwr - beta_strong_sim_norm_pwr
     text = r'$\Delta \beta=$'f'{beta_rel_diff:.1f}'
     print(text, file=output_file)
 
@@ -562,7 +562,7 @@ def simulate_all(fig_dir=None, output_file=None):
     ax.tick_params(axis='y', length=0, pad=1)
 
     # Annotation
-    beta_rel_diff = (beta_low_sim_norm_pwr - beta_large_offset_sim_norm_pwr)
+    beta_rel_diff = beta_low_sim_norm_pwr - beta_large_offset_sim_norm_pwr
     text = r'Relative: $\Delta \beta=$'f'{beta_rel_diff:.1f}'
     print(text, file=output_file)
 
@@ -671,7 +671,7 @@ def simulate_all(fig_dir=None, output_file=None):
     ax.tick_params(axis='y', length=0, pad=1)
 
     # Annotation
-    beta_rel_diff = (beta_low_sim_norm_pwr - beta_small_exponent_sim_norm_pwr)
+    beta_rel_diff = beta_low_sim_norm_pwr - beta_small_exponent_sim_norm_pwr
     text = r'Relative: $\Delta \beta=$'f'{beta_rel_diff:.1f}'
     print(text, file=output_file)
 

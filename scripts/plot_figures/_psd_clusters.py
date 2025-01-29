@@ -166,14 +166,14 @@ def _set_yscale(ax, cond, kind, yscale, info_title, yticks, yticklabels=None):
         formatter = lambda x, pos: f'{x:.1f}'.rstrip('0').rstrip('.')
         ax.yaxis.set_major_formatter(FuncFormatter(formatter))
         ax.tick_params(which='major', axis='y', labelcolor=color)
-    if info_title == False:
+    if info_title is False:
         if yticks is None:
             yticks = ax.get_yticks()
     else:
         yticklabels = yticks
     if yticklabels is None:
         yticklabels = yticks
-    elif yticklabels == False:
+    elif yticklabels is False:
         yticklabels = ['' for _ in yticks]
     elif isinstance(yticklabels, list):
         pass
@@ -285,7 +285,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
         elif kind == 'normalizedInce':
             df = dataframes['df_plateau']
             ylabel = 'Spectrum [%]' if ylabel else None
-        elif kind  == 'absolute':
+        elif kind == 'absolute':
             df = dataframes['df_abs']
             ylabel = 'Spectrum 'r'[$\mu V^2/Hz$]' if ylabel else None
             if ylim is None:
@@ -410,7 +410,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
                 cluster_str = 'across_' + hemispheres.replace(' ', '_')
                 hemisphere_str = '_' + hemispheres.replace(' ', '_')
 
-        # Extract cluster varible
+        # Extract cluster variable
         cluster_conds = df_cond[hue].unique()
         assert len(cluster_conds) == 2
 
@@ -453,7 +453,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
             clusters, cluster_count, cluster_borders = _get_clusters(
                 x_array, y_array, times, output_file, n_perm=n_perm,
                 paired_x1x2=paired_x1x2
-                )
+            )
 
             all_clusters.append(cluster_borders)
             if y.startswith('fm_'):
@@ -497,7 +497,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
         if legend:
             if kind == 'periodicBOTH':
                 handles = [Line2D([0], [0], color=color, ls='-')
-                            for color in legend_colors]
+                           for color in legend_colors]
                 total_stats = False  # do not show cluster stats for full model
                 if not total_stats:
                     labels = labels[:-1]
@@ -505,7 +505,9 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
                 title = None
             else:
                 # Plot neutral legend without kind colors
-                handles = [Line2D([0], [0], color='k', ls=ls) for ls in ['-', '--']]
+                handles = [
+                    Line2D([0], [0], color='k', ls=ls) for ls in ['-', '--']
+                ]
                 labels = [f'{hue_order[0]} {sample_size_str1}',
                           f'{hue_order[1]} {sample_size_str2}']
                 # Plot legend in kind colors
@@ -607,7 +609,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
             elif kind == 'normalizedInce':
                 df = dataframes['df_plateau']
                 ylabel = 'Spectrum [%]' if ylabel else None
-            elif kind  == 'absolute':
+            elif kind == 'absolute':
                 df = dataframes['df_abs']
                 ylabel = 'Spectrum 'r'[$\mu V^2/Hz$]' if ylabel else None
                 ylim = ylim_abs
@@ -673,7 +675,6 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
             # mean(log(psd_b)). Linear values on log scale appear more
             # reasonable since any errors based on non-linearities can be
             # excluded.
-            pass
 
             # drop nan arrays (df.dropna(y) does not work for arrays)
             for y in y_vals:
@@ -736,7 +737,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                         df_cond[y] = group[y].transform("mean")
                     df_cond = df_cond.drop_duplicates(subset=["subject"])
 
-            # Extract cluster varible
+            # Extract cluster variable
             cluster_conds = df_cond[hue].unique()
             assert len(cluster_conds) == 2
 
@@ -758,8 +759,8 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 if plot_lines[i]:
                     # do not plot fitted peaks without aperiodic power
                     df_exploded = explode_df(df_cond, freqs=x, psd=y,
-                                            keep_cols=[hue, 'sub_hemi'],
-                                            fmax=xmax, fmin=xmin)
+                                             keep_cols=[hue, 'sub_hemi'],
+                                             fmax=xmax, fmin=xmin)
 
                     n_x = x_array.shape[1]
                     n_y = y_array.shape[1]
@@ -780,7 +781,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 clusters, cluster_count, cluster_borders = _get_clusters(
                     x_array, y_array, times, output_file, n_perm=n_perm,
                     paired_x1x2=paired_x1x2
-                    )
+                )
 
                 all_clusters.append(cluster_borders)
                 if y.startswith('fm_'):
@@ -844,7 +845,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
             if legend:
                 if kind == 'periodicBOTH':
                     handles = [Line2D([0], [0], color=color, ls='-')
-                                for color in legend_colors]
+                               for color in legend_colors]
                     # do not show cluster stats for full model
                     total_stats = False
                     if not total_stats:

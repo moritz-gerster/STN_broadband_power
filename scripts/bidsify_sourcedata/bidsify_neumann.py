@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from mne import read_annotations
 from mne.channels import make_dig_montage, make_standard_montage
-from mne.io import Raw, read_raw
+from mne.io import Raw
 from mne_bids import BIDSPath, find_matching_paths, read_raw_bids
 from tqdm import tqdm
 
@@ -20,8 +20,7 @@ from scripts.utils import _copy_files_and_dirs, _delete_dirty_files, _save_bids
 
 
 def bidsify_sourcedata_neumann(subjects=None, only_cleaned=True) -> None:
-    """
-    Read sourcedata, bidsify, and save in rawdata.
+    """Read sourcedata, bidsify, and save in rawdata.
 
     Files are saved in fif format which does NOT follow the BIDS standard.
     However, the function mne_bids.write_raw_bids is very buggy at the moment.
@@ -66,7 +65,7 @@ def bidsify_sourcedata_neumann(subjects=None, only_cleaned=True) -> None:
         _check_channel_names(raw, bids_path)
 
         # Correct montage. Otherwise MNE BIDS bug ValueError (CapTrak)
-        # The electrode.tsv files aren't read and written correclty.
+        # The electrode.tsv files aren't read and written correctly.
         _correct_coord_frame(raw)
 
         # Add infos to raw.info
@@ -167,7 +166,7 @@ def _remove_bad_end(raw):
 
 def _clean_electrodes_tsv(bids_path):
     """
-    Remove nan values from electrodes tsv files becauses it causes errors.
+    Remove nan values from electrodes tsv files because it causes errors.
 
     Subject 7 has fused LFP coords LFP_020304_STN_MT. Therefore, mni
     coordinates are not correctly read from electrodes.tsv file. Correct file.
@@ -284,8 +283,7 @@ def _correct_coord_frame(raw: Raw, verbose=False) -> None:
 def _add_bad_segments(raw: Raw, bids_path: BIDSPath, modify_bidspath=True,
                       remove_eeg_annotations=False, location="both",
                       only_cleaned=True) -> None:
-    """
-    Add bad segment annotations provided either by Gunnar or Thomas.
+    """Add bad segment annotations provided either by Gunnar or Thomas.
 
     Annotations Thomas are stored in "derivatives/artifact_annotation_main/".
     They are not agreeing with BIDS standard because there are no datatype
@@ -307,7 +305,9 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath, modify_bidspath=True,
                                      anno_type="events")
     if anno_path.startswith(f'{cfg.BASE_DIR}/derivatives/annotations'):
         description = 'cleaned'
-    elif anno_path.startswith(f'{cfg.BASE_DIR}/sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/'):
+    elif anno_path.startswith(
+        f'{cfg.BASE_DIR}/sourcedata/BIDS_Neumann_ECOG_LFP/meta_infos/'
+    ):
         description = 'uncleaned'
 
     # read and add annotations
@@ -317,11 +317,10 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath, modify_bidspath=True,
         msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
         if only_cleaned:
             raise FileNotFoundError(msg)
-        else:
-            warn(msg)
-            if modify_bidspath:
-                bids_path.update(description="uncleaned", suffix="ieeg")
-            return None
+        warn(msg)
+        if modify_bidspath:
+            bids_path.update(description="uncleaned", suffix="ieeg")
+        return None
     except IndexError:
         # this just means that there are no annotations, this is fine
         annotations = None
@@ -346,8 +345,7 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath, modify_bidspath=True,
 def _add_bad_channels(raw: Raw, bids_path: BIDSPath, location="both",
                       descriptions="OriginalNames", drop_ctx=True,
                       only_cleaned=True) -> None:
-    """
-    Add bad segment annotations provided either by Gunnar or Thomas.
+    """Add bad segment annotations provided either by Gunnar or Thomas.
 
     Annotations Thomas are stored in "derivatives/artifact_annotation_main/".
     They are not agreeing with BIDS standard because there are no datatype
@@ -371,8 +369,7 @@ def _add_bad_channels(raw: Raw, bids_path: BIDSPath, location="both",
         if only_cleaned:
             msg = f"\n\n{bids_path.basename} has not been annotated yet!\n\n"
             raise FileNotFoundError(msg)
-        else:
-            return None
+        return None
     if drop_ctx:
         pick = 'dbs'
         if bids_path.subject == "EL029":
@@ -470,7 +467,7 @@ def _get_annotation_path(bids_path, location="both", anno_type="events",
         return None
     else:
         # extract root Thomas: cannot use "find_matching_paths" because files
-        # are not correctly saved in "ieeg" folder acoording to BIDS
+        # are not correctly saved in "ieeg" folder according to BIDS
         root = join(anno_root, 'artifact_annotation_main')
         bids_thomas = dict(root=root, description=None, processing=None,
                            recording=None)

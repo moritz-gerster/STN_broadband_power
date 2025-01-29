@@ -1,13 +1,4 @@
-"""Donwsample and rereference.
-
-Save to derivatives folder.
-
-Important: If directional leads 2a, 2b, 2c are averaged to ring electrode 2,
-leads 2b and 2c are ignored if they are bad or flat. This means, bipolar
-channel 2-3 is "good" eventhough its in reality 2a-3.
-2a will be averaged (summing would be wrong because two sums would be missing
-channel 3 would be emphasized due to larger power).
-"""
+"""Preprocessing script."""
 import re
 from itertools import combinations
 from json import dump, load
@@ -30,7 +21,9 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
                recordings=cfg.RECORDINGS, LAR=False,
                bipolar_ref=True, bipolar_distant=True,
                bipolar_directional=False):
-    """Preprocess data."""
+    """Preprocessing pipeline.
+
+    Filter, resample, standardize DBS leads, rereference."""
     set_log_level('error')
     load_root = cfg.RAWDATA
     save_root = cfg.PREPROCESSED
@@ -61,18 +54,8 @@ def preprocess(subjects=None, descriptions=None, sessions=None,
 
         # Apply preprocessing functions
         raw.resample(sfreq=cfg.RESAMPLE_FREQ)  # assert same srate across files
-        if bids_path_new.recording == "Neumann":
-            assert raw.info["proj_name"] == "Neumann"
-        elif bids_path_new.recording == "Litvak":
-            assert raw.info["proj_name"] == "Litvak"
-        elif bids_path_new.recording == "Hirschmann":
-            assert raw.info["proj_name"] == "Hirschmann"
-        elif bids_path_new.recording == "Hirschmann2":
-            assert raw.info["proj_name"] == "Hirschmann2"
-        elif bids_path_new.recording == "Tan":
-            assert raw.info["proj_name"] == "Tan"
-        elif bids_path_new.recording == "Florin":
-            assert raw.info["proj_name"] == "Florin"
+        msg = 'Recording info mismatch between raw object and BIDS path.'
+        assert raw.info["proj_name"] == bids_path_new.recording, msg
         ref_kwargs = dict(raw=raw, LAR=LAR, bipolar=bipolar_ref,
                           bipolar_directional=bipolar_directional,
                           bipolar_distant=bipolar_distant)
@@ -139,7 +122,7 @@ def _add_bad_directional_amplifier_channels(raw):
 
 
 def _distant_bip_from_adjacent_bip(raw):
-    """Get distant bipolar reference from alreay bipolar referenced data."""
+    """Get distant bipolar reference from already bipolar referenced data."""
     anodes = ['LFP_L_1-2_STN_MT', 'LFP_L_2-3_STN_MT',
               'LFP_R_1-2_STN_MT', 'LFP_R_2-3_STN_MT']
     cathodes = ['LFP_L_2-3_STN_MT', 'LFP_L_3-4_STN_MT',
@@ -147,9 +130,10 @@ def _distant_bip_from_adjacent_bip(raw):
     ch_names = ['LFP_L_1-3_STN_MT', 'LFP_L_2-4_STN_MT',
                 'LFP_R_1-3_STN_MT', 'LFP_R_2-4_STN_MT']
 
+    # check if channel has data
+    all_nan = lambda raw, anode: np.isnan(raw.get_data(anode)).all()
+
     # remove channels that do not exist or are all nan (causes silent error)
-    all_nan = lambda raw, anode: np.isnan(raw[raw.ch_names.index(anode)][0]
-                                          ).all()
     for anode, cathode, ch_nme in list(zip(anodes, cathodes, ch_names)):
         anode_exists = anode in raw.ch_names and not all_nan(raw, anode)
         cathode_exists = cathode in raw.ch_names and not all_nan(raw, cathode)
@@ -188,7 +172,7 @@ def _distant_bip_from_adjacent_bip(raw):
                         f"LFP_{hemi}_3-4_STN_MT"]
         if not set(ch_names_old).issubset(set(raw.ch_names)):
             continue
-        all_good = all([ch not in raw.info["bads"] for ch in ch_names_old])
+        all_good = all(ch not in raw.info["bads"] for ch in ch_names_old)
         ch_idcs_old = [raw.ch_names.index(ch) for ch in ch_names_old]
         sum_chs = {ch_name_new: ch_idcs_old}
 
@@ -310,7 +294,7 @@ def _reference_average_ctx(raw):
     raw_ecog_lar.rename_channels(dic_lar)
 
     # Exclude bipolar reference
-    assert all(["-" not in ch for ch in raw_ecog_lar.ch_names])
+    assert all("-" not in ch for ch in raw_ecog_lar.ch_names)
     return raw_ecog_lar
 
 
@@ -515,7 +499,7 @@ def _add_coords(anode, cathode, bip_channel, bip_coordinates, info):
     return bip_coordinates
 
 
-def _lfp_bipolar_names(ch_names,  anodes, cathodes, bip_ch_names,
+def _lfp_bipolar_names(ch_names, anodes, cathodes, bip_ch_names,
                        bip_coordinates, info, only_neighbors=True,
                        only_rings=True):
     """Implement all bipolar LFP combinations."""
@@ -818,8 +802,8 @@ def _combine_dir_leads(raw, ref_name_old, old_ch_names, ch_name_new,
         new_reference = rename[ref_name_old]
         new_ref = raw.info["description"].replace(ref_name_old, new_reference)
         raw.info["description"] = new_ref
-    all_bad = all([ch in raw.info["bads"] for ch in dir_ch_names_new])
-    drop_bad = True if not all_bad else False
+    all_bad = all(ch in raw.info["bads"] for ch in dir_ch_names_new)
+    drop_bad = bool(not all_bad)
     # Average directional leads to ring electrode
     average = {ch_name_new: old_ch_indices}
     # Important: don't sum directional leads, average them!
@@ -846,7 +830,7 @@ def _combine_dir_leads_florin(raw):
             reg_ex = f"..._{hemi}_{dir_num}.*"
             dir_ch_indices = pick_channels_regexp(raw.ch_names, reg_ex)
             dir_ch_nmes = [raw.ch_names[idx] for idx in dir_ch_indices]
-            all_bad = all([ch in raw.info["bads"] for ch in dir_ch_nmes])
+            all_bad = all(ch in raw.info["bads"] for ch in dir_ch_nmes)
             dir_ch_nme = dir_ch_nmes[0]
             ch_name_new = dir_ch_nme.replace('a', ''
                                              ).replace('b', ''
@@ -854,8 +838,7 @@ def _combine_dir_leads_florin(raw):
 
             # Average directional leads to ring electrode
             average = {ch_name_new: dir_ch_indices}
-            drop_bad = True if not all_bad else False
-            # Important: don't average directional leads, sum them!
+            drop_bad = bool(not all_bad)
             comb_dic = dict(inst=raw, groups=average,
                             method='mean',
                             drop_bad=drop_bad, verbose=False)

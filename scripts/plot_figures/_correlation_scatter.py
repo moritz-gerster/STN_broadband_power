@@ -40,7 +40,7 @@ def _corrected_aic(model):
 
 
 def all_combinations(any_list, max_len=None):
-    if max_len == None:
+    if max_len is None:
         max_len = len(any_list)
     return chain.from_iterable(combinations(any_list, i + 1)
                                for i in range(max_len))
@@ -399,7 +399,6 @@ def model_comparison(dataframes, fig_dir=None, output_file=None):
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/A__lin_regs.pdf', cfg.FIG_PAPER,
               bbox_inches=None, transparent=True)
-
 
     # Barplot model comparison
     fig, ax = plt.subplots(1, 1, figsize=(2, 1.985))
