@@ -16,7 +16,8 @@ from scripts.bidsify_sourcedata import (_add_info, _correct_units, _move_files,
 from scripts.utils import _delete_dirty_files, _save_bids
 
 
-def bidsify_sourcedata_tan(only_cleaned=True, add_dbs_subs=False) -> None:
+def bidsify_sourcedata_tan(only_cleaned=True, add_dbs_subs=False,
+                           add_noise_recordings=False) -> None:
     """Read sourcedata, bidsify, and save in rawdata."""
     raw_root = cfg.RAWDATA
 
@@ -31,7 +32,8 @@ def bidsify_sourcedata_tan(only_cleaned=True, add_dbs_subs=False) -> None:
     bidsify_onoff(bids_path, only_cleaned=only_cleaned)
     if add_dbs_subs:
         bidsify_dbs(bids_path, add_dbs=True)
-    bidsify_noise()
+    if add_noise_recordings:
+        bidsify_noise()
 
     # add dataset description in the end
     meta_data = cfg.TAN_META
