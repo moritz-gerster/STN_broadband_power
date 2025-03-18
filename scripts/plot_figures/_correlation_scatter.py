@@ -9,7 +9,7 @@ import statsmodels.api as sm
 from scipy import stats
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import N_PERM_CORR, FONTSIZE_ASTERISK
 from scripts.utils_plot import (_corr_results, _save_fig,
                                 convert_pvalue_to_asterisks)
 
@@ -47,7 +47,7 @@ def all_combinations(any_list, max_len=None):
 
 
 def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
-             output_file=None):
+             output_file=None, ylabel=None):
     if isinstance(X, str):
         X = [X]
     X = X.copy()
@@ -82,8 +82,7 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
     print(f'{feature_nme} coefficients: {coefficients}', file=output_file)
     df[feature_nme] = [np.dot(coefficients, x) for x in X_arr]
 
-
-    fig, axes = plt.subplots(1, len(X), figsize=(3.5, 1.3), sharey=True,
+    fig, axes = plt.subplots(1, len(X), figsize=(3.21, 1.1), sharey=True,
                              width_ratios=[1] * (len(X) - 1) + [1.5])
     for i, x in enumerate(X):
         add_sample_size = True if i == len(X)-1 else False
@@ -100,7 +99,7 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
         corr_results = _corr_results(df, x, y, 'pearson', None,
                                      add_sample_size=add_sample_size,
                                      n_perm=N_PERM_CORR)
-        r_pearson, sample_size, label, weight, _ = corr_results
+        r_pearson, _, label, weight, _ = corr_results
         pvalue = float(label.split('p=')[1])
         ax = axes[i]
         kind_color = ('periodicAP'
@@ -116,10 +115,14 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
         except KeyError:
             xlabel = x
         print(f'{xlabel}: {label}, {model_abic}', file=output_file)
-        ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel, fontsize=6)
         ax.set_ylabel(None)
         ax.set_title(label, weight=weight)
-    axes[0].set_ylabel('UPDRS-III')
+    if ylabel is None:
+        ylabel = 'UPDRS-III'
+    else:
+        ylabel = None
+    axes[0].set_ylabel(ylabel)
     plt.tight_layout()
     fname = f'{prefix}{kind}_regression_all_vs_{y}_{df.cond.unique()[0]}.pdf'
     save_dir = join(cfg.FIG_PAPER, fig_dir)
@@ -130,7 +133,7 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
 
 
 def plot_all_ax(ax, df, X, y, kind, add_constant=True, ylabel=False,
-                output_file=None):
+                output_file=None, title=True, fontsize=7):
     if isinstance(X, str):
         X = [X]
     X = X.copy()
@@ -170,7 +173,7 @@ def plot_all_ax(ax, df, X, y, kind, add_constant=True, ylabel=False,
     corr_results = _corr_results(df, x, y, 'pearson', None,
                                  add_sample_size=add_sample_size,
                                  n_perm=N_PERM_CORR)
-    r_pearson, sample_size, label, weight, _ = corr_results
+    r_pearson, _, label, weight, _ = corr_results
     pvalue = float(label.split('p=')[1])
     kind_color = ('periodicAP'
                   if x in ['fm_offset_log',
@@ -185,20 +188,22 @@ def plot_all_ax(ax, df, X, y, kind, add_constant=True, ylabel=False,
     except KeyError:
         xlabel = x
     print(f'{xlabel}: {label}, {model_abic}', file=output_file)
-    ax.set_xlabel(xlabel)
+    ax.set_xlabel(xlabel, fontsize=fontsize)
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=fontsize)
     if ylabel:
         ax.set_ylabel('UPDRS-III')
     else:
         ax.set_ylabel(None)
         ax.set_yticklabels([])
-    ax.set_title(label, weight=weight)
+    if title:
+        ax.set_title(label, weight=weight)
     return (r_pearson, pvalue, sum_of_squared_residuals, degrees_of_freedom,
             AICc_linreg, BIC_linreg)
 
 
 def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
                     n_models=3, max_params=3, add_constant=True,
-                    optimize='AIC+BIC'):
+                    n_perm=None, optimize='AIC+BIC'):
     if kind == 'periodic':
         pwr_str = f'_fm_{power}_log'
     else:
@@ -214,7 +219,8 @@ def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
         keep = ['subject', 'cond', 'project', 'color']
         df = df.groupby(keep).mean(numeric_only=True).reset_index()
     y_arr = df[y].values
-    combinations = [list(l) for l in all_combinations(features, max_len=max_params)]
+    combinations = [list(l) for l in
+                    all_combinations(features, max_len=max_params)]
 
     # Test all combinations
     metrics = []
@@ -262,8 +268,8 @@ def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
         df[feature_nme] = [np.dot(coefficients, x) for x in X_arr]
         X.append(feature_nme)
 
-        fig, axes = plt.subplots(1, len(X), figsize=(3.5, 1.3), sharey=True,
-                                width_ratios=[1] * (len(X) - 1) + [1.5])
+        _, axes = plt.subplots(1, len(X), figsize=(3.5, 1.3), sharey=True,
+                               width_ratios=[1] * (len(X) - 1) + [1.5])
         for i, x in enumerate(X):
             add_sample_size = True if i == len(X)-1 else False
             x_arr = df[x].values
@@ -276,9 +282,9 @@ def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
             else:
                 model_abic = full_model_abic
             corr_results = _corr_results(df, x, y, 'pearson', None,
-                                        add_sample_size=add_sample_size,
-                                        n_perm=n_perm)
-            rho, sample_size, label, weight, _ = corr_results
+                                         add_sample_size=add_sample_size,
+                                         n_perm=n_perm)
+            _, _, label, weight, _ = corr_results
             ax = axes[i]
             kind_color = ('periodicAP'
                           if x in ['fm_offset_log',
@@ -301,7 +307,10 @@ def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
 
 
 def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
-                                fig_dir='Figure2', prefix=''):
+                                fig_dir='Figure2', prefix='',
+                                xlabel=True, title=True, output_file=None,
+                                figsize=(1.2, 1.4),
+                                n_perm=N_PERM_CORR):
     df_plot = df_norm[(df_norm.cond == cond) & (df_norm.project == 'all')]
     if y == 'UPDRS_III':
         # average hemispheres
@@ -309,20 +318,24 @@ def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
         df_plot = df_plot.groupby(keep).mean(numeric_only=True).reset_index()
 
     corr_results = _corr_results(df_plot, x, y, corr_method, None,
-                                 n_perm=N_PERM_CORR)
-    rho, sample_size, label, weight, _ = corr_results
+                                 n_perm=n_perm)
+    _, _, label, weight, _ = corr_results
 
     df_plot = df_plot.dropna(subset=[x, y])
 
-    fig, ax = plt.subplots(figsize=(1.3, 1.4))
+    fig, ax = plt.subplots(figsize=figsize)
 
     sns.regplot(ax=ax, data=df_plot, y=y, x=x, ci=95, scatter_kws=dict(s=1),
                 color='k', label=label, marker='.', n_boot=1000)
 
-    ax.set_title(label, weight=weight)
+    if title:
+        ax.set_title(label, weight=weight)
+    if output_file:
+        print(label, file=output_file)
     band_nme = x.replace('_abs_mean_log', '')
     band_label = cfg.BAND_NAMES_GREEK[band_nme]
-    ax.set_xlabel(f'Relative {band_label} [%]')
+    xlabel = f'Relative {band_label} [%]' if xlabel else None
+    ax.set_xlabel(xlabel)
     ax.set_ylabel(cfg.PLOT_LABELS[y])
     plt.tight_layout()
     fname = f'{prefix}scatter_normalized_{band_nme}_vs_{y}_{cond}.pdf'
@@ -331,7 +344,7 @@ def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
               transparent=True)
 
 
-def model_comparison(dataframes, fig_dir=None, output_file=None):
+def model_comparison(dataframes, fig_dir=None, output_file=None, fontsize=7):
     # Dataframes
     df_norm = dataframes['df_norm']
     df_abs = dataframes['df_abs']
@@ -349,14 +362,14 @@ def model_comparison(dataframes, fig_dir=None, output_file=None):
     xticklabels = [cfg.PLOT_LABELS[kind] for kind in kinds]
     colors = [cfg.COLOR_DIC[kind] for kind in kinds]
 
-    fig, axes = plt.subplots(1, 3, figsize=(4.5, 2), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(4.6, 2), sharey=True)
 
     # Normalized
     df_norm_off_ = df_norm_off[df_norm_off.sub_hemi.isin(
         df_per_off.sub_hemi.unique())]
     X = ['beta_low_abs_mean_log']
     res = plot_all_ax(axes[0], df_norm_off_, X, y,
-                      'normalized', ylabel=True,
+                      'normalized', ylabel=True, title=False,
                       output_file=output_file)
     r_linreg_rel, p_linreg_rel, ssr_rel1, dof_rel1, aic_rel, bic_rel = res
 
@@ -366,13 +379,13 @@ def model_comparison(dataframes, fig_dir=None, output_file=None):
          'gamma_low_abs_mean_log']
     df_abs_off_ = df_abs_off[df_abs_off.sub_hemi.isin(
         df_per_off.sub_hemi.unique())]
-    res = plot_all_ax(axes[1], df_abs_off_, X, y, 'absolute',
+    res = plot_all_ax(axes[1], df_abs_off_, X, y, 'absolute', title=False,
                       output_file=output_file)
     r_linreg_abs, p_linreg_abs, ssr_abs3, dof_abs3, aic_abs, bic_abs = res
 
     # Periodic
     X = ['fm_offset_log', 'beta_low_fm_mean_log', 'gamma_low_fm_mean_log']
-    res = plot_all_ax(axes[2], df_per_off, X, y, 'periodic',
+    res = plot_all_ax(axes[2], df_per_off, X, y, 'periodic', title=False,
                       output_file=output_file)
     r_linreg_per, p_linreg_per, ssr_per3, dof_per3, aic_per, bic_per = res
 
@@ -393,15 +406,15 @@ def model_comparison(dataframes, fig_dir=None, output_file=None):
     correlations = [r_linreg_rel, r_linreg_abs, r_linreg_per]
     pvalues = [p_linreg_rel, p_linreg_abs, p_linreg_per]
 
-    axes[0].set_ylabel('UPDRS-III')
+    axes[0].set_ylabel('UPDRS-III', fontsize=fontsize)
     yticks = [0, 10, 20, 30, 40, 50, 60, 70]
-    axes[0].set_yticks(yticks, labels=yticks)
+    axes[0].set_yticks(yticks, labels=yticks, fontsize=fontsize)
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/A__lin_regs.pdf', cfg.FIG_PAPER,
               bbox_inches=None, transparent=True)
 
     # Barplot model comparison
-    fig, ax = plt.subplots(1, 1, figsize=(2, 1.985))
+    fig, ax = plt.subplots(1, 1, figsize=(2, 2))
 
     ax.bar(x=xticklabels, height=correlations, color=colors)
 
@@ -449,19 +462,18 @@ def model_comparison(dataframes, fig_dir=None, output_file=None):
     bic_values = [bic_rel, bic_abs, bic_per]
     for x, (aic, bic) in enumerate(zip(aic_values, bic_values)):
         corr = correlations[x]
-        ax.text(x, .09,
+        ax.text(x, .11,
                 f'r={corr:.2f}', ha='center', va='bottom',
-                fontsize=5.5, fontweight='bold', color='w')
+                fontsize=fontsize, fontweight='bold', color='w')
         ax.text(x, .008,
                 f'AIC: {aic:.0f}\nBIC: {bic:.0f}',
                 ha='center',
-                va='bottom', fontsize=FONTSIZE_S,
+                va='bottom', fontsize=fontsize-1,
                 color='w')
 
-    ax.set_ylabel(r"Pearson's $r$")
-    ax.set_title(f'Linear regression {cfg.COND_DICT['off']} ~ UPDRS-III',
-                fontweight='bold', y=1)
-    ax.set_xlabel(r'$\alpha$ placeholder', alpha=0)
+    ax.set_ylabel(r"Pearson's $r$", fontsize=fontsize)
+    ax.tick_params(axis='both', labelsize=fontsize)
+    ax.set_xlabel(r'$\alpha$ placeholder', alpha=0, fontsize=fontsize)
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/B__model_comparison.pdf', cfg.FIG_PAPER,
               bbox_inches=None, transparent=True)
@@ -481,7 +493,7 @@ def corr_offset_theta(df_per, fig_dir='Figure_S6', prefix=''):
     df_plot = df_plot.dropna(subset=[x]+[y])
 
     corr_results = _corr_results(df_plot, x, y, corr_method, None, n_perm=None)
-    rho, sample_size, label, weight, _ = corr_results
+    _, _, label, weight, _ = corr_results
 
     df_plot = df_plot.dropna(subset=[x, y])
 

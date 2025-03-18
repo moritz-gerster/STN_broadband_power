@@ -11,7 +11,11 @@ from matplotlib.patches import Patch
 
 import scripts.config as cfg
 from scripts.corr_stats import _get_freqs_correlation_stats
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import (BANDS, FONTSIZE_ASTERISK,
+                                           LINEWIDTH_AXES, N_PERM_CORR,
+                                           XTICKS_FREQ_high, XTICKS_FREQ_low,
+                                           XTICKS_FREQ_low_labels,
+                                           XTICKS_FREQ_high_labels_skip13)
 from scripts.utils import get_correlation_df
 from scripts.utils_plot import (_add_band_annotations, _save_fig,
                                 convert_pvalue_to_asterisks)
@@ -97,7 +101,8 @@ def df_corr_freq(df_plot, x, y, average_hemispheres=None, rolling_mean=None,
 
 
 def plot_psd_updrs_correlation(df_corrs, x, y, kind, fig_dir=None, prefix='',
-                               output_file=None):
+                               xlabel=True, output_file=None,
+                               figsize=(1.9, 1.3)):
     projects = [proj for proj in cfg.PROJECT_ORDER_SLIM
                 if proj in df_corrs.project.unique()]
     updrs = y.replace('UPDRS_', '').replace('III', 'III_mean')
@@ -111,10 +116,9 @@ def plot_psd_updrs_correlation(df_corrs, x, y, kind, fig_dir=None, prefix='',
     y_plot = f"corr_{x}_{y}"
     y_pval = f"pval_{x}_{y}"
     cond = df_corrs.cond.unique()[0]
-    n_perm = df_corrs.n_perm.unique()[0]
     xmax = df_corrs[x_plot].max()
 
-    fig, ax = plt.subplots(1, 1, figsize=(2, 1.3))
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
     for project in projects:
         df_corr = df_corrs[df_corrs.project == project]
         lw = line_widths[project]
@@ -159,12 +163,13 @@ def plot_psd_updrs_correlation(df_corrs, x, y, kind, fig_dir=None, prefix='',
     ax.set_ylabel(ylabel)
     ax.set_xticks(XTICKS_FREQ_low)
     ax.set_xticklabels(XTICKS_FREQ_low_labels)
-    ax.set_xlabel('Frequency [Hz]')
+    xlabel = 'Frequency [Hz]' if xlabel else None
+    ax.set_xlabel(xlabel)
     plt.tight_layout()
     if fig_dir:
-        _save_fig(fig, f'{fig_dir}/{prefix}psd_UPDRS_correlation_{corr_method}_'
-                  f'{kind}_{cond}_{updrs}_{xmax}Hz_nperm={n_perm}',
-                  cfg.FIG_PAPER, bbox_inches=None);
+        _save_fig(fig, f'{fig_dir}/{prefix}psd_UPDRS_correlation'
+                  f'_{corr_method}_{kind}_{cond}_{updrs}_{xmax}Hz',
+                  cfg.FIG_PAPER, bbox_inches=None)
 
 
 def _get_ylabel(corr_method):
@@ -182,7 +187,7 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
                                        legend=False, palette_barplot=None,
                                        band_annos=None, xmin=2,
                                        info_title=False, prefix='',
-                                       output_file=None,
+                                       output_file=None, ylabel=None,
                                        ylim=None, fill_significance=False):
     assert df_corrs.project.nunique() == 1
     kinds = '_'.join(kind for kind in df_corrs.kind.unique())
@@ -198,7 +203,6 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
     y_pval = f"pval_{x}_{y}"
     conds = df_corrs.cond.unique()
     kinds = df_corrs.kind.unique()
-    n_perm = df_corrs.n_perm.unique()[0]
     xmax = df_corrs[x_plot].max()
     if df_corrs_bar is None:
         fig, axes = plt.subplots(1, 1, figsize=figsize, sharey=True)
@@ -257,22 +261,25 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
     # set axis
     ax.axhline(0, color='k', lw=LINEWIDTH_AXES, ls='--')
     corr_method = df_corrs.corr_method.unique()[0]
-    if corr_method == 'spearman':
-        ylabel = r"$\rho$"
-    elif corr_method == 'within':
-        ylabel = r"$r_{rm}$"
-    elif corr_method == 'withinRank':
-        ylabel = r"$r_{\text{rank rm}}$"
+    if ylabel is None:
+        if corr_method == 'spearman':
+            ylabel = r"$\rho$"
+        elif corr_method == 'within':
+            ylabel = r"$r_{rm}$"
+        elif corr_method == 'withinRank':
+            ylabel = r"$r_{\text{rank rm}}$"
+    else:
+        ylabel = None
     ax.set_ylabel(ylabel)
     alpha = 1 if cond == 'on' else 0
     ax.set_xlabel('Frequency [Hz]', alpha=alpha)
-    handles, labels = ax.get_legend_handles_labels()
+    _, labels = ax.get_legend_handles_labels()
 
     # bar plot
     asymmetric_subjects = df_corrs.asymmetric_subjects.unique()[0]
     if asymmetric_subjects:
         consistent_str = '_consistent'
-    elif asymmetric_subjects is False:
+    elif asymmetric_subjects == False:
         consistent_str = '_inconsistent'
     elif asymmetric_subjects is None:
         consistent_str = ''
@@ -287,7 +294,7 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
     kind_str = '_'.join(kinds)
     fname = (f'{prefix}psd{log}_UPDRS_correlation_{corr_method}_'
              f'{kind_str}_{cond}_{updrs}_{xmax}Hz{bar_str}'
-             f'{consistent_str}_nperm={n_perm}')
+             f'{consistent_str}')
 
     if legend:
         ax.legend()
@@ -345,7 +352,7 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
     ax.set_xticks(xticks, labels=labels)
     ax.set_xlim((xmin, df_corrs[x_plot].max()))
 
-    _add_band_annotations(band_annos, ax, short=False, y=1.07,
+    _add_band_annotations(band_annos, ax, short=False, y=1.085,
                           invisible=False)  # do after setting xlim
     if info_title:
         kind_str = cfg.KIND_DICT[kind]
@@ -360,12 +367,11 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
                   bbox_inches=None)
 
 
-def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
-            conds=['offon_abs'], n_perm=N_PERM_CORR, xmax=45,
-            asymmetric_subjects=None, fig_dir=None, prefix='',
-            output_file=None,
-            y="UPDRS_III", ylim=None,
-            corr_method='spearman'):
+def corr_by_freq_bars(dataframes, kinds=['normalized', 'absolute', 'periodic'],
+                      conds=['offon_abs'], n_perm=N_PERM_CORR, xmax=45,
+                      asymmetric_subjects=None, fig_dir=None, prefix='',
+                      output_file=None, ylabel=None, y="UPDRS_III", ylim=None,
+                      corr_method='spearman'):
     df_corr_bar = None
     for cond in conds:
         df_corrs_all = []
@@ -373,7 +379,6 @@ def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
             if kind == 'normalized':
                 df_plot = dataframes['df_norm']
                 x = 'psd_log'
-                # xmax = 45
             elif kind == 'normalizedInce':
                 df_plot = dataframes['df_normInce']
                 x = 'psd_log'
@@ -443,53 +448,55 @@ def figure2(dataframes, kinds=['normalized', 'absolute', 'periodic'],
         plot_psd_updrs_correlation_and_bar(df_corrs_all, df_corr_bar,
                                            save_dir=fig_dir,
                                            prefix=prefix,
+                                           ylabel=ylabel,
                                            legend=False, ylim=ylim,
                                            palette_barplot=palette_barplot,
                                            output_file=output_file,
                                            band_annos=band_annos,
-                                           figsize=(3.5, 1.2))
+                                           figsize=(3.31, 1.1))
+
 
 rename_periodic = {'fm_freqs': 'psd_freqs',
-                   'fm_psd_peak_fit': 'psd',
-                   'fm_psd_peak_fit_log': 'psd_log',
-                   'fm_psd_ap_fit': 'psd',
-                   'fm_psd_ap_fit_log': 'psd_log',
-                   'fm_fooofed_spectrum': 'psd',
-                   'fm_fooofed_spectrum_log': 'psd_log',
-                   'psd': 'psd',
-                   'psd_log': 'psd_log',
-                   'corr_fm_psd_peak_fit_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
-                   'pval_fm_psd_peak_fit_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
-                   'corr_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
-                   'pval_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
-                   'corr_fm_psd_ap_fit_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
-                   'pval_fm_psd_ap_fit_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
-                   'corr_fm_psd_ap_fit_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
-                   'pval_fm_psd_ap_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
-                   'pval_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
-                   'corr_fm_fooofed_spectrum_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
-                   'pval_fm_fooofed_spectrum_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
-                   'corr_fm_fooofed_spectrum_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
-                   'pval_fm_fooofed_spectrum_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
-                   'corr_fm_psd_peak_fit_UPDRS_III': 'corr_psd_UPDRS_III',
-                   'pval_fm_psd_peak_fit_UPDRS_III': 'pval_psd_UPDRS_III',
-                   'corr_fm_psd_ap_fit_UPDRS_III': 'corr_psd_UPDRS_III',
-                   'pval_fm_psd_ap_fit_UPDRS_III': 'pval_psd_UPDRS_III',
-                   'corr_fm_psd_ap_fit_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
-                   'pval_fm_psd_ap_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
-                   'corr_fm_psd_peak_fit_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
-                   'pval_fm_psd_peak_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
-                   'pval_fm_psd_peak_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
-                   'corr_fm_fooofed_spectrum_UPDRS_III': 'corr_psd_UPDRS_III',
-                   'pval_fm_fooofed_spectrum_UPDRS_III': 'pval_psd_UPDRS_III',
-                   'corr_fm_fooofed_spectrum_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
-                   'pval_fm_fooofed_spectrum_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
-                   }
+    'fm_psd_peak_fit': 'psd',
+    'fm_psd_peak_fit_log': 'psd_log',
+    'fm_psd_ap_fit': 'psd',
+    'fm_psd_ap_fit_log': 'psd_log',
+    'fm_fooofed_spectrum': 'psd',
+    'fm_fooofed_spectrum_log': 'psd_log',
+    'psd': 'psd',
+    'psd_log': 'psd_log',
+    'corr_fm_psd_peak_fit_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
+    'pval_fm_psd_peak_fit_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
+    'corr_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
+    'pval_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
+    'corr_fm_psd_ap_fit_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
+    'pval_fm_psd_ap_fit_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
+    'corr_fm_psd_ap_fit_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
+    'pval_fm_psd_ap_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
+    'pval_fm_psd_peak_fit_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
+    'corr_fm_fooofed_spectrum_UPDRS_bradyrigid_contra': 'corr_psd_UPDRS_bradyrigid_contra',
+    'pval_fm_fooofed_spectrum_UPDRS_bradyrigid_contra': 'pval_psd_UPDRS_bradyrigid_contra',
+    'corr_fm_fooofed_spectrum_log_UPDRS_bradyrigid_contra': 'corr_psd_log_UPDRS_bradyrigid_contra',
+    'pval_fm_fooofed_spectrum_log_UPDRS_bradyrigid_contra': 'pval_psd_log_UPDRS_bradyrigid_contra',
+    'corr_fm_psd_peak_fit_UPDRS_III': 'corr_psd_UPDRS_III',
+    'pval_fm_psd_peak_fit_UPDRS_III': 'pval_psd_UPDRS_III',
+    'corr_fm_psd_ap_fit_UPDRS_III': 'corr_psd_UPDRS_III',
+    'pval_fm_psd_ap_fit_UPDRS_III': 'pval_psd_UPDRS_III',
+    'corr_fm_psd_ap_fit_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
+    'pval_fm_psd_ap_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
+    'corr_fm_psd_peak_fit_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
+    'pval_fm_psd_peak_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
+    'pval_fm_psd_peak_fit_log_UPDRS_III': 'pval_psd_log_UPDRS_III',
+    'corr_fm_fooofed_spectrum_UPDRS_III': 'corr_psd_UPDRS_III',
+    'pval_fm_fooofed_spectrum_UPDRS_III': 'pval_psd_UPDRS_III',
+    'corr_fm_fooofed_spectrum_log_UPDRS_III': 'corr_psd_log_UPDRS_III',
+    'pval_fm_fooofed_spectrum_log_UPDRS_III': 'pval_psd_log_UPDRS_III'
+    }
 
 
 def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
                                      xlabel=None,
-                                     legend=False, band_annos=None, xmin=2,
+                                     legend=False,  band_annos=None, xmin=2,
                                      info_title=False, prefix='',
                                      ylim=None):
     assert df_corrs.project.nunique() == 1
@@ -506,16 +513,12 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
     y_plot = f"corr_{x}_{y}"
     y_pval = f"pval_{x}_{y}"
     conds = df_corrs.cond.unique()
-    cond_str = '_'.join(cond for cond in conds)
-    n_perm = df_corrs.n_perm.unique()[0]
     xmax = df_corrs[x_plot].max()
     corr_method = df_corrs.corr_method.unique()[0]
 
     kinds_conds = list(product(kinds, conds))
-    n_cols = len(kinds_conds)
-    fig, axes = plt.subplots(1, n_cols, figsize=figsize, sharey=True)
-    for idx, (kind, cond) in enumerate(kinds_conds):
-        ax = axes[idx]
+    for idx, (kind, cond) in enumerate(kinds_conds, start=1):
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         df_plot = df_corrs[(df_corrs.kind == kind) & (df_corrs.cond == cond)]
         label = cfg.COND_DICT[cond]
         c = '2' if cond == 'on' else ''
@@ -541,22 +544,18 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
                 clusters = np.split(significant_freqs, splits)
             for cluster in clusters:
                 ax.plot([cluster.iloc[0], cluster.iloc[-1]],
-                        [offset, offset], color=color, lw=1)
+                        [offset, offset], color=color, lw=1.5)
             offset += ydiff
+        yticks = ax.get_yticks()
+        yticks = [np.round(ytick, 2) for ytick in yticks]
+        label_visibility = 0 if idx > 1 else 1
+        ax.set_yticks(yticks, labels=yticks, alpha=label_visibility)
         ax.set_ylim(ymin - ydiff*1.5, ymax)
 
         # set axis
         ax.axhline(0, color='k', lw=LINEWIDTH_AXES, ls='--')
         corr_method = df_corrs.corr_method.unique()[0]
-        if corr_method == 'spearman':
-            ylabel = r"Spearman $\rho$ "
-        elif corr_method == 'within':
-            ylabel = r"$r_{rm}$"
-        elif corr_method == 'withinRank':
-            ylabel = r"$r_{\text{rank rm}}$"
-        # labelpad important to match raster with cluster stats
-        labelpad = 0 if kind == 'normalized' else 2.5
-        ax.set_ylabel(ylabel, labelpad=labelpad)
+        ax.set_ylabel('placeholder', alpha=0)
         ax.set_xlabel(None)
 
         if legend:
@@ -568,13 +567,19 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
             xticks = XTICKS_FREQ_low + [60]
             labels = XTICKS_FREQ_low_labels + [60]
         elif xmax == 60:
-            xticks = XTICKS_FREQ_high
-            labels = XTICKS_FREQ_high_labels_skip13
+            if cond == 'on':
+                xticks = XTICKS_FREQ_high
+                labels = XTICKS_FREQ_high_labels_skip13
+            else:
+                xticks = XTICKS_FREQ_high[:-2]
+                labels = XTICKS_FREQ_high_labels_skip13[:-2]
+
         else:
             # skip last xtick at 100 Hz due to barplot xticks
             xticks = XTICKS_FREQ_high[:-1]
             labels = XTICKS_FREQ_high_labels_skip13[:-1]
         ax.set_xticks(xticks, labels=labels)
+        ax.tick_params('both', pad=1, labelsize=6)
         ax.set_xlim((xmin, df_corrs[x_plot].max()))
 
         # invisible = True if kind != 'absolute' else False
@@ -582,6 +587,7 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
         if band_annos:
             _add_band_annotations(band_annos[kind], ax, short=False, y=1.07,
                                   invisible=False)  # do after setting xlim
+        cond_str = cfg.COND_DICT[cond]
         if info_title:
             sample_size = df_corrs['sample_size'].unique()[0]
             if df_corrs['hemispheres_averaged'].unique()[0]:
@@ -590,22 +596,18 @@ def plot_psd_updrs_correlation_multi(df_corrs, fig_dir=None, figsize=(7, 1.3),
                 sampling_str = 'hemi'
             sample_size_str = rf'$n_{{{sampling_str}}}={sample_size}$'
             kind_str = cfg.KIND_DICT[kind]
-            cond_str = cfg.COND_DICT[cond]
             updrs_str = cfg.PLOT_LABELS[y]
             ax.set_title(f'{kind_str}, {cond_str}, {updrs_str}, '
                          f'{sample_size_str}')
-    if xlabel:
-        fig.supxlabel(xlabel)
-    log = '_log' if x.endswith('_log') else ''
+        if xlabel:
+            fig.supxlabel(xlabel)
+        log = '_log' if x.endswith('_log') else ''
 
-    fname = (f'{prefix}psd{log}_UPDRS_correlation_{corr_method}_'
-             f'{kinds_str}_{cond_str}_{updrs}_{xmax}Hz'
-             f'_nperm={n_perm}')
-    plt.tight_layout()
-    plt.subplots_adjust(wspace=0.2)
-    if fig_dir:
-        _save_fig(fig, join(fig_dir, fname), cfg.FIG_PAPER,
-                  transparent=False, bbox_inches=None)
+        fname = (f'{prefix}{idx}__psd{log}_UPDRS_correlation_{corr_method}_'
+                 f'{kinds_str}_{cond_str}_{updrs}_{xmax}Hz')
+        if fig_dir:
+            _save_fig(fig, join(fig_dir, fname), cfg.FIG_PAPER,
+                      transparent=False, bbox_inches=None)
 
 
 def get_corrs_kinds(dataframes, kinds, conds, n_perm=N_PERM_CORR, xmax=60,
@@ -618,7 +620,8 @@ def get_corrs_kinds(dataframes, kinds, conds, n_perm=N_PERM_CORR, xmax=60,
                 df = dataframes['df_norm']
             elif kind == 'normalizedInce':
                 df = dataframes['df_normInce']
-            elif kind in ['absolute', 'periodic', 'periodicAP', 'periodicFULL']:
+            elif kind in ['absolute', 'periodic',
+                          'periodicAP', 'periodicFULL']:
                 df = dataframes['df_abs']
             df = df[(df.cond == cond) & (df.project == 'all')]
 

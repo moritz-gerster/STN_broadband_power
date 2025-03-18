@@ -10,7 +10,7 @@ def figure4(df_orig):
     # equalize subject count for model comparisons
     dataframes_equal = get_dfs(df_orig, ch_choice='ch_dist_sweet',
                                equalize_subjects_norm_abs=True)
-    output_file_path = join(FIG_PAPER, 'Figure4', "4___output.txt")
+    output_file_path = join(FIG_PAPER, 'Figure4', "5___output.txt")
     makedirs(join(FIG_PAPER, 'Figure4'), exist_ok=True)
     with open(output_file_path, "w") as output_file:
         model_comparison(dataframes_equal,

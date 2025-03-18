@@ -1,5 +1,5 @@
-from scripts.plot_figures._stun_effect import (power_vs_recovery,
-                                               pre_post_vs_recovery,
+from scripts.plot_figures._stun_effect import (post_pre_vs_recovery,
+                                               power_vs_recovery,
                                                pre_post_vs_symptoms,
                                                updrs_pre_post)
 from scripts.plot_figures.settings import get_dfs
@@ -19,12 +19,12 @@ def supp_figure5a(df_norm):
 
 
 def supp_figure5b(df_norm):
-    pre_post_vs_recovery(df_norm, fig_dir='Figure_S5', prefix='B__')
+    post_pre_vs_recovery(df_norm, fig_dir='Figure_S5', prefix='B__')
 
 
 def supp_figure5c(df_norm):
     power_vs_recovery(df_norm, fig_dir='Figure_S5', prefix='C__',
-                      output_file=None)
+                      output_file=None, fontsize_stat=8, stat_height=0.9)
 
 
 def supp_figure5d(df_norm):

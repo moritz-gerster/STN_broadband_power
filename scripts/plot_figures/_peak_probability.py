@@ -6,7 +6,7 @@ import seaborn as sns
 from matplotlib.patches import Patch
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import BANDS
 from scripts.utils_plot import _save_fig
 
 
@@ -63,13 +63,14 @@ def get_peak_probability(df_per, bands=BANDS+['gamma_mid'], project='all',
     return df_peaks
 
 
-def barplot_peaks(df_peaks, ylim=(0, 100), fig_dir='Figure8', prefix='B__'):
+def barplot_peaks(df_peaks, ylim=(0, 100), fig_dir='Figure8', prefix='B__',
+                  fontsize=6):
     hue_order = [cond for cond in cfg.COND_ORDER
                  if cond in df_peaks.cond.unique()]
     colors_off = df_peaks[df_peaks.cond == 'off'].color.to_list()
     colors_on = df_peaks[df_peaks.cond == 'on'].color.to_list()
 
-    fig, ax = plt.subplots(1, 1, figsize=(2.3, 1.5), sharey=True)
+    fig, ax = plt.subplots(1, 1, figsize=(2.3, 1.3), sharey=True)
 
     sns.barplot(df_peaks, ax=ax, y='probability', x='band_nme', hue='cond',
                 hue_order=hue_order, legend=True)
@@ -80,10 +81,11 @@ def barplot_peaks(df_peaks, ylim=(0, 100), fig_dir='Figure8', prefix='B__'):
                Patch(facecolor=cfg.COLOR_DIC['all2'])]
     handles = [Patch(facecolor=cfg.COLOR_DIC['periodic']),
                Patch(facecolor=cfg.COLOR_DIC['periodic2'])]
-    ax.legend(handles, hue_order)
+    ax.legend(handles, hue_order, fontsize=fontsize)
     ax.set_ylim(ylim)
-    ax.set_xlabel('Space label', alpha=0)
-    ax.set_ylabel('Fit probability [%]')
+    ax.set_xlabel('Space label', alpha=0, fontsize=fontsize)
+    ax.set_ylabel('Fit probability [%]', fontsize=fontsize)
+    ax.tick_params(axis='both', labelsize=fontsize)
     fname = f'{fig_dir}/{prefix}peak_probability_consistent_subs'
     plt.tight_layout()
     _save_fig(fig, fname, cfg.FIG_PAPER,

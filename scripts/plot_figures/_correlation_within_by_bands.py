@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import BANDS, N_PERM_CORR
 from scripts.utils import _average_hemispheres, _corr_results
-from scripts.utils_plot import _axes2d, _save_fig, convert_pvalue_to_asterisks
+from scripts.utils_plot import _save_fig, convert_pvalue_to_asterisks
 
 
 def _correct_sample_size(df, x, repeated_m="subject"):
@@ -20,9 +21,8 @@ def _correct_sample_size(df, x, repeated_m="subject"):
     hemi_both = hemis_subject == df_copy.ch_hemisphere.nunique()
     df_copy = df_copy.set_index(group)[hemi_both].reset_index()
     # assert no subjects with only one hemisphere
-    enough_subs = (
-        df_copy.groupby(repeated_m).ch_hemisphere.nunique() == 2
-    ).all()
+    group_rm = df_copy.groupby(repeated_m)
+    enough_subs = (group_rm.ch_hemisphere.nunique() == 2).all()
     if not enough_subs:
         return None
 
@@ -74,6 +74,7 @@ def get_correlation_df_multi(dataframes,
         if kind == 'normalized':
             df = dataframes['df_norm'].copy()
             df = df[(df.project == 'all')]
+
             band_cols = [f'{band}_abs_mean_log' for band in bands]
             band_nmes = [band_dic[band] for band in bands]
         elif kind == 'absolute':
@@ -100,7 +101,7 @@ def get_correlation_df_multi(dataframes,
             band_cols = ['fm_exponent', 'fm_offset_log', 'ap_power']
             band_nmes = ['1/f exponent',
                          plot_dic['fm_offset_log'],
-                         'Ap. pwr. 1-60 Hz']
+                         '']
         msg = f'{set(band_cols) - set(band_nmes)}'
         assert len(band_cols) == len(band_nmes), msg
 
@@ -143,7 +144,7 @@ def get_correlation_df_multi(dataframes,
                                        n_perm=n_perm)
                     rho, sample_size, label, _, _ = _corr_results(
                         **corr_kwargs
-                    )
+                        )
                     if rho is None:
                         msg = f'No correlation found for {corr_kwargs}'
                         raise ValueError(msg)
@@ -161,6 +162,7 @@ def get_correlation_df_multi(dataframes,
 
 
 def barplot_biomarkers(df_corrs, fig_dir='Figure7', prefix='',
+                       height_stat=None, fontsize_stat=9,
                        figsize=(7, 1.5), ylim=None, output_file=None):
 
     kinds = df_corrs.kind.unique()
@@ -168,12 +170,8 @@ def barplot_biomarkers(df_corrs, fig_dir='Figure7', prefix='',
     hue_order = [cond for cond in cfg.COND_ORDER
                  if cond in df_corrs.cond.unique()]
 
-    n_cols = len(kinds)
-    fig, axes = plt.subplots(1, n_cols, figsize=figsize, sharey=True)
-    axes = _axes2d(axes, 1, n_cols)[0]
-
-    for i, kind in enumerate(kinds):
-        ax = axes[i]
+    for idx, kind in enumerate(kinds, start=1):
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         df_kind = df_corrs[df_corrs.kind == kind]
         band_nmes = df_kind.band_nme.unique()
         sns.barplot(df_kind, ax=ax, y='rho', x='band_nme', hue='cond',
@@ -182,7 +180,9 @@ def barplot_biomarkers(df_corrs, fig_dir='Figure7', prefix='',
         ax.set_ylim(ylim)
         ax.set_xlabel(None)
         # indicate significance
-        _, ymax = ax.get_ylim()
+        if height_stat is None:
+            _, height_stat = ax.get_ylim()
+            height_stat *= 0.9
         print(f'\n{kind}:', file=output_file)
         for i, cond in enumerate(hue_order):
             print(f'{cond}:', file=output_file)
@@ -198,19 +198,33 @@ def barplot_biomarkers(df_corrs, fig_dir='Figure7', prefix='',
                 text = convert_pvalue_to_asterisks(pvalue)
                 x_bar = bar.get_x() + bar.get_width() / 2
                 ax.annotate(text,
-                            xy=(x_bar, ymax*.9),
+                            xy=(x_bar, height_stat),
                             va='bottom',
                             ha='center',
-                            fontsize=FONTSIZE_ASTERISK,
+                            fontsize=fontsize_stat,
                             color=color
                             )
                 print(f'{band_col}: rho={rho:.2f}, p={pvalue}',
                       file=output_file)
 
-    axes[0].set_ylabel(r"$r_{\text{rank rm}}$")
-    n_perm = df_corrs.n_perm.unique()[0]
-    kind_str = '_'.join(df_corrs.kind.unique())
-    fname = f'{fig_dir}/{prefix}biomarkers_{kind_str}_nperm={n_perm}'
-    plt.tight_layout()
-    _save_fig(fig, fname, cfg.FIG_PAPER,
-              transparent=True, bbox_inches=None)
+        ax.set_ylabel(None)
+        sns.despine(ax=ax, left=False, right=False)
+        yticks = np.arange(*ylim, 0.2)
+        yticks = [round(y, 2) for y in yticks]
+        tick_visibility = 1 if idx == 1 else 0
+        yticklabels = [ytick for ytick in yticks]
+        yticklabels[-1] = ''
+        # ax.tick_params(axis="y", direction="in")
+        ax.set_yticks(yticks, labels=yticklabels, alpha=tick_visibility)
+        ax2 = ax.twinx()
+        ax2.set_yticks(yticks)
+        ax2.set_yticklabels([])
+        ax.tick_params(axis="both", labelsize=6)
+        ax.tick_params(axis="y", direction="in", length=.75)
+        ax2.tick_params(axis="y", direction="in", length=.75)
+
+        ax.set_ylim(ylim)
+        ax2.set_ylim(ylim)
+        fname = f'{fig_dir}/{prefix}{idx}__biomarkers_{kind}'
+        _save_fig(fig, fname, cfg.FIG_PAPER, transparent=True,
+                  bbox_inches=None)

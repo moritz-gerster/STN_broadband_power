@@ -7,7 +7,7 @@ import seaborn as sns
 
 import scripts.config as cfg
 from scripts.plot_figures._correlation_by_bands import barplot_UPDRS_bands
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import BANDS, FONTSIZE_M, N_PERM_CORR
 from scripts.utils import get_correlation_df
 from scripts.utils_plot import _corr_results, _save_fig, _stat_anno, plot_corr
 
@@ -80,11 +80,11 @@ def updrs_pre_post(df, fig_dir='Figure_S5', prefix=''):
               fpath, bbox_inches=None)
 
 
-def pre_post_vs_recovery(df, fig_dir='Figure_S5', prefix=''):
+def post_pre_vs_recovery(df, fig_dir='Figure_S5', prefix=''):
     df = df[~df.project.isin(['all'])].copy()
-    df["UPDRS_III_prepost_diff"] = df["UPDRS_pre_III"] - df["UPDRS_post_III"]
+    df["UPDRS_III_postpre_diff"] = df["UPDRS_post_III"] - df["UPDRS_pre_III"]
     x = 'patient_days_after_implantation'
-    y = 'UPDRS_III_prepost_diff'
+    y = 'UPDRS_III_postpre_diff'
     subset = ['subject', 'cond', 'project']
     df = df.dropna(subset=[x, y]).drop_duplicates(subset=subset)
 
@@ -106,7 +106,7 @@ def pre_post_vs_recovery(df, fig_dir='Figure_S5', prefix=''):
                 df_proj = df_plot[df_plot.project_nme == project]
                 corr_results = _corr_results(df_proj, x, y, corr_method, None,
                                              n_perm=N_PERM_CORR)
-                rho, sample_size, label, weight, _ = corr_results
+                _, _, _, weight, _ = corr_results
                 weights.append(weight)
         handles, labels = ax.get_legend_handles_labels()
         labels = [label.replace('Berlin ', '').replace('Düsseldorf1 ', '')
@@ -213,7 +213,7 @@ def pre_post_vs_symptoms(df_norm, fig_dir='Figure_S5', prefix=''):
 
 
 def power_vs_recovery(df_norm, fig_dir='Figure_S5', prefix='',
-                      output_file=None):
+                      output_file=None, fontsize_stat=8, stat_height=0.9):
     y = "patient_days_after_implantation"
     total_power = True
     kind = 'normalized'
@@ -236,4 +236,6 @@ def power_vs_recovery(df_norm, fig_dir='Figure_S5', prefix='',
                                          corr_method=corr_method)
             df_corr['kind'] = kind
             barplot_UPDRS_bands(df_corr, fig_dir=fig_dir, title=False,
+                                fontsize_stat=fontsize_stat,
+                                stat_height=stat_height,
                                 prefix=prefix, figsize=(2, 1.9))

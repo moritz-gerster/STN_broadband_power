@@ -11,7 +11,9 @@ from matplotlib.ticker import FuncFormatter
 from pte_stats import cluster, timeseries
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import (CI_SPECT, N_PERM_CLUSTER,
+                                           XTICKS_FREQ_high, XTICKS_FREQ_low,
+                                           XTICKS_FREQ_low_labels)
 from scripts.utils_plot import _save_fig, explode_df
 
 
@@ -166,14 +168,14 @@ def _set_yscale(ax, cond, kind, yscale, info_title, yticks, yticklabels=None):
         formatter = lambda x, pos: f'{x:.1f}'.rstrip('0').rstrip('.')
         ax.yaxis.set_major_formatter(FuncFormatter(formatter))
         ax.tick_params(which='major', axis='y', labelcolor=color)
-    if info_title is False:
+    if info_title == False:
         if yticks is None:
             yticks = ax.get_yticks()
     else:
         yticklabels = yticks
     if yticklabels is None:
         yticklabels = yticks
-    elif yticklabels is False:
+    elif yticklabels == False:
         yticklabels = ['' for _ in yticks]
     elif isinstance(yticklabels, list):
         pass
@@ -228,7 +230,7 @@ def _annotate_stats(ax, all_clusters, color=None, labels=None,
         if len(cluster_borders):
             for (lim1, lim2) in cluster_borders:
                 ax.plot([lim1, lim2], [height_data, height_data],
-                        color=colors[i], lw=1, label=labels[i])
+                        color=colors[i], lw=1.5, label=labels[i])
             # Adjust the height for the next annotation
             height_axes += shift
             height_data = ax.transAxes.transform((0, height_axes))[1]
@@ -453,7 +455,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
             clusters, cluster_count, cluster_borders = _get_clusters(
                 x_array, y_array, times, output_file, n_perm=n_perm,
                 paired_x1x2=paired_x1x2
-            )
+                )
 
             all_clusters.append(cluster_borders)
             if y.startswith('fm_'):
@@ -536,6 +538,7 @@ def plot_psd_by_severity_conds(dataframes, kind, conds=['off', 'on'],
         ax.yaxis.set_tick_params(which='major', pad=0)
     if ax.get_xscale() == 'log':
         ax.xaxis.set_tick_params(which='major', pad=0)
+    ax.tick_params(axis='both', which='major', labelsize=6)
     plt.minorticks_off()
     cond_str = '_'.join(conds)
     save_dir = join(cfg.FIG_PAPER, fig_dir)
@@ -584,11 +587,8 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
     periodic_shift = 0
 
     kinds_conds = list(product(kinds, conds))
-    n_cols = len(kinds_conds)
-    fig, axes = plt.subplots(1, n_cols, figsize=figsize, sharey=False)
-
-    for idx, (kind, cond) in enumerate(kinds_conds):
-        ax = axes[idx]
+    for idx, (kind, cond) in enumerate(kinds_conds, start=1):
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
         yscale = 'log'  # always log except pure periodic and relative
         if kind in ['normalized', 'absolute', 'normalizedInce']:
             palette = [[cfg.COLOR_DIC[kind]], [cfg.COLOR_DIC[kind + '2']]]
@@ -653,11 +653,11 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 elif kind == 'periodicFULL':
                     y_vals = ['fm_fooofed_spectrum']
             labels = [cfg.KIND_DICT[y_kind_dict[y]] for y in y_vals]
-            ylabel = 'Spectrum 'r'[$\mu V^2/Hz$]' if ylabel else None
+            # ylabel = 'Spectrum 'r'[$\mu V^2/Hz$]' if ylabel else None
         else:
             raise ValueError(f"Unknown kind {kind}")
-        if idx > 0:
-            ylabel = None
+        # if idx > 0:
+        ylabel = None
 
         df_cond = df[(df.cond == cond) & (df.project == 'all')]
         labels_conds = [labels, labels]  # duplicate to avoid altering
@@ -781,7 +781,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 clusters, cluster_count, cluster_borders = _get_clusters(
                     x_array, y_array, times, output_file, n_perm=n_perm,
                     paired_x1x2=paired_x1x2
-                )
+                    )
 
                 all_clusters.append(cluster_borders)
                 if y.startswith('fm_'):
@@ -804,7 +804,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 xticklabels = XTICKS_FREQ_low_labels
             elif xmax == 60:
                 xticks = XTICKS_FREQ_high
-                xticklabels = XTICKS_FREQ_high_labels_skip13
+                xticklabels = ['' for _ in XTICKS_FREQ_high]
             elif xmax == 200:
                 xticks = [xmin, 50, 200]
                 xticklabels = xticks
@@ -838,6 +838,8 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                 ax.set_title(f'{cond_str}: {sample_size_str}')
                 info_str = '_Title'
             elif info_title is False:
+                print(f'Sample size {cond_str}: {sample_size_str}\n',
+                      file=output_file)
                 info_str = ''
             ax.set_ylim(ylim)
             _annotate_stats(ax, all_clusters, legend_colors, labels,
@@ -863,7 +865,7 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
                     else:
                         title = None
                 ax.legend(handles, labels, handlelength=1, title=title,
-                          borderaxespad=0.1, **leg_kws)
+                          **leg_kws)
                 legend = False  # only on first axis
             else:
                 ax.get_legend().remove()
@@ -876,21 +878,19 @@ def plot_psd_by_severity_kinds(dataframes, kinds, conds=['off', 'on'],
         else:
             raise ValueError(f"Set yticks for {kind}")
         if cond == 'on':
-            yticklabels = ['' for _ in yticks]
+            ytick_visible = 0
         else:
-            yticklabels = yticks
+            ytick_visible = 1
         ax.set_yscale(yscale)
-        ax.set_yticks(yticks, labels=yticklabels)
+        ax.set_yticks(yticks, labels=yticks, alpha=ytick_visible)
+        ax.yaxis.set_tick_params(which='major', pad=1)
+        ax.tick_params(axis='both', labelsize=6)
         ax.set_ylim(ylim)
         ax.set_ylabel(ylabel)
-    save_dir = join(cfg.FIG_PAPER, fig_dir)
-    cond_str = '_'.join(conds)
-    kind_str = '_'.join(kinds)
-    fname = (f'{prefix}psd_clusters_{cluster_str}_{kind_str}_'
-             f'{hue}_{xmax}Hz_{cond_str}_'
-            f'{xscale}_{yscale}'
-            f'{info_str}')
-    plt.tight_layout()
-    plt.subplots_adjust(wspace=.2)
-    _save_fig(fig, fname, save_dir, bbox_inches=None,
-              facecolor=(1, 1, 1, 0))
+        save_dir = join(cfg.FIG_PAPER, fig_dir)
+        cond_str = cond
+        kind_str = kind
+        fname = (f'{prefix}{idx}__psd_clusters_{cluster_str}_{kind_str}_'
+                 f'{hue}_{xmax}Hz_{cond_str}_{xscale}_{yscale}{info_str}')
+        _save_fig(fig, fname, save_dir, bbox_inches=None,
+                  facecolor=(1, 1, 1, 0))

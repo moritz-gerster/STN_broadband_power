@@ -8,14 +8,16 @@ import seaborn as sns
 from scipy.stats import bootstrap
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import (BANDS, FONTSIZE_ASTERISK,
+                                           LINEWIDTH_AXES, LINEWIDTH_PLOT,
+                                           N_BOOT_COHEN)
 from scripts.utils_plot import _save_fig, cohen_d, equalize_x_and_y
 
 
 def band_barplot(df, kind, ycols, figsize=(2, 1),
                  projects=cfg.PROJECT_ORDER_SLIM, n_boot=N_BOOT_COHEN,
                  estimator='effect_size', fig_dir='Figure_S6', prefix='',
-                 xticklabels=None):
+                 xticklabels=None, output_file=None):
     # Set linewidths proportional to sample sizes
     line_widths = {proj: .25 for proj in projects}
     line_widths['all'] = LINEWIDTH_PLOT
@@ -25,6 +27,7 @@ def band_barplot(df, kind, ycols, figsize=(2, 1),
     errors = []
     significances = []
     project_list = []
+    print(f'{estimator}', file=output_file)
     for proj in projects:
         for ycol in ycols:
             names.append(ycol)
@@ -51,8 +54,6 @@ def band_barplot(df, kind, ycols, figsize=(2, 1),
                     raise ValueError('Unknown estimator')
                 value = func(off_arr - on_arr)
                 data = (off_arr - on_arr,)
-            if proj == 'all':
-                print(f'{estimator} {ycol}: {value:.2f}')
             values.append(value)
             if n_boot is None:
                 msg = 'Only effect size supports parametric'
@@ -62,7 +63,7 @@ def band_barplot(df, kind, ycols, figsize=(2, 1),
             else:
                 # nonparametric (slow but more correct)
                 result = bootstrap(data, func, n_resamples=n_boot, paired=True,
-                                random_state=1)
+                                   random_state=1)
                 ci = result.confidence_interval
                 # if distribution is degenerate (many 0 values),
                 # apply parametric
@@ -71,6 +72,10 @@ def band_barplot(df, kind, ycols, figsize=(2, 1),
 
             # CIs
             ci_lower, ci_upper = ci
+            if proj == 'all':
+                print(f'{ycol}: {value:.2f} '
+                      f'CI: [{ci_lower:.2f}, {ci_upper:.2f}]',
+                      file=output_file)
             error = [[abs(value - ci_lower)], [abs(ci_upper - value)]]
             errors.append(error)
             # make sure that np.nan values are not significant
@@ -90,14 +95,14 @@ def band_barplot(df, kind, ycols, figsize=(2, 1),
     fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     ax.axhline(0, color="k", lw=LINEWIDTH_AXES, ls='--')
-    for i, proj in enumerate(projects):
+    for proj in projects:
         df_proj = df_plot[df_plot.project == proj]
         # Plot CIs
         yerr = [item for sublist in df_proj.ci.values for item in sublist]
         yerr = np.array(yerr).reshape(len(ycols), 2).T
         values = df_proj.value.values
 
-        xticks = np.arange(len(ycols))# + 0.03 * i
+        xticks = np.arange(len(ycols))
         color = (cfg.COLOR_DIC[proj] if len(projects) > 1
                  else cfg.COLOR_DIC[kind])
         sns.barplot(x=xticks, y=values, yerr=yerr, ax=ax, capsize=capsize,

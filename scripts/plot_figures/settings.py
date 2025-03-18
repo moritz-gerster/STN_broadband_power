@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-
 import scripts.config as cfg
 
 
@@ -12,7 +11,7 @@ def get_dfs(df, ch_choice=None, chs=None, equalize_subjects_norm_abs=False):
     df.loc[:, 'sub_hemi_cond'] = df.sub_hemi + '_' + df.cond  # add column
 
     # Select dataframes
-    df_norm = df[(df.psd_kind == "normalized") & (df.fm_params is False)]
+    df_norm = df[(df.psd_kind == "normalized") & (df.fm_params == False)]
     df_abs = df[(df.psd_kind == "standard") & (df.fm_params == 'broad')]
     df_per = df_abs.copy()
     df_per = df_per[df_per.fm_exponent.notna()]
@@ -65,11 +64,11 @@ def get_dfs(df, ch_choice=None, chs=None, equalize_subjects_norm_abs=False):
         dominant_side_consistent=('dominant_side_consistent', 'any'),
         has_model=('has_model', 'any'),
     ).reset_index()
-    # df_sample_sizes['UPDRS_exists'] = True
 
     dataframes = dict(df=df, df_norm=df_norm, df_per=df_per, df_abs=df_abs,
                       df_sample_sizes=df_sample_sizes)
     return dataframes
+
 
 # Bands
 BANDS = ['delta', 'theta', "alpha", "beta_low", "beta_high", 'gamma_low']
@@ -90,7 +89,6 @@ XTICKS_FREQ = sorted(list(set(XTICKS_FREQ)))
 XTICKS_FREQ_low = XTICKS_FREQ.copy()
 XTICKS_FREQ_low_labels = XTICKS_FREQ.copy()
 XTICKS_FREQ_low_labels[0] = ''
-# XTICKS_FREQ_high = XTICKS_FREQ + [60, 80, 100]
 XTICKS_FREQ_high = XTICKS_FREQ + [60, 100]
 XTICKS_FREQ_high_labels_skip9 = XTICKS_FREQ_high.copy()
 XTICKS_FREQ_high_labels_skip13 = XTICKS_FREQ_high.copy()
@@ -119,7 +117,7 @@ FONTSIZE_S = 5
 FONTSIZE_ASTERISK = 7
 FONTSIZE_M = 6
 FONTSIZE_L = 8
-plt.rc('font', size=FONTSIZE_S)  # bold not working
+# plt.rc('font', family='Helvetica', size=FONTSIZE_S)  # bold not working
 plt.rc('axes', titlesize=FONTSIZE_S, labelsize=FONTSIZE_S)
 plt.rc('xtick', labelsize=FONTSIZE_S)
 plt.rc('ytick', labelsize=FONTSIZE_S)
@@ -140,3 +138,33 @@ plt.rcParams['ytick.major.size'] = TICK_SIZE
 plt.rcParams['ytick.major.width'] = LINEWIDTH_AXES
 plt.rcParams['patch.linewidth'] = LINEWIDTH_AXES
 plt.rcParams['grid.linewidth'] = LINEWIDTH_AXES
+
+# Change seaborn darkgrid settings
+sns_darkgrid = {'axes.facecolor': '#f0f0f0'}
+
+
+# IMPORTANT: The script below needs to be run after creation of new
+# environment in order to enable Helvetica font for matplotlib plotting on Mac.
+# import os
+# import re
+# import shutil
+# from glob import glob
+# from matplotlib import matplotlib_fname
+# from matplotlib import get_cachedir
+
+# # Copy files over
+# _dir_data = re.sub('/matplotlibrc$', '', matplotlib_fname())
+# dir_source = '/System/Library/Fonts/'  # <- individual directory
+# dir_dest = f'{_dir_data}/fonts/ttf'
+# # print(f'Transfering .ttf and .otf files from {dir_source} to {dir_dest}.')
+# for file in glob(f'{dir_source}/*.[ot]tf'):
+#     if not os.path.exists(f'{dir_dest}/{os.path.basename(file)}'):
+#         print(f'Adding font "{os.path.basename(file)}".')
+#         shutil.copy(file, dir_dest)
+
+# # Delete cache
+# dir_cache = get_cachedir()
+# for file in glob(f'{dir_cache}/*.cache') + glob(f'{dir_cache}/font*'):
+#     if not os.path.isdir(file): # don't dump the tex.cache folder...
+#         os.remove(file)
+#         print(f'Deleted font cache {file}.')

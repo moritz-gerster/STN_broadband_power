@@ -7,7 +7,7 @@ import scipy.signal as sig
 import scripts.config as cfg
 from specparam import SpectralModel
 from specparam.analysis import get_band_peak
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import XTICKS_FREQ_low
 from scripts.utils import elec_phys_signal
 from scripts.utils_plot import _save_fig
 
@@ -29,11 +29,10 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # Plot settings
     c_rel = cfg.COLOR_DIC['normalized']
-    c_rel2 = cfg.COLOR_DIC['normalized2']
+    c_rel2 = '#136f53'
     c_abs = cfg.COLOR_DIC['absolute']
-    c_abs2 = cfg.COLOR_DIC['absolute2']
+    c_abs2 = '#4b4785'
     c_per = cfg.COLOR_DIC['periodic']
-    plot_peak_power = False
 
     # %% Simulation parameters
 
@@ -53,7 +52,7 @@ def simulate_all(fig_dir=None, output_file=None):
     theta_power = .6
     theta_width = 2
     theta = (theta_freq, theta_power, theta_width)
-    beta_strong = (beta_freq, beta_normal_power * .68, beta_normal_width * .68)
+    beta_strong = (beta_freq, beta_normal_power * .79, beta_normal_width * .79)
 
     beta_narrow = (beta_freq,
                    beta_normal_power * 1.7,
@@ -73,24 +72,24 @@ def simulate_all(fig_dir=None, output_file=None):
 
     beta_normal_sim_ap, beta_normal_sim = elec_phys_signal(
         **aperiodic_params, periodic_params=[beta_normal]
-    )
+        )
     beta_theta_broad_sim = elec_phys_signal(
         **aperiodic_params, periodic_params=[theta, beta_normal]
-    )[1]
+        )[1]
     beta_narrow_sim = elec_phys_signal(**aperiodic_params,
                                        periodic_params=[beta_narrow])[1]
     beta_strong_sim = elec_phys_signal(**aperiodic_params,
                                        periodic_params=[beta_strong])[1]
     beta_large_offset_sim_ap, beta_large_offset_sim = elec_phys_signal(
         exponent=.8, offset=.83, nlv=1e-5, periodic_params=[beta_large_offset]
-    )
+        )
     beta_small_exponent_sim_ap, beta_small_exponent_sim = elec_phys_signal(
         exponent=sim_exponent_small, offset=.4, nlv=1e-5,
         periodic_params=[beta_small_exponent]
-    )
+        )
     beta_low_sim_ap, beta_low_sim = elec_phys_signal(
         exponent=.8, offset=.4, nlv=1e-5, periodic_params=[beta_low]
-    )
+        )
 
     # Create reasonable uV^2/Hz units
     scaling_factor = 50000
@@ -101,7 +100,6 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_large_offset_sim *= scaling_factor
     beta_low_sim *= scaling_factor
     beta_low_sim_ap *= scaling_factor
-    # beta_low2_sim *= scaling_factor
     beta_small_exponent_sim *= scaling_factor
     beta_large_offset_sim_ap *= scaling_factor
     beta_small_exponent_sim_ap *= scaling_factor
@@ -127,7 +125,6 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # %% Fit FOOOF
     beta_borders = cfg.BANDS['beta_low']
-    theta_borders = cfg.BANDS['theta']
     beta_low_borders = cfg.BANDS['beta_low']
     beta_high_borders = cfg.BANDS['beta_high']
 
@@ -137,54 +134,57 @@ def simulate_all(fig_dir=None, output_file=None):
     fm.fit(freqs, beta_normal_sim, fit_range)
     kwargs = dict(band=beta_borders, select_highest=True)
     cf, beta_normal_sim_per_pwr_max, _ = get_band_peak(fm, **kwargs)
-    if not plot_peak_power:
-        beta_mask_fm = ((fm.freqs >= beta_borders[0])
-                        & (fm.freqs <= beta_borders[1]))
-        beta_normal_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    beta_mask_fm = ((fm.freqs >= beta_borders[0])
+                    & (fm.freqs <= beta_borders[1]))
+    beta_normal_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
 
     # Get aperidiodic power at peak frequency
     freq_idx = np.argmin(np.abs(fm.freqs - cf))
     ap_pwr = fm._ap_fit[freq_idx]
 
     fm.fit(freqs, beta_theta_broad_sim, fit_range)
-    if not plot_peak_power:
-        beta_theta_broad_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    beta_theta_broad_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
     fm.fit(freqs, beta_narrow_sim, fit_range)
-    if not plot_peak_power:
-        beta_narrow_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    beta_narrow_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
     fm.fit(freqs, beta_strong_sim, fit_range)
-    if not plot_peak_power:
-        beta_strong_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    beta_strong_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
     fm.fit(freqs, beta_large_offset_sim, fit_range)
     cf, beta_large_offset_per_pwr_max, _ = get_band_peak(fm, **kwargs)
-    if not plot_peak_power:
-        beta_large_offset_per_pwr = fm._peak_fit[beta_mask_fm].mean()
-        fm_per_large_offset = 10**fm.modeled_spectrum_[beta_mask_fm]
+    beta_large_offset_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    fm_per_large_offset = 10**fm.modeled_spectrum_[beta_mask_fm]
     ap_pwr_large = fm._ap_fit[freq_idx]
 
     kwargs_high = kwargs.copy()
     kwargs_high['band'] = beta_high_borders
     fm.fit(freqs, beta_low_sim, fit_range)
     cf, beta_low_sim_per_pwr_max, _ = get_band_peak(fm, **kwargs)
-    if not plot_peak_power:
-        beta_low_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
-        fm_per_low = 10**fm.modeled_spectrum_[beta_mask_fm]
+    beta_low_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    fm_per_low = 10**fm.modeled_spectrum_[beta_mask_fm]
     freq_idx = np.argmin(np.abs(fm.freqs - cf))
     ap_pwr_low = fm._ap_fit[freq_idx]
 
     fm.fit(freqs, beta_small_exponent_sim, fit_range)
     cf, beta_small_exponent_sim_per_pwr_max, _ = get_band_peak(fm, **kwargs)
-    if not plot_peak_power:
-        beta_small_exponent_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
-        fm_per_small_exponent = 10**fm.modeled_spectrum_[beta_mask_fm]
+    beta_small_exponent_sim_per_pwr = fm._peak_fit[beta_mask_fm].mean()
+    fm_per_small_exponent = 10**fm.modeled_spectrum_[beta_mask_fm]
     freq_idx = np.argmin(np.abs(fm.freqs - cf))
     ap_pwr_small_exponent = fm._ap_fit[freq_idx]
 
+    # %% Normalize
+
+    # Normalize
+    beta_normal_sim_norm = _normalize(beta_normal_sim, freqs)
+    beta_theta_broad_sim_norm = _normalize(beta_theta_broad_sim, freqs)
+    beta_narrow_sim_norm = _normalize(beta_narrow_sim, freqs)
+    beta_strong_sim_norm = _normalize(beta_strong_sim, freqs)
+    beta_large_offset_sim_norm = _normalize(beta_large_offset_sim, freqs)
+    beta_low_sim_norm = _normalize(beta_low_sim, freqs)
+    beta_small_exponent_sim_norm = _normalize(beta_small_exponent_sim, freqs)
     # %% Shrink data
 
     # Mask relevant frequency range
-    highpass = 2
-    lowpass = 35
+    highpass = 3
+    lowpass = 40
     filt = (freqs >= highpass) & (freqs <= lowpass)
 
     # Mask above highpass and below lowpass
@@ -200,31 +200,23 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_small_exponent_sim_ap = beta_small_exponent_sim_ap[filt]
     beta_large_offset_sim_ap = beta_large_offset_sim_ap[filt]
     beta_normal_sim_ap = beta_normal_sim_ap[filt]
-
-    # %% Normalize
-
-    # Normalize
-    beta_normal_sim_norm = _normalize(beta_normal_sim, freqs)
-    beta_theta_broad_sim_norm = _normalize(beta_theta_broad_sim, freqs)
-    beta_narrow_sim_norm = _normalize(beta_narrow_sim, freqs)
-    beta_strong_sim_norm = _normalize(beta_strong_sim, freqs)
-    beta_large_offset_sim_norm = _normalize(beta_large_offset_sim, freqs)
-    beta_low_sim_norm = _normalize(beta_low_sim, freqs)
-    beta_small_exponent_sim_norm = _normalize(beta_small_exponent_sim, freqs)
+    beta_normal_sim_norm = beta_normal_sim_norm[filt]
+    beta_theta_broad_sim_norm = beta_theta_broad_sim_norm[filt]
+    beta_narrow_sim_norm = beta_narrow_sim_norm[filt]
+    beta_strong_sim_norm = beta_strong_sim_norm[filt]
+    beta_large_offset_sim_norm = beta_large_offset_sim_norm[filt]
+    beta_small_exponent_sim_norm = beta_small_exponent_sim_norm[filt]
+    beta_low_sim_norm = beta_low_sim_norm[filt]
 
     # %% Band power calculation
 
     beta_mask = (freqs >= beta_borders[0]) & (freqs < beta_borders[1])
-    theta_mask = (freqs >= theta_borders[0]) & (freqs < theta_borders[1])
     beta_low_mask = ((freqs >= beta_low_borders[0])
                      & (freqs < beta_low_borders[1]))
     beta_mask = beta_low_mask
 
     # Absolute power
-    if plot_peak_power:
-        func = np.max
-    else:
-        func = np.mean
+    func = np.mean
     beta_normal_sim_pwr = func(beta_normal_sim[beta_mask])
     beta_theta_broad_sim_pwr = func(beta_theta_broad_sim[beta_mask])
     beta_narrow_sim_pwr = func(beta_narrow_sim[beta_mask])
@@ -241,10 +233,10 @@ def simulate_all(fig_dir=None, output_file=None):
     beta_strong_sim_norm_pwr = func(beta_strong_sim_norm[beta_mask])
     beta_large_offset_sim_norm_pwr = func(
         beta_large_offset_sim_norm[beta_mask]
-    )
+        )
     beta_small_exponent_sim_norm_pwr = func(
         beta_small_exponent_sim_norm[beta_mask]
-    )
+        )
 
     beta_low_sim_norm_pwr = func(beta_low_sim_norm[beta_low_mask])
     beta_normal_sim_per_pwr = (10**(beta_normal_sim_per_pwr + ap_pwr)
@@ -287,7 +279,7 @@ def simulate_all(fig_dir=None, output_file=None):
     msg = ('Max. Beta must be same in both conds but is '
            f'{beta_low_sim_per_pwr_max - beta_large_offset_per_pwr_max:.2f}')
     assert np.allclose(beta_low_sim_per_pwr_max, beta_large_offset_per_pwr_max,
-                       atol=0.02), msg
+                       atol=0.01), msg
     msg = ('Mean Beta must be same in both conds but is '
            f'{beta_low_sim_per_pwr - beta_large_offset_per_pwr:.2f}')
     assert np.allclose(beta_low_sim_per_pwr, beta_large_offset_per_pwr,
@@ -312,33 +304,37 @@ def simulate_all(fig_dir=None, output_file=None):
 
     xticks = XTICKS_FREQ_low
     xticklabels = ['', 4, '', 13, 20, 30, 45]
+    lw1 = 1
+    lw2 = .5
+    lw3 = .7
+    lw_tiny = .2
+    lw1_per = .7
+    lw2_per = .4
 
     # %% Theta increased
-
-    fig, axes = plt.subplots(1, 2, figsize=(1.75, 1), sharey=False)
+    figsize = (1.65, .9)
+    fig, axes = plt.subplots(1, 2, figsize=figsize, sharey=False)
 
     # Spectra
     ax = axes[0]
-    ax.plot(freqs, beta_normal_sim, c_abs, label='spec 1')
-    ax.plot(freqs, beta_theta_broad_sim, c_abs2, ls='--', label='spec 2')
+    ax.plot(freqs, beta_normal_sim, c_abs, label='spec 1', lw=lw1)
+    ax.plot(freqs, beta_theta_broad_sim, 'w', lw=lw3)
+    ax.plot(freqs, beta_theta_broad_sim, c_abs2, label='spec 2',
+            lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_normal_sim_pwr, '.', color=c_abs, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_normal_sim_pwr, beta_normal_sim_pwr], '-',
-                color=c_abs, markersize=1)
-        ax.plot(beta_borders, [beta_theta_broad_sim_pwr,
-                               beta_theta_broad_sim_pwr], '--', color=c_abs2,
-                markersize=1)
+    y_data = [beta_normal_sim_pwr, beta_normal_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs, markersize=1, lw=lw1)
+    y_data = [beta_theta_broad_sim_pwr, beta_theta_broad_sim_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_theta_broad_sim_pwr, beta_theta_broad_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_abs)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Absolute 'r'[$\mu V^2/Hz$]', y=.95)
     ax.set_label(None)
-    ax.set_xlim([highpass, lowpass])
-    ax.legend(loc='upper right', handlelength=1, borderaxespad=0.3)
+    ax.set_xlim([highpass, 35])
+    ax.legend(loc='upper right', borderaxespad=0.3, handlelength=1)
     ax.set_yticks(yticks_abs)
     ax.tick_params(axis='y', length=0, pad=1)
 
@@ -349,32 +345,24 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # Spectra Normalized
     ax = axes[1]
-    ax.plot(freqs, beta_normal_sim_norm, c_rel, label='PSD 1')
-    ax.plot(freqs, beta_theta_broad_sim_norm, c_rel2, ls='--', label='PSD 2')
+    ax.plot(freqs, beta_normal_sim_norm, c_rel, label='PSD 1', lw=lw1)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_normal_sim_norm_pwr, '.', color=c_rel,
-                markersize=1)
-        ax.plot(beta_freq, beta_theta_broad_sim_norm_pwr, '.', color=c_rel2,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_normal_sim_norm_pwr, beta_theta_broad_sim_norm_pwr], '-',
-                color=c_rel, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_normal_sim_norm_pwr,
-                               beta_normal_sim_norm_pwr], '-', color=c_rel,
-                markersize=1)
-        ax.plot(beta_borders, [beta_theta_broad_sim_norm_pwr,
-                               beta_theta_broad_sim_norm_pwr], '--',
-                color=c_rel2, markersize=1)
+    y_data = [beta_normal_sim_norm_pwr, beta_normal_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel, markersize=1, lw=lw1)
+
+    ax.plot(freqs, beta_theta_broad_sim_norm, 'w', lw=lw3)
+    ax.plot(freqs, beta_theta_broad_sim_norm, c_rel2, label='PSD 2', lw=lw2)
+
+    y_data = [beta_theta_broad_sim_norm_pwr, beta_theta_broad_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_theta_broad_sim_norm_pwr, beta_theta_broad_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_norm)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Relative [%]', y=.96)
     ax.set_label(None)
-    ax.set_xlim([highpass, lowpass])
+    ax.set_xlim([highpass, 35])
     ax.set_yticks(yticks_norm)
     ax.yaxis.tick_right()
     ax.tick_params(axis='y', length=0, pad=1)
@@ -392,26 +380,26 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # %% Vary Peak width
 
-    fig, axes = plt.subplots(1, 2, figsize=(1.75, 1), sharey=False)
+    fig, axes = plt.subplots(1, 2, figsize=figsize, sharey=False)
 
     # Spectra
     ax = axes[0]
-    ax.plot(freqs, beta_narrow_sim, c_abs, label='spec1')
-    ax.plot(freqs, beta_strong_sim, c_abs2, ls='--', label='spec2')
+    ax.plot(freqs, beta_narrow_sim, c_abs, label='spec1', lw=lw1)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_strong_sim_pwr, '.', color=c_abs, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_narrow_sim_pwr, beta_narrow_sim_pwr], '-',
-                color=c_abs, markersize=1)
-        ax.plot(beta_borders, [beta_strong_sim_pwr, beta_strong_sim_pwr], '--',
-                color=c_abs2, markersize=1)
+    y_data = [beta_narrow_sim_pwr, beta_narrow_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs, markersize=1, lw=lw1)
+
+    ax.plot(freqs, beta_strong_sim, 'w', lw=lw3)
+    ax.plot(freqs, beta_strong_sim, c_abs2, label='spec2', lw=lw2)
+
+    y_data = [beta_strong_sim_pwr, beta_strong_sim_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_strong_sim_pwr, beta_strong_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_abs)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Absolute 'r'[$\mu V^2/Hz$]', y=.95)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_abs)
@@ -424,30 +412,20 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # Spectra Normalized
     ax = axes[1]
-    ax.plot(freqs, beta_narrow_sim_norm, c_rel, label='PSD 1')
-    ax.plot(freqs, beta_strong_sim_norm, c_rel2, ls='--', label='PSD 2')
+    ax.plot(freqs, beta_narrow_sim_norm, c_rel, label='PSD 1', lw=lw1)
+    ax.plot(freqs, beta_strong_sim_norm, 'w', lw=lw3)
+    ax.plot(freqs, beta_strong_sim_norm, c_rel2, label='PSD 2', lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_narrow_sim_norm_pwr, '.', color=c_rel,
-                markersize=1)
-        ax.plot(beta_freq, beta_strong_sim_norm_pwr, '.', color=c_rel2,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_narrow_sim_norm_pwr, beta_strong_sim_norm_pwr], '-',
-                color=c_rel, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_narrow_sim_norm_pwr,
-                               beta_narrow_sim_norm_pwr], '-', color=c_rel,
-                markersize=1)
-        ax.plot(beta_borders, [beta_strong_sim_norm_pwr,
-                               beta_strong_sim_norm_pwr], '--', color=c_rel2,
-                markersize=1)
+    y_data = [beta_narrow_sim_norm_pwr, beta_narrow_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel, markersize=1, lw=lw1)
+    y_data = [beta_strong_sim_norm_pwr, beta_strong_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_strong_sim_norm_pwr, beta_strong_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_norm)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Relative [%]', y=.96)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_norm)
@@ -466,57 +444,36 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # %% Elevated broadband
 
-    dotted_line = dict(color='dimgrey', lw=LINEWIDTH_AXES, ls=':')
-
-    fig, axes = plt.subplots(1, 2, figsize=(1.75, 1), sharey=False)
+    fig, axes = plt.subplots(1, 2, figsize=figsize, sharey=False)
 
     # Spectra
     ax = axes[0]
-    ax.plot(freqs, beta_low_sim_ap, 'k-', label=None, lw=0.05)
-    ax.plot(freqs, beta_low_sim, c_abs, label='spec1')
-    ax.plot(freqs, beta_large_offset_sim_ap, 'k-', label=None, lw=0.05)
-    ax.plot(freqs, beta_large_offset_sim, c_abs2, ls='--', label='spec2')
+    ax.plot(freqs, beta_low_sim_ap, 'k-', label=None, lw=lw_tiny)
+    ax.plot(freqs, beta_low_sim, c_abs, label='spec1', lw=lw1)
+    ax.plot(freqs, beta_large_offset_sim_ap, 'k-', label=None, lw=lw_tiny)
+    ax.plot(freqs, beta_large_offset_sim, 'w', lw=lw3)
+    ax.plot(freqs, beta_large_offset_sim, c_abs2, label='spec2',
+            lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_low_sim_pwr, '.', color=c_abs,
-                markersize=1)
-        ax.plot(beta_freq, beta_large_offset_sim_pwr, '.', color=c_abs,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_low_sim_pwr, beta_large_offset_sim_pwr], '-',
-                color=c_abs, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_low_sim_pwr, beta_low_sim_pwr], '-',
-                color=c_abs, markersize=1)
-        ax.plot(beta_borders, [beta_large_offset_sim_pwr,
-                               beta_large_offset_sim_pwr], '--', color=c_abs2,
-                markersize=1)
-        ax.plot(fm.freqs[beta_mask_fm], fm_per_low, '--', color=c_per)
-        ax.plot(fm.freqs[beta_mask_fm], fm_per_large_offset, '--', color=c_per)
+    y_data = [beta_low_sim_pwr, beta_low_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs, markersize=1, lw=lw1)
+    y_data = [beta_large_offset_sim_pwr, beta_large_offset_sim_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_large_offset_sim_pwr, beta_large_offset_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs2, markersize=1, lw=lw2)
+    ax.plot(fm.freqs[beta_mask_fm], fm_per_low, c_per, lw=lw1_per)
+    ax.plot(fm.freqs[beta_mask_fm], fm_per_large_offset, c_per,
+            lw=lw2_per)
     # Plot periodic power
-    if plot_peak_power:
-        x_freqs = np.array([beta_freq, beta_freq])
-        tot_pwr1 = ap_pwr + beta_low_sim_per_pwr
-        ax.plot(x_freqs, [ap_pwr, tot_pwr1], c_per, zorder=1)
-        shift = 5  # shift to left
-        x_freqs_shift = x_freqs - shift
-        tot_pwr2 = ap_pwr_large + beta_large_offset_per_pwr
-        ax.hlines(tot_pwr2, beta_freq - shift, beta_freq, **dotted_line)
-        ax.hlines(ap_pwr_large, beta_freq - shift, beta_freq, **dotted_line)
-    else:
-        freq1 = freq2 = beta_freq
-        ax.plot([freq1, freq1], [ap_pwr_low, fm_per_low.max()],
-                c_per, zorder=1)
-        ax.plot([freq2, freq2],
-                [ap_pwr_large,
-                 fm_per_large_offset[beta_borders[1] - beta_freq]], c_per,
-                zorder=1)
+    freq1 = freq2 = beta_freq
+    y_data = [ap_pwr_low, fm_per_low.max()]
+    ax.plot([freq1, freq1], y_data, c_per, lw=lw1_per)
+    y_data = [ap_pwr_large, fm_per_large_offset[beta_borders[1] - beta_freq]]
+    ax.plot([freq2, freq2], y_data, c_per, lw=lw1_per)
 
     # Axes
     ax.set_ylim(ylim_abs)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Absolute 'r'[$\mu V^2/Hz$]', y=.95)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_abs)
@@ -532,29 +489,20 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # Spectra Normalized
     ax = axes[1]
-    ax.plot(freqs, beta_low_sim_norm, c_rel, label='PSD 1')
-    ax.plot(freqs, beta_large_offset_sim_norm, c_rel2, ls='--', label='PSD 2')
+    ax.plot(freqs, beta_low_sim_norm, c_rel, label='PSD 1', lw=lw1)
+    ax.plot(freqs, beta_large_offset_sim_norm, 'w', lw=lw3)
+    ax.plot(freqs, beta_large_offset_sim_norm, c_rel2, label='PSD 2', lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_low_sim_norm_pwr, '.', color=c_rel,
-                markersize=1)
-        ax.plot(beta_freq, beta_large_offset_sim_norm_pwr, '.', color=c_rel2,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_low_sim_norm_pwr, beta_large_offset_sim_norm_pwr], '-',
-                color=c_rel, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_low_sim_norm_pwr, beta_low_sim_norm_pwr],
-                '-', color=c_rel, markersize=1)
-        ax.plot(beta_borders, [beta_large_offset_sim_norm_pwr,
-                               beta_large_offset_sim_norm_pwr], '--',
-                color=c_rel2, markersize=1)
+    y_data = [beta_low_sim_norm_pwr, beta_low_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel, markersize=1, lw=lw1)
+    y_data = [beta_large_offset_sim_norm_pwr, beta_large_offset_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_large_offset_sim_norm_pwr, beta_large_offset_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_norm)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Relative [%]', y=.96)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_norm)
@@ -568,62 +516,38 @@ def simulate_all(fig_dir=None, output_file=None):
 
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.05)
-    _save_fig(fig, join(fig_dir, "G1__sim_broadband_shift"), cfg.FIG_PAPER,
+    _save_fig(fig, join(fig_dir, "F1__sim_broadband_shift"), cfg.FIG_PAPER,
               bbox_inches=None, facecolor=(1, 1, 1, 0))
 
     # %% Reduced 1/f exponent
 
-    fig, axes = plt.subplots(1, 2, figsize=(1.75, 1), sharey=False)
+    fig, axes = plt.subplots(1, 2, figsize=figsize, sharey=False)
 
     # Spectra
     ax = axes[0]
-    ax.plot(freqs, beta_low_sim_ap, 'k-', label=None, lw=0.05)
-    ax.plot(freqs, beta_low_sim, c_abs, label='spec1')
-    ax.plot(freqs, beta_small_exponent_sim_ap, 'k-', label=None, lw=0.05)
-    ax.plot(freqs, beta_small_exponent_sim, c_abs2, ls='--', label='spec2')
+    ax.plot(freqs, beta_low_sim_ap, 'k-', label=None, lw=lw_tiny)
+    ax.plot(freqs, beta_low_sim, c_abs, label='spec1', lw=lw1)
+    ax.plot(freqs, beta_small_exponent_sim_ap, 'k-', label=None, lw=lw_tiny)
+    ax.plot(freqs, beta_small_exponent_sim, 'w', lw=lw3)
+    ax.plot(freqs, beta_small_exponent_sim, c_abs2, label='spec2', lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_low_sim_pwr, '.', color=c_abs, markersize=1)
-        ax.plot(beta_freq, beta_small_exponent_sim_pwr, '.', color=c_abs,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_low_sim_pwr, beta_small_exponent_sim_pwr], '-',
-                color=c_abs, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_low_sim_pwr, beta_low_sim_pwr], '-',
-                color=c_abs, markersize=1)
-        ax.plot(beta_borders, [beta_small_exponent_sim_pwr,
-                               beta_small_exponent_sim_pwr], '--',
-                color=c_abs2, markersize=1)
-        ax.plot(fm.freqs[beta_mask_fm], fm_per_low, '--', color=c_per)
-        ax.plot(fm.freqs[beta_mask_fm], fm_per_small_exponent, '--',
-                color=c_per)
+    y_data = [beta_low_sim_pwr, beta_low_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs, markersize=1, lw=lw1)
+    y_data = [beta_small_exponent_sim_pwr, beta_small_exponent_sim_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_small_exponent_sim_pwr, beta_small_exponent_sim_pwr]
+    ax.plot(beta_borders, y_data, c_abs2, markersize=1, lw=lw2)
+    ax.plot(fm.freqs[beta_mask_fm], fm_per_low, c_per, lw=lw1_per)
+    ax.plot(fm.freqs[beta_mask_fm], fm_per_small_exponent, c_per, lw=lw2_per)
 
-    # Plot periodic power
-    if plot_peak_power:
-        x_freqs = np.array([beta_freq, beta_freq])
-        tot_pwr1 = ap_pwr + beta_low_sim_per_pwr
-        ax.plot(x_freqs, [ap_pwr, tot_pwr1], c_per, zorder=1)
-        shift = 5  # shift to left
-        x_freqs -= shift
-        tot_pwr2 = ap_pwr_small_exponent + beta_small_exponent_sim_per_pwr
-        ax.plot(x_freqs_shift, [ap_pwr_small_exponent, tot_pwr2], c_per,
-                ls='--', zorder=1)
-        ax.hlines(tot_pwr2, beta_freq - shift, beta_freq, **dotted_line)
-        ax.hlines(ap_pwr_small_exponent, beta_freq - shift, beta_freq,
-                  **dotted_line)
-    else:
-        ax.plot([beta_freq, beta_freq], [ap_pwr_low, fm_per_low.max()], c_per,
-                zorder=1)
-        ax.plot([beta_freq, beta_freq],
-                [ap_pwr_small_exponent, fm_per_small_exponent.max()], c_per,
-                zorder=1)
+    y_data = [ap_pwr_low, fm_per_low.max()]
+    ax.plot([beta_freq, beta_freq], y_data, c_per, lw=lw1_per)
+    y_data = [ap_pwr_small_exponent, fm_per_small_exponent.max()]
+    ax.plot([beta_freq, beta_freq], y_data, c_per, lw=lw1_per)
 
     # Axes
     ax.set_ylim(ylim_abs)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Absolute 'r'[$\mu V^2/Hz$]', y=.95)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_abs)
@@ -640,30 +564,22 @@ def simulate_all(fig_dir=None, output_file=None):
 
     # Spectra Normalized
     ax = axes[1]
-    ax.plot(freqs, beta_low_sim_norm, c_rel, label='PSD 1')
-    ax.plot(freqs, beta_small_exponent_sim_norm, c_rel2, ls='--',
-            label='PSD 2')
+    ax.plot(freqs, beta_low_sim_norm, c_rel, label='PSD 1', lw=lw1)
+    ax.plot(freqs, beta_small_exponent_sim_norm, 'w', lw=lw3)
+    ax.plot(freqs, beta_small_exponent_sim_norm, c_rel2, label='PSD 2', lw=lw2)
 
-    if plot_peak_power:
-        # Plot absolute peak power
-        ax.plot(beta_freq, beta_low_sim_norm_pwr, '.', color=c_rel,
-                markersize=1)
-        ax.plot(beta_freq, beta_small_exponent_sim_norm_pwr, '.', color=c_rel2,
-                markersize=1)
-        ax.plot([beta_freq, beta_freq],
-                [beta_low_sim_norm_pwr, beta_small_exponent_sim_norm_pwr], '-',
-                color=c_rel, markersize=1)
-    else:
-        ax.plot(beta_borders, [beta_low_sim_norm_pwr, beta_low_sim_norm_pwr],
-                '-', color=c_rel, markersize=1)
-        ax.plot(beta_borders, [beta_small_exponent_sim_norm_pwr,
-                               beta_small_exponent_sim_norm_pwr], '--',
-                color=c_rel2, markersize=1)
+    y_data = [beta_low_sim_norm_pwr, beta_low_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel, markersize=1, lw=lw1)
+    y_data = [beta_small_exponent_sim_norm_pwr,
+              beta_small_exponent_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, 'w', markersize=1, lw=lw3)
+    y_data = [beta_small_exponent_sim_norm_pwr,
+              beta_small_exponent_sim_norm_pwr]
+    ax.plot(beta_borders, y_data, c_rel2, markersize=1, lw=lw2)
 
     # Axes
     ax.set_ylim(ylim_norm)
     ax.set_xticks(xticks, labels=xticklabels)
-    ax.set_title('Relative [%]', y=.96)
     ax.set_label(None)
     ax.set_xlim([highpass, lowpass])
     ax.set_yticks(yticks_norm)
@@ -677,6 +593,5 @@ def simulate_all(fig_dir=None, output_file=None):
 
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.05)
-    _save_fig(fig, join(fig_dir, "G2__sim_exponent_beta"),
-              cfg.FIG_PAPER, bbox_inches=None,
-              facecolor=(1, 1, 1, 0))
+    _save_fig(fig, join(fig_dir, "F2__sim_exponent_beta"), cfg.FIG_PAPER,
+              bbox_inches=None, facecolor=(1, 1, 1, 0))

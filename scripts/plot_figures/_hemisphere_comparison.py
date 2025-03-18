@@ -5,7 +5,7 @@ import matplotlib.ticker as mtick
 import seaborn as sns
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import FONTSIZE_ASTERISK
 from scripts.utils_plot import _axes2d, _save_fig, _stat_anno
 
 
@@ -81,37 +81,41 @@ def normalized_bands_by_hemisphere(df_norm, fig_dir='Figure_S7', prefix=''):
                           & df_norm.dominant_side_consistent))]
 
     conds = ['off', 'on']
-    yvals = ['alpha_beta_abs_mean', 'alpha_abs_mean',
-             'beta_low_abs_mean', 'beta_high_abs_mean',
+    yvals = ['alpha_beta_abs_mean', 'beta_low_abs_mean', 'beta_high_abs_mean',
              'gamma_abs_mean']
     n_rows = len(conds)
     n_col = len(yvals)
     severity = ['severe side', 'mild side']
 
-    fig, axes = plt.subplots(n_rows, n_col, figsize=(4.4, 1.5), sharey=False,
+    fig, axes = plt.subplots(n_rows, n_col, figsize=(3, 1.5), sharey='col',
                              sharex=True)
     axes = _axes2d(axes, n_rows, n_col)
     for row, cond in enumerate(conds):
 
         x = f"patient_symptom_dominant_side_BR_{cond}"
         df_plot = df_norm[(df_norm.cond == cond)]
-        # df_plot = df[(df.cond == cond)]
 
         for col, y in enumerate(yvals):
             ax = axes[row, col]
-            # sns.stripplot(df_cond, y=y, x=hemi, ax=ax, size=1)
             kind = 'normalized' if row == 0 else 'normalized2'
             sns.pointplot(df_plot, y=y, x=x, ax=ax, color=cfg.COLOR_DIC[kind],
-                          order=severity,
-                          errorbar=('ci', 95))
-            _stat_anno(ax, df_plot, x, y, fontsize=FONTSIZE_ASTERISK)
+                          order=severity, errorbar=('ci', 95))
 
             if row == 0:
                 ax.set_title(cfg.PLOT_LABELS_SHORT[y].replace(' mean', ''))
             ax.set_ylabel(None)
             ax.set_xlabel(None)
+
+            ymin, ymax = ax.get_ylim()
+            ymin = round(ymin, 1)
+            ymax = round(ymax, 1)
+            yticks = [ymin, ymax]
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticks)
+
             ax.set_xticks([0, 1], ['More', 'Less'])
             ax.set_xlim(-.5, 1.5)
+            _stat_anno(ax, df_plot, x, y, fontsize=FONTSIZE_ASTERISK)
         axes[row, 0].set_ylabel(cfg.COND_DICT[cond])
     fig.supxlabel('Affected hemisphere')
     fig.supylabel(r'Relative Power [%]')
@@ -128,14 +132,14 @@ def periodic_bands_by_hemisphere(df_per, fig_dir='Figure_S7', prefix=''):
                       & df_per.dominant_side_consistent))]
 
     conds = ['off', 'on']
-    yvals = ['alpha_beta_fm_mean_log', 'alpha_fm_mean_log',
+    yvals = ['alpha_beta_fm_mean_log',
              'beta_low_fm_mean_log', 'beta_high_fm_mean_log',
              'gamma_fm_mean_log', 'full_fm_band_aperiodic_log']
     n_rows = len(conds)
     n_col = len(yvals)
     severity = ['severe side', 'mild side']
 
-    fig, axes = plt.subplots(n_rows, n_col, figsize=(4.4, 1.5), sharey=False,
+    fig, axes = plt.subplots(n_rows, n_col, figsize=(3, 1.5), sharey='col',
                              sharex=True)
     axes = _axes2d(axes, n_rows, n_col)
     for row, cond in enumerate(conds):
@@ -153,15 +157,24 @@ def periodic_bands_by_hemisphere(df_per, fig_dir='Figure_S7', prefix=''):
                 kind += '2'
             sns.pointplot(df_plot, y=y, x=x, ax=ax, color=cfg.COLOR_DIC[kind],
                           order=severity, errorbar=('ci', 95))
-            _stat_anno(ax, df_plot, x, y, fontsize=FONTSIZE_ASTERISK)
 
             if row == 0:
                 ax.set_title(cfg.PLOT_LABELS_SHORT[y].replace(' mean', ''))
             ax.set_ylabel(None)
             ax.set_xlabel(None)
-            ax.set_xticks([0, 1], ['More', 'Less'])
+
+            ymin, ymax = ax.get_ylim()
+            ymin = round(ymin, 1)
+            ymax = round(ymax, 1)
+            yticks = [ymin, ymax]
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticks)
+
+            ax.set_xticks([0, 1], ['More', 'Less'], rotation=35, ha='right')
             ax.set_xlim(-.5, 1.5)
+            _stat_anno(ax, df_plot, x, y, fontsize=FONTSIZE_ASTERISK)
         axes[row, 0].set_ylabel(cfg.COND_DICT[cond])
+
     fig.supxlabel('Affected hemisphere')
     fig.supylabel(r'Abs. Power [[log($\mu$V$^2/Hz$)]')
     plt.tight_layout()

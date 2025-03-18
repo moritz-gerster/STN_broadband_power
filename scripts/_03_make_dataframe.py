@@ -1233,7 +1233,8 @@ def _get_sweetspot_chs(mni_locs):
 
 
 def _litvak_mono_coords(subj_old):
-    lead_path = f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/meta_infos/lead_reconstruction"
+    lead_path = (f"{cfg.SOURCEDATA}/BIDS_Litvak_MEG_LFP/"
+                 "meta_infos/lead_reconstruction")
     sub_dir = subj_old.replace("subj", "S")
     file_path = join(lead_path, sub_dir, "ea_reconstruction.mat")
     mat_file = loadmat(file_path)["reco"]
@@ -1282,7 +1283,6 @@ def _litvak_mono_coords(subj_old):
 def _normalize_psd(psds, freqs, method="Neumann"):
     """Normalize PSDs according to Neumann et al. 2017 Clin. Neurophys."""
     if method == "Neumann":
-        # mask = ((freqs >= 5) & (freqs <= 45)) | ((freqs >= 55) & (freqs <= 95))
         mask = (freqs >= 5) & (freqs <= 95)  # simplify
         factor = 100  # percentage
     elif method == "Litvak":
@@ -1573,4 +1573,4 @@ def _add_minmax_noise(ch_dics):
 
 
 if __name__ == "__main__":
-    dataframe = psd_fooof_to_dataframe(recordings='Litvak')
+    dataframe = psd_fooof_to_dataframe()

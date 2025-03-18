@@ -4,7 +4,7 @@ import seaborn as sns
 
 from scripts.config import FIG_PAPER
 from scripts.plot_figures._power_spectra import plot_absolute_spectra
-from scripts.plot_figures.settings import get_dfs
+from scripts.plot_figures.settings import get_dfs, sns_darkgrid
 from scripts.utils_plot import (_dataset_dbs_models_leads,
                                 _mni_coords_datasets, _patient_symptoms_flat)
 
@@ -16,7 +16,7 @@ def supp_figure1(df_orig):
     df_abs = dataframes['df_abs']
     supp_figure1a(df)
     supp_figure1b()
-    with sns.axes_style('darkgrid'):
+    with sns.axes_style('darkgrid', rc=sns_darkgrid):
         supp_figure1c(df_abs)
     supp_figure1d(df)
 

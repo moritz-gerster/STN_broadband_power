@@ -6,13 +6,13 @@ import seaborn as sns
 from matplotlib.patches import Patch
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import FONTSIZE_ASTERISK
 from scripts.utils_plot import _save_fig, convert_pvalue_to_asterisks
 
 
 def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
-                        palette_barplot=None, prefix='',
-                        figsize=(2.5, 1)):
+                        palette_barplot=None, prefix='', xlabel=True,
+                        figsize=(1.9, 1.3), fontsize_stat=10, stat_height=0.8):
     kind = df_corrs.kind.unique()[0]
     band_cols = df_corrs.band_nme.unique()
     projects = [proj for proj in cfg.PROJECT_ORDER_SLIM
@@ -39,13 +39,12 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
 
     sns.barplot(**plot_all, **plot_kwargs)
     sns.barplot(**plot_single, **plot_kwargs)
-
     # add significance star for bars where pval < 0.05
     if len(ax.containers) > 2:
         bars_pooled = ax.containers[0]  # select all project
     else:
         bars_pooled = ax.containers
-    _, ymax = ax.get_ylim()
+    ymin, ymax = ax.get_ylim()
     for bar, band in zip(bars_pooled, band_cols):
         df_band = df_all[(df_all.band_nme == band)]
         pvalue = df_band.pval.values[0]
@@ -53,26 +52,31 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
         if isinstance(bar, list):
             bar = bar[0]
         x_bar = bar.get_x() + bar.get_width() / 2
-        ax.annotate(text, xy=(x_bar, ymax*.9), ha='center', va='bottom',
-                    fontsize=FONTSIZE_ASTERISK)
+        ax.annotate(text, xy=(x_bar, ymax*stat_height), ha='center',
+                    va='bottom', fontsize=fontsize_stat)
+    ax.set_ylim(ymin, ymax*1.12)
     xticklabels = []
     for xticklabel in df_all.band_nme.unique():
         xticklabels.append(xticklabel)
     ax.set_xticks(range(len(xticklabels)))
     ax.set_xticklabels(xticklabels)
-    ax.set_xlabel(None)
+    if xlabel:
+        xlabel = 'Frequency band'
+    else:
+        xlabel = None
+    ax.set_xlabel(xlabel, labelpad=1.5)
     corr_method = df_all.corr_method.unique()[0]
     y = df_corrs['y'].unique()[0]
     if y == 'patient_days_after_implantation':
         kind_str = 'Relative' if kind == 'normalized' else 'Absolute'
-        ylabel = f'{kind_str} power ~ days after surgery'
+        ylabel = f'{kind_str} power vs. days after surgery'
     elif corr_method == 'spearman':
         ylabel = r"$\rho$"
     elif corr_method == 'within':
         ylabel = r"$r_{rm}$"
     elif corr_method == 'withinRank':
         ylabel = r"$r_{\text{rank rm}}$"
-    if title:
+    if title True:
         ax.set_title(ylabel)
         unit_alone = r"$\rho$"
         ax.set_ylabel(unit_alone)
@@ -83,11 +87,8 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
     cond = df_all.cond.unique()[0]
     updrs = df_all.y.unique()[0]
     pwr_kind = df_all.pwr_kind.unique()[0]
-    n_perm = df_corrs.n_perm.unique()[0]
-    fname = (
-        f'{prefix}band_UPDRS_{kind}_{cond}_{updrs}_{corr_method}_{pwr_kind}_'
-        f'nperm={n_perm}'
-    )
+    fname = (f'{prefix}band_UPDRS_{kind}_{cond}_'
+             f'{updrs}_{corr_method}_{pwr_kind}')
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/{fname}', cfg.FIG_PAPER,
               transparent=True, bbox_inches=None)
@@ -99,8 +100,8 @@ def barplot_UPDRS_periodic(df_corrs, save_dir='Figure5'):
     cond = df_corrs.cond.unique()[0]
     palette = [(sns.color_palette()[0])] + list(sns.color_palette("flare", 3))
 
-    fig, ax = plt.subplots(1, 1, figsize=((len(band_cols)) / 16, .4),
-                           sharey=True)
+    figsize = ((len(band_cols)) / 16, .4)
+    _, ax = plt.subplots(1, 1, figsize=figsize, sharey=True)
 
     plot_kwargs = {'ax': ax, 'x': 'band_nme', 'y': 'rho', "order": band_cols,
                    'legend': False, 'data': df_corrs, 'width': 0.6,
@@ -152,8 +153,8 @@ def barplot_UPDRS_periodic(df_corrs, save_dir='Figure5'):
 def export_legend(save_dir, band_cols, palette, fname):
     handles = [Patch(color=color) for color in palette]
     labels = [band_nme for band_nme in band_cols]
-    legend = plt.legend(handles, labels, loc=3, framealpha=1,
-                            frameon=True, ncol=1)
+    legend = plt.legend(handles, labels, loc=3, framealpha=1, frameon=True,
+                        ncol=1)
     fig = legend.figure
     fig.canvas.draw()
     bbox = legend.get_window_extent().transformed(

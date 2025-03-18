@@ -1,5 +1,3 @@
-from os.path import join
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -7,19 +5,19 @@ import seaborn as sns
 
 import scripts.config as cfg
 from scripts.corr_stats import compare_corrs_perm, independent_corr
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import CI, LINEWIDTH_PLOT, N_PERM_CORR
 from scripts.utils_plot import (_corr_results, _plot_legend, _save_fig,
                                 convert_pvalue_to_asterisks)
 
 
-def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
+def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6',
+                            output_file=None):
     band = df_corr['band'].iloc[0]
-    n_perm = df_corr['n_perm'].iloc[0]
-    fig_name = f'{fig_dir}/sweetspot_{band}_off_corr_nperm={n_perm}.pdf'
+    fig_name = f'{fig_dir}/sweetspot_{band}_off_corr.pdf'
     kinds = list(df_corr['kind'].unique())
     colors = df_corr['colors'].unique()
 
-    fig, ax = plt.subplots(1, 1, figsize=(2, 1.7))
+    fig, ax = plt.subplots(1, 1, figsize=(2.75, 1.7))
     ci_arr = np.array([
         [df_corr['ci'][0][0] - df_corr['rho'][0],
          df_corr['ci'][1][0] - df_corr['rho'][1],
@@ -35,7 +33,7 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
                color=colors)
     else:
         ax.bar(x=kinds, height=df_corr['rho'], color=colors)
-    ax.set_xticklabels([cfg.PLOT_LABELS[kind] for kind in kinds])
+    ax.set_xticklabels([cfg.PLOT_LABELS[kind] for kind in kinds], fontsize=8)
 
     # add significance star for bars where pval < 0.05
     if add_ci:
@@ -51,7 +49,7 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
         text = convert_pvalue_to_asterisks(pvalue)
         x_bar = bar.get_x() + bar.get_width() / 2
         ax.annotate(text, xy=(x_bar, ymax - y_buffer), ha='center', va='top',
-                    fontsize=FONTSIZE_ASTERISK)
+                    fontsize=10)
 
     pval_norm_abs = df_corr['pval_norm_abs'].iloc[0]
     pval_abs_per = df_corr['pval_abs_per'].iloc[0]
@@ -71,7 +69,7 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
 
         # Determine the y position for the line and asterisk
         y_line = height_stat + 1.5*y_buffer  # Add some offset for the line
-        y_text = y_line - y_buffer/2  # Add a little more offset for  asterisks
+        y_text = y_line - y_buffer/4  # Add a little more offset for  asterisks
 
         # Draw the line connecting the two bars
         ax.plot([x1, x1, x2, x2],
@@ -83,22 +81,19 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
 
         # Place the text above the line
         ax.text((x1 + x2) / 2, y_text, text, ha='center', va='bottom',
-                fontsize=FONTSIZE_ASTERISK)
+                fontsize=10)
 
     # starbars.draw_annotation(annotations)
-    ax.set_ylabel(r'Spearmans $\rho$')
+    ax.set_ylabel(r'Spearmans $\rho$', fontsize=7.5)
     ax.invert_yaxis()
-    title = (f'{cfg.BAND_NAMES_GREEK[band]} power {cfg.COND_DICT['off']}'
-             ' ~ sweet spot distance')
-    ax.set_title(title)
+    ax.tick_params(axis='y', labelsize=7)
     sns.despine()
     ax.set_xlabel(None)
     plt.tight_layout()
     _save_fig(fig, fig_name, cfg.FIG_PAPER, bbox_inches=None,
               transparent=True)
 
-    output_file_path = join(cfg.FIG_PAPER, fig_dir, f"{fig_dir}___output.txt")
-    with open(output_file_path, "w") as output_file:
+    if output_file:
         print(f'pval_norm_abs: {pval_norm_abs}', file=output_file)
         print(f'pval_abs_per: {pval_abs_per}', file=output_file)
         print(f'pval_norm_per: {pval_norm_per}', file=output_file)
@@ -106,7 +101,7 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6'):
 
 def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                             add_units_xlabel=True, n_perm=N_PERM_CORR,
-                            pval_off_vs_on=False,
+                            pval_off_vs_on=False, output_file=None,
                             bands=['beta_low', 'beta_high']):
     # Get df
     if adjacent:
@@ -125,7 +120,7 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
     df = df[~df.ch_bad & df.cond.isin(['on', 'off'])
             & df.mni_x.notna() & df.ch.isin(bip_chs)
             & df.project.isin(['all'])]
-    df_norm = df[(df.psd_kind == 'normalized') & (df.fm_params is False)]
+    df_norm = df[(df.psd_kind == 'normalized') & (df.fm_params == False)]
     df_abs = df[(df.psd_kind == 'standard') & (df.fm_params == 'broad')
                 & df.fm_exponent.notna()]
     # equalize subjects for comparison
@@ -140,9 +135,11 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
 
     # Settings
     kinds = ['normalized', 'absolute', 'periodic']
-    color_dict = dict(off='k', on='grey')
+    color_dict = dict(off='k', on='dimgrey')
     y = 'sweet_spot_distance'
     for prefix, kind in enumerate(kinds, start=1):
+        if output_file:
+            print(f'{kind}:\n', file=output_file)
         df_kind = df_norm.copy() if kind == 'normalized' else df_abs.copy()
         pwr = '_fm_powers_max_log' if kind == 'periodic' else '_abs_max_log'
         if add_units_xlabel:
@@ -158,6 +155,8 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
         fig, axes = plt.subplots(1, len(bands), figsize=(2.2, 1.5),
                                  sharey=True)
         for i, band in enumerate(bands):
+            if output_file:
+                print(f'{band}:\n', file=output_file)
             pwr_col = band + pwr
             ax = axes[i]
             rhos = []
@@ -168,7 +167,7 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                 color_dict['off'] = cfg.BAND_COLORS[band]
             except KeyError:
                 color_dict['off'] = 'k'
-            for cond in ['off', 'on']:
+            for cond in ['on', 'off']:
                 ch_max = f'ch_chmax_{pwr_col}_{cond}'
                 df_plot = df_kind[df_kind[ch_max].fillna(False)]
                 df_plot = df_plot[df_plot.cond == cond]
@@ -176,7 +175,7 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                 sns.regplot(ax=ax, data=df_plot, x=pwr_col, y=y,
                             color=color_dict[cond], ci=CI,
                             scatter_kws=dict(s=8, alpha=1, edgecolor='k',
-                                             linewidths=.1),
+                                             linewidths=.2),
                             label=cfg.COND_DICT[cond],
                             line_kws=dict(linewidth=LINEWIDTH_PLOT),
                             marker='.')
@@ -197,6 +196,8 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                 rhos.append(rho)
                 sample_sizes.append(sample_size)
                 labels.append(label)
+                if output_file:
+                    print(f'{cond}: {label}', file=output_file)
                 weights.append(weight)
                 handles, _ = ax.get_legend_handles_labels()
             _plot_legend(ax, pwr_col, y, labels, weights, 'cond', rhos,
@@ -205,9 +206,13 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                          bbox_to_anchor=(-.125, 1.02, 1, 0.2),
                          corr_comparison=pval_off_vs_on)
             try:
-                ax.set_xlabel(cfg.BAND_NAMES_GREEK[band] + units)
+                ax.set_xlabel(cfg.BAND_NAMES_GREEK[band] + units, fontsize=6)
             except KeyError:
-                ax.set_xlabel(band + units)
+                ax.set_xlabel(band + units, fontsize=6)
+            if output_file:
+                print('\n', file=output_file)
+        if output_file:
+            print('\n', file=output_file)
 
         axes[0].set_ylabel(None)
         axes[1].set_ylabel(None)
@@ -215,7 +220,7 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
         plt.subplots_adjust(wspace=0.05)
         band_str = '_'.join(bands)
         fig_name = (f'{fig_dir}/{prefix}__sweetspot_correlation_'
-                    f'{band_str}_{kind}_nperm={n_perm}.pdf')
+                    f'{band_str}_{kind}.pdf')
         _save_fig(fig, fig_name, cfg.FIG_PAPER, transparent=True,
                   bbox_inches=None)
 
@@ -224,6 +229,9 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
         xvalues_kinds.append(xvals)
         yvalues_kinds.append(yvals)
         CIs.append(ci_high_beta_off)
+
+    if output_file:
+        print('\n\n', file=output_file)
 
     groupby = ['subject', 'ch_hemisphere']
     group = df[(df.cond == 'off') & df.fm_has_model].groupby(groupby)

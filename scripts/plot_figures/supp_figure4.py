@@ -10,7 +10,8 @@ from scripts.plot_figures._forrest_plot_datasets_correlation import \
     forest_plot_correlation
 from scripts.plot_figures._psd_clusters import plot_psd_by_severity_conds
 from scripts.plot_figures.settings import (BANDS, N_PERM_CORR, XTICKS_FREQ_low,
-                                           XTICKS_FREQ_low_labels, get_dfs)
+                                           XTICKS_FREQ_low_labels, get_dfs,
+                                           sns_darkgrid)
 from scripts.utils import get_correlation_df
 
 
@@ -20,11 +21,11 @@ def supp_figure4(df_orig):
     df_norm = df_norm[df_norm.cond == 'on']
     supp_figure4a(df_norm)
     supp_figure4b(df_norm)
-    with sns.axes_style('darkgrid'):
+    with sns.axes_style('darkgrid', rc=sns_darkgrid):
         supp_figure4c(dataframes)
         supp_figure4d(df_norm)
     supp_figure4e(df_norm)
-    with sns.axes_style('darkgrid'):
+    with sns.axes_style('darkgrid', rc=sns_darkgrid):
         supp_figure4f(dataframes)
         supp_figure4g(df_norm)
     supp_figure4h(df_norm)
@@ -35,9 +36,8 @@ def supp_figure4a(df_norm):
     bands = ['alpha_beta_abs_mean_log',
              'beta_abs_mean_log',
              'beta_low_abs_mean_log']
-    forest_plot_correlation(df_norm, bands, 'UPDRS_III',
-                            fig_dir='Figure_S4', prefix='A__',
-                            dataset_labels=True)
+    forest_plot_correlation(df_norm, bands, 'UPDRS_III', fig_dir='Figure_S4',
+                            prefix='A__', dataset_labels=True)
 
 
 def supp_figure4b(df_norm):
@@ -59,7 +59,7 @@ def supp_figure4c(dataframes):
                                    lateralized_updrs=False,
                                    color_by_kind=False,
                                    xmin=2, xmax=45, info_title=False,
-                                   figsize=(2, 1.3), fig_dir='Figure_S4',
+                                   figsize=(1.9, 1.3295), fig_dir='Figure_S4',
                                    xticks=XTICKS_FREQ_low,
                                    xticklabels=XTICKS_FREQ_low_labels,
                                    ylim=(0, 8), prefix='C__',
@@ -74,7 +74,7 @@ def supp_figure4f(dataframes):
         plot_psd_by_severity_conds(dataframes, 'normalized', ['on'],
                                    lateralized_updrs=True, color_by_kind=False,
                                    xmin=2, xmax=45, info_title=False,
-                                   figsize=(2, 1.3), fig_dir='Figure_S4',
+                                   figsize=(1.9, 1.3295), fig_dir='Figure_S4',
                                    xticks=XTICKS_FREQ_low,
                                    xticklabels=XTICKS_FREQ_low_labels,
                                    ylim=(0, 8), prefix='F__',
@@ -112,13 +112,12 @@ def supp_figure4e(df_norm):
     y = 'UPDRS_III'
     output_file_path = join(cfg.FIG_PAPER, 'Figure_S4', "E___output.txt")
     with open(output_file_path, "w") as output_file:
-        df_corr = get_correlation_df(df_norm, y,
-                                     n_perm=N_PERM_CORR,
+        df_corr = get_correlation_df(df_norm, y, n_perm=N_PERM_CORR,
                                      use_peak_power=True, bands=BANDS,
                                      output_file=output_file)
     df_corr['kind'] = 'normalized'
     barplot_UPDRS_bands(df_corr, fig_dir='Figure_S4', prefix='E__',
-                        figsize=(1.9, 1.3))
+                        fontsize_stat=8)
 
 
 def supp_figure4h(df_norm):
@@ -126,10 +125,9 @@ def supp_figure4h(df_norm):
     y = 'UPDRS_bradyrigid_contra'
     output_file_path = join(cfg.FIG_PAPER, 'Figure_S4', "H___output.txt")
     with open(output_file_path, "w") as output_file:
-        df_corr = get_correlation_df(df_norm, y,
-                                     n_perm=N_PERM_CORR,
+        df_corr = get_correlation_df(df_norm, y, n_perm=N_PERM_CORR,
                                      use_peak_power=True, bands=BANDS,
                                      output_file=output_file)
     df_corr['kind'] = 'normalized'
     barplot_UPDRS_bands(df_corr, fig_dir='Figure_S4', prefix='H__',
-                        figsize=(1.9, 1.3))
+                        fontsize_stat=8)

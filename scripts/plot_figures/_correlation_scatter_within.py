@@ -2,7 +2,8 @@ from os.path import join
 
 import matplotlib.pyplot as plt
 
-from scripts.plot_figures.settings import *
+import scripts.config as cfg
+from scripts.plot_figures.settings import N_PERM_CORR
 from scripts.utils_plot import _save_fig, plot_corr
 
 ylabel = 'Bradykinesia-rigidity'
@@ -55,7 +56,7 @@ def _correct_sample_size(df, x, y, repeated_m="subject"):
     return df
 
 
-def normalized_beta_within(df_norm, fig_dir='Figure7', prefix=''):
+def normalized_beta_within(df_norm, fig_dir='Figure7', prefix='', fontsize=6):
     df_norm = df_norm[~df_norm.project.isin(['all'])]
     df_norm_off = df_norm[df_norm.cond == 'off']
     df_norm_on = df_norm[df_norm.cond.isin(['on'])
@@ -79,6 +80,8 @@ def normalized_beta_within(df_norm, fig_dir='Figure7', prefix=''):
         n_perm=N_PERM_CORR,
         xlabel=r'Relative Low $\beta$ power [%]',
         add_sample_size=False,
+        scatter_kws=dict(size=15),
+        line_kws=dict(lw=.5),
         )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.5, 1.5))
@@ -86,6 +89,10 @@ def normalized_beta_within(df_norm, fig_dir='Figure7', prefix=''):
               **plot_kwargs)
     plot_corr(axes[1], df_norm_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
     axes[1].set_ylabel(None)
     plt.tight_layout()
     _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
@@ -117,7 +124,7 @@ def periodic_gamma_within(df_per, fig_dir='Figure7', prefix='',
         ylabel=ylabel,
         add_sample_size=True,
         subs_special=exemplary_subs,
-    )
+        )
 
     # figsize_single = (1.7, 1.34)
     fig, ax = plt.subplots(1, 1, sharey=True, figsize=figsize)
@@ -127,7 +134,7 @@ def periodic_gamma_within(df_per, fig_dir='Figure7', prefix='',
               bbox_inches=None, transparent=True)
 
 
-def absolute_gamma_within(df_abs, fig_dir='Figure8', prefix=''):
+def absolute_gamma_within(df_abs, fig_dir='Figure8', prefix='', fontsize=6):
     df_abs = df_abs[~df_abs.project.isin(['all'])]
     df_abs_off = df_abs[df_abs.cond == 'off']
     df_abs_on = df_abs[df_abs.cond.isin(['on'])
@@ -151,20 +158,24 @@ def absolute_gamma_within(df_abs, fig_dir='Figure8', prefix=''):
         xlabel=cfg.PLOT_LABELS[x],
         add_sample_size=False,
         subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
-    )
+        )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
     plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
               **plot_kwargs)
     plot_corr(axes[1], df_abs_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
     axes[1].set_ylabel(None)
     plt.tight_layout()
     _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
               bbox_inches=None, transparent=True)
 
 
-def aperiodic_within(df_per, fig_dir='Figure8', prefix=''):
+def aperiodic_within(df_per, fig_dir='Figure8', prefix='', fontsize=6):
     df_per = df_per[~df_per.project.isin(['all'])]
     df_per_off = df_per[df_per.cond == 'off']
     df_per_on = df_per[df_per.cond.isin(['on'])
@@ -185,16 +196,20 @@ def aperiodic_within(df_per, fig_dir='Figure8', prefix=''):
     plot_kwargs = dict(
         corr_method=corr_method,
         n_perm=N_PERM_CORR,
-        xlabel='Aperiodic power (1-60 Hz)',
+        xlabel='Aperiodic power',
         add_sample_size=False,
         subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
-    )
+        )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
     plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
               **plot_kwargs)
     plot_corr(axes[1], df_per_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
     axes[1].set_ylabel(None)
     plt.tight_layout()
     _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),

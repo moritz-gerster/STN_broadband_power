@@ -9,9 +9,9 @@ from scripts.plot_figures._correlation_by_frequencies import (
 from scripts.plot_figures._forrest_plot_datasets_correlation import \
     forest_plot_correlation
 from scripts.plot_figures._psd_clusters import plot_psd_by_severity_conds
-from scripts.plot_figures.settings import (BANDS, N_PERM_CORR,
-                                           XTICKS_FREQ_low,
-                                           XTICKS_FREQ_low_labels, get_dfs)
+from scripts.plot_figures.settings import (BANDS, N_PERM_CORR, XTICKS_FREQ_low,
+                                           XTICKS_FREQ_low_labels, get_dfs,
+                                           sns_darkgrid)
 from scripts.utils import get_correlation_df
 
 
@@ -21,11 +21,11 @@ def supp_figure3(df_orig):
     df_norm = df_norm[df_norm.cond == 'offon_abs']
     supp_figure3a(df_norm)
     supp_figure3b(df_norm)
-    with sns.axes_style('darkgrid'):
+    with sns.axes_style('darkgrid', rc=sns_darkgrid):
         supp_figure3c(dataframes)
         supp_figure3d(df_norm)
     supp_figure3e(df_norm)
-    with sns.axes_style('darkgrid'):
+    with sns.axes_style('darkgrid', rc=sns_darkgrid):
         supp_figure3f(dataframes)
         supp_figure3g(df_norm)
     supp_figure3h(df_norm)
@@ -36,9 +36,8 @@ def supp_figure3a(df_norm):
     bands = ['alpha_beta_abs_mean_log',
              'beta_abs_mean_log',
              'beta_low_abs_mean_log']
-    forest_plot_correlation(df_norm, bands, 'UPDRS_III',
-                            fig_dir='Figure_S3', prefix='A__',
-                            dataset_labels=True)
+    forest_plot_correlation(df_norm, bands, 'UPDRS_III', fig_dir='Figure_S3',
+                            prefix='A__', dataset_labels=True)
 
 
 def supp_figure3b(df_norm):
@@ -60,7 +59,7 @@ def supp_figure3c(dataframes):
                                    lateralized_updrs=False,
                                    color_by_kind=False,
                                    xmin=2, xmax=45, info_title=False,
-                                   figsize=(2, 1.3), fig_dir='Figure_S3',
+                                   figsize=(1.9, 1.3), fig_dir='Figure_S3',
                                    xticks=XTICKS_FREQ_low,
                                    xticklabels=XTICKS_FREQ_low_labels,
                                    ylim=(0, 8), prefix='C__',
@@ -75,7 +74,7 @@ def supp_figure3f(dataframes):
         plot_psd_by_severity_conds(dataframes, 'normalized', ['offon_abs'],
                                    lateralized_updrs=True, color_by_kind=False,
                                    xmin=2, xmax=45, info_title=False,
-                                   figsize=(2, 1.3), fig_dir='Figure_S3',
+                                   figsize=(1.9, 1.3), fig_dir='Figure_S3',
                                    xticks=XTICKS_FREQ_low,
                                    xticklabels=XTICKS_FREQ_low_labels,
                                    ylim=(0, 8), prefix='F__',
@@ -119,7 +118,7 @@ def supp_figure3e(df_norm):
                                      output_file=output_file)
     df_corr['kind'] = 'normalized'
     barplot_UPDRS_bands(df_corr, fig_dir='Figure_S3', prefix='E__',
-                        figsize=(1.9, 1.3))
+                        fontsize_stat=8)
 
 
 def supp_figure3h(df_norm):
@@ -133,4 +132,4 @@ def supp_figure3h(df_norm):
                                      output_file=output_file)
     df_corr['kind'] = 'normalized'
     barplot_UPDRS_bands(df_corr, fig_dir='Figure_S3', prefix='H__',
-                        figsize=(1.9, 1.3))
+                        fontsize_stat=8)

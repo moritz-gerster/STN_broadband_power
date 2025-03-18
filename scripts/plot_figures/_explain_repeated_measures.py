@@ -7,15 +7,75 @@ import pandas as pd
 import seaborn as sns
 from matplotlib.patches import Patch
 from pingouin import rm_corr
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import spearmanr
 from statsmodels.formula.api import ols
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
 from scripts.utils_plot import _save_fig
 
 
-def repeated_measures_toy_example(fig_dir='Figure6', prefix=''):
+def repeated_measures_simple(fig_dir='Figure1', prefix=''):
+    delta_y = 5
+    delta_x = 4
+    beta_powers = [0, delta_x, 10.5, 10+delta_x-2, 20, 20+delta_x+2]
+    updrs_scores = np.array([delta_y+1, 0, 10+delta_y, 10, 20+delta_y, 20])
+    hemispheres = ['L', 'R'] * 3
+    markers = ['o', 'v'] * 3
+    patient_list = ['1', '1', '2', '2', '3', '3']
+    dark = sns.color_palette("pastel")
+    colors = [dark[0], dark[0], dark[2], dark[2], dark[6], dark[6]]
+
+    df = pd.DataFrame({'beta_power': beta_powers, 'UPDRS': updrs_scores,
+                       'subject': patient_list,
+                       'marker': markers,
+                       'ch_hemisphere': hemispheres,
+                       'color': colors})
+
+    # calc repeated measures correlation
+    x = 'beta_power'
+    y = 'UPDRS'
+    subject = 'subject'
+    formula = f"Q('{y}') ~ C(Q('{subject}')) + Q('{x}')"
+    model = ols(formula, data=df).fit()
+    df["pred"] = model.fittedvalues
+
+    fig, ax = plt.subplots(1, 1, figsize=(1, 1))
+
+    for i, subject in enumerate(df.subject.unique()):
+        df_sub = df[df['subject'] == subject]
+        color = df_sub.color.values[0]
+        # Separate loop for each hemisphere to enable different markers
+        for hemi in df_sub.ch_hemisphere.unique():
+            df_sub_hemi = df_sub[df_sub['ch_hemisphere'] == hemi]
+            ax.scatter(df_sub_hemi['beta_power'], df_sub_hemi['UPDRS'],
+                       label=subject,
+                       marker=df_sub_hemi['marker'].values[0],
+                       color=color, s=12, zorder=0, edgecolors='k')
+        # Plot repeated measures correlation
+        label = r'$r_{rm}$' if i == 2 else None
+        sns.regplot(x=x, y="pred", data=df_sub, ax=ax, scatter=False,
+                    ci=None, truncate=True, label=label, color=color,
+                    line_kws=dict(linewidth=0.5, zorder=2))
+        sns.regplot(x=x, y="pred", data=df_sub, ax=ax, scatter=False,
+                    ci=None, truncate=True, label=label, color='k',
+                    line_kws=dict(linewidth=0.65, zorder=1))
+
+        # Plot linear regression across all data
+        coef = np.polyfit(df['beta_power'].values, df['UPDRS'].values, 1)
+        poly1d_fn = np.poly1d(coef)
+        ax.plot(df['beta_power'], poly1d_fn(df['beta_power']), 'k',
+                label='Lin. reg.', lw=.25, zorder=0)
+
+    ax.axis('off')
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.4)
+    save_dir = join(cfg.FIG_PAPER, fig_dir)
+    _save_fig(fig, f'{prefix}repeated_measures_simple_', save_dir,
+              bbox_inches=None, transparent=True)
+
+
+def repeated_measures_toy_example(fig_dir='Figure6', prefix='', fontsize=6):
     beta_powers = [1, 2, 3, 4.5, 5.8, 6.5]
     updrs_scores = [2, 2.7, 4, 3, 5.5, 6.5]
     hemispheres = ['L', 'R'] * 3
@@ -76,7 +136,7 @@ def repeated_measures_toy_example(fig_dir='Figure6', prefix=''):
 
     dfs = [df1, df2]
 
-    fig, axes = plt.subplots(1, 2, figsize=(2.6, 1.25), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(2.55, 1.25), sharey=True)
 
     for axi in range(2):
         ax = axes[axi]
@@ -106,8 +166,9 @@ def repeated_measures_toy_example(fig_dir='Figure6', prefix=''):
 
         # Set axis
         ax.set_ylabel(None)
-        ax.set_xlabel('Beta power [a.u.]')
+        ax.set_xlabel('Beta power [a.u.]', fontsize=fontsize)
         ax.set_ylim(1, 8)
+        ax.tick_params(axis='both', labelsize=fontsize)
 
     # Legend handles
     handles = [Patch(color=color) for color in df.color.unique()]
@@ -115,7 +176,7 @@ def repeated_measures_toy_example(fig_dir='Figure6', prefix=''):
     axes[0].legend(handles, labels, handlelength=1, ncol=3, title='Patient',
                    columnspacing=1, borderaxespad=0.2,
                    handletextpad=0.4, loc='upper left')
-    axes[0].set_ylabel('Bradykinesia-Rigidity')
+    axes[0].set_ylabel('Bradykinesia-Rigidity', fontsize=fontsize)
 
     more = mlines.Line2D([], [], color='k', marker='v', markersize=2, lw=0)
     less = mlines.Line2D([], [], color='k', marker='o', markersize=2, lw=0)

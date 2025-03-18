@@ -2,6 +2,7 @@
 import warnings
 from os.path import join
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pingouin as pg
 import seaborn as sns
@@ -9,7 +10,10 @@ from pte_stats import cluster, timeseries
 from scipy.stats import bootstrap
 
 import scripts.config as cfg
-from scripts.plot_figures.settings import *
+from scripts.plot_figures.settings import (BANDS, CI_SPECT, LINEWIDTH_AXES,
+                                           N_BOOT_COHEN, N_PERM_CLUSTER,
+                                           XTICKS_FREQ_low,
+                                           XTICKS_FREQ_low_labels)
 from scripts.utils_plot import (_add_band, _axes2d, _save_fig, cohen_d,
                                 equalize_x_and_y, explode_df)
 
@@ -93,12 +97,12 @@ def _plot_clusters_line(ax, times, clusters, cluster_count, height, color):
             continue
         lims = np.arange(index[0], index[-1] + 1)
         y_arr = np.ones((times[lims].shape[0], 1)) * height
-        ax.plot(times[lims], y_arr, color=color, lw=.5)
+        ax.plot(times[lims], y_arr, color=color, lw=1)
 
 
 def _mean_psds_ax(ax, df_proj, x, y, kind, hue,
                   add_bands=False, scale='log', fm_params=False,
-                  n_perm=10000, paired=True,
+                  n_perm=10000, paired=True, ylabel=True,
                   palette=None, xmin=2, xmax=45, output_file=None):
     proj = df_proj.project.unique()[0]
     proj_nme = df_proj.project_nme.unique()[0]
@@ -198,23 +202,24 @@ def _mean_psds_ax(ax, df_proj, x, y, kind, hue,
 
     _plot_clusters_line(ax, times, clusters, cluster_count, height, palette[0])
 
-    if proj == 'Neumann' or kind in ['absolute', 'periodic', 'lorentzian']:
-        if scale == 'linear':
-            if kind in ['normalized', 'relative']:
-                ylabel = "Normalized spectra\n[%]"
+    if ylabel:
+        if proj == 'Neumann' or kind in ['absolute', 'periodic', 'lorentzian']:
+            if scale == 'linear':
+                if kind in ['normalized', 'relative']:
+                    ylabel = "Normalized spectra "r"[$\%$]"
+                else:
+                    ylabel = 'Spectra 'r'[$\mu V^2/Hz$]'
             else:
-                ylabel = 'Spectra\n'r'[$\mu V^2/Hz$]'
-        else:
-            if kind in ['normalized', 'relative']:
-                ylabel = "Normalized spectra\n[log10(%)]"
-            else:
-                ylabel = 'Spectra\n'r'[$log10(\mu V^2/Hz)$]'
+                if kind in ['normalized', 'relative']:
+                    ylabel = "Normalized spectra\n[log10(%)]"
+                else:
+                    ylabel = 'Spectra 'r'[$log10(\mu V^2/Hz)$]'
     else:
         ylabel = None
     _add_band(add_bands, ax)
     if proj == 'all' or kind in ['normalized', 'relative']:
         ax.legend(handles, labels, loc='upper right', title=None,
-                  handlelength=1)
+                  handlelength=1, fontsize=6)
     else:
         ax.get_legend().remove()
     ax.set_ylabel(ylabel)
@@ -223,6 +228,7 @@ def _mean_psds_ax(ax, df_proj, x, y, kind, hue,
             ylim = (0, 10)
         else:
             ylim = (-.02, 1.2)
+            ax.set_yticks([0, .2, .4, .6, .8, 1, 1.2])
     ax.set_ylim(ylim)
     ax.set_xticks(XTICKS_FREQ_low)
     ax.set_xticklabels(XTICKS_FREQ_low_labels)
@@ -237,7 +243,7 @@ def _mean_psds_ax(ax, df_proj, x, y, kind, hue,
 def _forrest_plot_ax(ax, df_proj, kind, hue, bands=BANDS,
                      estimator='effect_size',
                      add_band_colors=False, scale='log', hue_order=None,
-                     paired=True, ylabel=True,
+                     paired=True, ylabel=True, height_star=1,
                      n_boot=10000, palette=None, output_file=None):
     proj = df_proj.project.unique()[0]
     proj_nme = df_proj.project_nme.unique()[0]
@@ -353,9 +359,9 @@ def _forrest_plot_ax(ax, df_proj, kind, hue, bands=BANDS,
             axes_coords = ax.transAxes.inverted().transform(display_coords)
             x_pos = axes_coords[0]
             # convert pval to asterisk
-            ax.text(x_pos, .927, '*', ha='center',
+            ax.text(x_pos, height_star, '*', ha='center', va='center',
                     transform=ax.transAxes,
-                    fontsize=FONTSIZE_ASTERISK, color='k')
+                    fontsize=9, color='k')
 
     ax.axhline(0, color="k", lw=LINEWIDTH_AXES)
 
@@ -385,8 +391,8 @@ def _forrest_plot_ax(ax, df_proj, kind, hue, bands=BANDS,
         ax.set_ylim([-1, 1])
     if ylabel:
         if hue == 'cond':
-            ylabel = (f'Power {cfg.COND_DICT['off']}-{cfg.COND_DICT['on']}'
-                      '\n[Cohen\'s d]')
+            ylabel = (f'Power {cfg.COND_DICT['off']}-{cfg.COND_DICT['on']} '
+                      r'[$d$]')
         else:
             ylabel = 'Severe - mild'
     else:
@@ -394,7 +400,9 @@ def _forrest_plot_ax(ax, df_proj, kind, hue, bands=BANDS,
     ax.set_ylabel(ylabel)
 
 
-def plot_normalized_spectra(df_norm, prefix=''):
+def plot_normalized_spectra(df_norm, fig_dir='Figure1', prefix='',
+                            n_perm_cluster=N_PERM_CLUSTER,
+                            n_boot_cohen=N_BOOT_COHEN):
     estimator = 'effect_size'
     kind = 'normalized'
     paired = True
@@ -408,10 +416,9 @@ def plot_normalized_spectra(df_norm, prefix=''):
     hue = 'cond'
     n_cols = len(projects)
     n_rows = 2
-    fig_x_size = 7 if n_cols > 1 else 1.5
+    fig_x_size = 7.16 if n_cols > 1 else 1.5
 
     # Create output directory
-    fig_dir = 'Figure1'
     output_dir = join(cfg.FIG_PAPER, fig_dir)
 
     # Open an output file for saving text logs
@@ -434,7 +441,7 @@ def plot_normalized_spectra(df_norm, prefix=''):
             df_proj, hue_order = _mean_psds_ax(ax, df_proj, freqs, psd, kind,
                                                hue, paired=paired,
                                                fm_params=fm_params,
-                                               n_perm=N_PERM_CLUSTER,
+                                               n_perm=n_perm_cluster,
                                                add_bands=bands, scale=scale,
                                                palette=palette,
                                                output_file=output_file)
@@ -442,7 +449,7 @@ def plot_normalized_spectra(df_norm, prefix=''):
             ylabel = True if i == 0 else False
             _forrest_plot_ax(ax, df_proj, kind, hue, estimator=estimator,
                              hue_order=hue_order, paired=paired,
-                             n_boot=N_BOOT_COHEN,
+                             n_boot=n_boot_cohen,
                              ylabel=ylabel, add_band_colors=bands, scale=scale,
                              palette=palette, output_file=output_file)
             sample_size_str = f' ({cfg.SAMPLE_STN}='f"{n_sample})"
@@ -455,7 +462,8 @@ def plot_normalized_spectra(df_norm, prefix=''):
                   transparent=False, bbox_inches=None)
 
 
-def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix=''):
+def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix='',
+                          n_perm=N_PERM_CLUSTER, n_boot=N_BOOT_COHEN):
     estimator = 'effect_size'
     kind = 'absolute'
     paired = True
@@ -469,7 +477,7 @@ def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix=''):
     hue = 'cond'
     n_cols = len(projects)
     n_rows = 2
-    fig_x_size = 7 if n_cols > 1 else 1.5
+    fig_x_size = 7.2 if n_cols > 1 else 1.5
 
     # Create output directory
     output_dir = join(cfg.FIG_PAPER, fig_dir)
@@ -494,7 +502,7 @@ def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix=''):
             df_proj, hue_order = _mean_psds_ax(ax, df_proj, freqs, psd, kind,
                                                hue, paired=paired,
                                                fm_params=fm_params,
-                                               n_perm=N_PERM_CLUSTER,
+                                               n_perm=n_perm,
                                                add_bands=bands, scale=scale,
                                                palette=palette,
                                                output_file=output_file)
@@ -502,7 +510,7 @@ def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix=''):
             ylabel = True if i == 0 else False
             _forrest_plot_ax(ax, df_proj, kind, hue, estimator=estimator,
                              hue_order=hue_order, paired=paired,
-                             n_boot=N_BOOT_COHEN, ylabel=ylabel,
+                             n_boot=n_boot, ylabel=ylabel,
                              add_band_colors=bands, scale=scale,
                              palette=palette, output_file=output_file)
             sample_size_str = f' ({cfg.SAMPLE_STN}='f"{n_sample})"
@@ -515,23 +523,24 @@ def plot_absolute_spectra(df_abs, fig_dir='Figure_S1', prefix=''):
                   transparent=False, bbox_inches=None)
 
 
-def plot_abs_per_spectra(dataframes, kind, prefix=''):
+def plot_abs_per_spectra(dataframes, kind, fig_dir='Figure4', prefix='',
+                         height_star=1,
+                         n_perm=N_PERM_CLUSTER, n_boot=N_BOOT_COHEN):
     estimator = 'effect_size'
     hues = ['cond', 'UPDRS_III_severity_median']
     proj = 'all'
     n_cols = len(hues)
     n_rows = 2
-    fig_x_size = 3.5
+    fig_x_size = 3.35
     bands = False
     scale = 'linear'
 
     # Create output directory
-    fig_dir = 'Figure3'
     output_dir = join(cfg.FIG_PAPER, fig_dir)
     output_file_path = join(output_dir, f"{prefix}_output.txt")
 
     with open(output_file_path, "w") as output_file:
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_x_size, 2),
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(fig_x_size, 1.75),
                                  sharex="col", sharey="row",
                                  height_ratios=[3, 1.5])
         axes = _axes2d(axes, n_rows, n_cols)
@@ -572,7 +581,7 @@ def plot_abs_per_spectra(dataframes, kind, prefix=''):
                     # smaller sample size but stronger statistics
                     df_proj, n_sample = equalize_x_and_y(df_proj, hue, psd)
                 else:
-                    n = df_proj.subject.nunique()
+                    n_sample = df_proj.subject.nunique()
             else:
                 raise ValueError(f'Unknown kind {kind}')
 
@@ -585,21 +594,23 @@ def plot_abs_per_spectra(dataframes, kind, prefix=''):
             df_proj, hue_order = _mean_psds_ax(ax, df_proj, freqs, psd, kind,
                                                hue,
                                                paired=paired,
-                                               n_perm=N_PERM_CLUSTER,
+                                               n_perm=n_perm,
                                                add_bands=bands,
+                                               ylabel=False,
                                                scale=scale, palette=palette,
                                                output_file=output_file)
             ax = axes[1, col]
             _forrest_plot_ax(ax, df_proj, kind, hue, estimator=estimator,
                              paired=paired,
                              hue_order=hue_order,
-                             n_boot=N_BOOT_COHEN, add_band_colors=bands,
-                             scale=scale,
+                             height_star=height_star,
+                             n_boot=n_boot, add_band_colors=bands,
+                             scale=scale, ylabel=False,
                              palette=palette, output_file=output_file)
-            ax.set_xlabel('Frequency [Hz]')
+            ax.set_xlabel(None)
         plt.tight_layout()
         plt.subplots_adjust(hspace=0.1, wspace=None)
         fig_name = (f'{prefix}PSDs_{estimator}_{kind}_{scale}_'
                     f'{'_'.join(hues)}_samplesize={sample_size_stn}')
-        _save_fig(fig, join('Figure3', fig_name), cfg.FIG_PAPER,
+        _save_fig(fig, join(fig_dir, fig_name), cfg.FIG_PAPER,
                   transparent=False, bbox_inches=None)
