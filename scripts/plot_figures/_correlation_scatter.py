@@ -28,6 +28,61 @@ def f_test(sum_squares_resid1, sum_squares_resid2, dof1, dof2,
     return p_value
 
 
+def j_test(data1, data2, X1, X2, y, model_nme1='Model 1', model_nme2='Model 2',
+           alpha=0.05, output_file=None):
+    data1 = data1.copy()
+    data1 = data1.dropna(subset=X1+[y])
+
+    data2 = data2.copy()
+    data2 = data2.dropna(subset=X2+[y])
+
+    if y == 'UPDRS_III':
+        # average hemispheres
+        keep = ['subject', 'cond', 'project', 'color']
+        data1 = data1.groupby(keep).mean(numeric_only=True).reset_index()
+        data2 = data2.groupby(keep).mean(numeric_only=True).reset_index()
+
+    assert len(data1) == len(data2), 'Data unequal length'
+    assert (data1[y].values == data2[y].values).all(), 'Order unequal'
+    y_arr = data1[y].values
+    X_arr1 = data1[X1].values
+    X_arr2 = data2[X2].values
+    X_arr1 = sm.add_constant(X_arr1)
+    X_arr2 = sm.add_constant(X_arr2)
+
+    model1 = sm.OLS(y_arr, X_arr1).fit()
+    model2 = sm.OLS(y_arr, X_arr2).fit()
+    y_pred1 = model1.predict(X_arr1)
+    y_pred2 = model2.predict(X_arr2)
+
+    # Extend x_arrays by predicted values
+    X_arr1_ext = np.column_stack((X_arr1, y_pred2))
+    X_arr2_ext = np.column_stack((X_arr2, y_pred1))
+
+    model1_ext = sm.OLS(y_arr, X_arr1_ext).fit()
+    model2_ext = sm.OLS(y_arr, X_arr2_ext).fit()
+
+    pval1_ext = model1_ext.pvalues[-1]
+    pval2_ext = model2_ext.pvalues[-1]
+
+    print('J-test results:', file=output_file)
+    if pval1_ext < alpha and pval2_ext > alpha:
+        print(f'{model_nme2} is significantly better than {model_nme1} at '
+              f'p={pval1_ext}', file=output_file)
+    elif pval1_ext > alpha and pval2_ext < alpha:
+        print(f'{model_nme1} is significantly better than {model_nme2} at '
+              f'p={pval2_ext}', file=output_file)
+    elif pval1_ext < alpha and pval2_ext < alpha:
+        print(f'{model_nme2} and {model_nme1} are significantly different\n'
+              f'pval1_ext={pval1_ext}, pval2_ext={pval2_ext}',
+              file=output_file)
+    elif pval1_ext > alpha and pval2_ext > alpha:
+        print(f'{model_nme2} and {model_nme1} fail to fit the data\n'
+              f'pval1_ext={pval1_ext}, pval2_ext={pval2_ext}',
+              file=output_file)
+    return pval1_ext, pval2_ext
+
+
 def _corrected_aic(model):
     """Correct AIC for small sample sizes."""
     aic = model.aic
@@ -344,7 +399,8 @@ def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
               transparent=True)
 
 
-def model_comparison(dataframes, fig_dir=None, output_file=None, fontsize=7):
+def model_comparison(dataframes, fig_dir=None, output_file=None, fontsize=7,
+                     model_comparison='f_test'):
     # Dataframes
     df_norm = dataframes['df_norm']
     df_abs = dataframes['df_abs']
@@ -367,38 +423,54 @@ def model_comparison(dataframes, fig_dir=None, output_file=None, fontsize=7):
     # Normalized
     df_norm_off_ = df_norm_off[df_norm_off.sub_hemi.isin(
         df_per_off.sub_hemi.unique())]
-    X = ['beta_low_abs_mean_log']
-    res = plot_all_ax(axes[0], df_norm_off_, X, y,
+    X_norm = ['beta_low_abs_mean_log']
+    res = plot_all_ax(axes[0], df_norm_off_, X_norm, y,
                       'normalized', ylabel=True, title=False,
                       output_file=output_file)
     r_linreg_rel, p_linreg_rel, ssr_rel1, dof_rel1, aic_rel, bic_rel = res
 
     # Absolute
-    X = ['theta_abs_mean_log',
-         'beta_low_abs_mean_log',
-         'gamma_low_abs_mean_log']
+    X_abs = ['theta_abs_mean_log',
+             'beta_low_abs_mean_log',
+             'gamma_low_abs_mean_log']
     df_abs_off_ = df_abs_off[df_abs_off.sub_hemi.isin(
         df_per_off.sub_hemi.unique())]
-    res = plot_all_ax(axes[1], df_abs_off_, X, y, 'absolute', title=False,
+    res = plot_all_ax(axes[1], df_abs_off_, X_abs, y, 'absolute', title=False,
                       output_file=output_file)
     r_linreg_abs, p_linreg_abs, ssr_abs3, dof_abs3, aic_abs, bic_abs = res
 
     # Periodic
-    X = ['fm_offset_log', 'beta_low_fm_mean_log', 'gamma_low_fm_mean_log']
-    res = plot_all_ax(axes[2], df_per_off, X, y, 'periodic', title=False,
+    X_per = ['fm_offset_log', 'beta_low_fm_mean_log', 'gamma_low_fm_mean_log']
+    res = plot_all_ax(axes[2], df_per_off, X_per, y, 'periodic', title=False,
                       output_file=output_file)
     r_linreg_per, p_linreg_per, ssr_per3, dof_per3, aic_per, bic_per = res
 
-    # f-test model comparison
-    pval_norm_abs = f_test(ssr_rel1, ssr_abs3, dof_rel1, dof_abs3,
-                           model_nme1='Normalized', model_nme2='Absolute',
-                           output_file=output_file)
-    pval_norm_per = f_test(ssr_rel1, ssr_per3, dof_rel1, dof_per3,
-                           model_nme1='Normalized', model_nme2='Periodic',
-                           output_file=output_file)
-    pval_abs_per = f_test(ssr_abs3, ssr_per3, dof_abs3, dof_per3,
-                          model_nme1='Absolute', model_nme2='Periodic',
-                          output_file=output_file)
+    # model comparison
+    if model_comparison == 'f_test':
+        pval_norm_abs = f_test(ssr_rel1, ssr_abs3, dof_rel1, dof_abs3,
+                               model_nme1='Normalized',
+                               model_nme2='Absolute',
+                               output_file=output_file)
+        pval_norm_per = f_test(ssr_rel1, ssr_per3, dof_rel1, dof_per3,
+                               model_nme1='Normalized',
+                               model_nme2='Periodic',
+                               output_file=output_file)
+        pval_abs_per = f_test(ssr_abs3, ssr_per3, dof_abs3, dof_per3,
+                              model_nme1='Absolute',
+                              model_nme2='Periodic',
+                              output_file=output_file)
+    elif model_comparison == 'j_test':
+        pval_norm_abs, _ = j_test(df_norm_off_, df_abs_off_, X_norm, X_abs, y,
+                                  model_nme1='Normalized',
+                                  model_nme2='Absolute',
+                                  output_file=output_file)
+        pval_norm_per, _ = j_test(df_norm_off_, df_per_off, X_norm, X_per, y,
+                                  model_nme1='Normalized',
+                                  model_nme2='Periodic',
+                                  output_file=output_file)
+        pval_abs_per, _ = j_test(df_abs_off_, df_per_off, X_abs, X_per, y,
+                                 model_nme1='Absolute', model_nme2='Periodic',
+                                 output_file=output_file)
 
     annotations = [('normalized', 'absolute', pval_norm_abs),
                    ('absolute', 'periodic', pval_abs_per),
@@ -473,6 +545,8 @@ def model_comparison(dataframes, fig_dir=None, output_file=None, fontsize=7):
 
     ax.set_ylabel(r"Pearson's $r$", fontsize=fontsize)
     ax.tick_params(axis='both', labelsize=fontsize)
+    # ax.set_title(f'Linear regression {cfg.COND_DICT['off']} vs. UPDRS-III',
+    #              fontweight='bold', y=1)
     ax.set_xlabel(r'$\alpha$ placeholder', alpha=0, fontsize=fontsize)
     plt.tight_layout()
     _save_fig(fig, f'{fig_dir}/B__model_comparison.pdf', cfg.FIG_PAPER,

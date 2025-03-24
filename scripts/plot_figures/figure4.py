@@ -15,4 +15,5 @@ def figure4(df_orig):
     with open(output_file_path, "w") as output_file:
         model_comparison(dataframes_equal,
                          fig_dir='Figure4',
+                         model_comparison='j_test',
                          output_file=output_file)
