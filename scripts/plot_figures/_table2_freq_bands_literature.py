@@ -35,7 +35,7 @@ def plot_beta_ranges(fig_dir='Figure3', prefix='', xlabel=True):
         ax.hlines(ypositions[i], freq_range[0], freq_range[1], colors='grey')
 
     # Set labels and title
-    ax.set_ylabel('Study index (table S1)')
+    ax.set_ylabel('Study index (table S2)')
     ax.set_yticks([1, 5, 10, 15, 20, 25, 30, 35, 40, 45])
     ax.set_yticklabels([1, '', 10, '', 20, '', 30, '', 40, ''])
     ax.set_ylim(0, len(sorted_ranges_all)-2)
