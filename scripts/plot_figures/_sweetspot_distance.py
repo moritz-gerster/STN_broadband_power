@@ -102,7 +102,9 @@ def plot_corrs_highbeta_off(df_corr, add_ci=False, fig_dir='Figure6',
 def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                             add_units_xlabel=True, n_perm=N_PERM_CORR,
                             pval_off_vs_on=False, output_file=None,
-                            bands=['beta_low', 'beta_high']):
+                            bands=['beta_low', 'beta_high'],
+                            conds=['on', 'off'],
+                            kinds=['normalized', 'absolute', 'periodic']):
     # Get df
     if adjacent:
         bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
@@ -116,15 +118,36 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                'to enable proper choice.')
         raise NotImplementedError(msg)
         bip_chs = ['LFP_1-3', 'LFP_2-4']
+    df = df.copy()
+    df['sub_hemi_cond_ch'] = df.sub_hemi + '_' + df.cond + '_' + df.ch
     df['sub_hemi_cond'] = df.sub_hemi + '_' + df.cond
     df = df[~df.ch_bad & df.cond.isin(['on', 'off'])
             & df.mni_x.notna() & df.ch.isin(bip_chs)
             & df.project.isin(['all'])]
     df_norm = df[(df.psd_kind == 'normalized') & (df.fm_params == False)]
-    df_abs = df[(df.psd_kind == 'standard') & (df.fm_params == 'broad')
-                & df.fm_exponent.notna()]
+    df_abs = df[(df.psd_kind == 'standard') & (df.fm_params == 'broad')]
     # equalize subjects for comparison
-    df_norm = df_norm[df_norm.sub_hemi_cond.isin(df_abs.sub_hemi_cond.unique())]
+    df_per = df_abs.copy()
+    sub_hemis = []
+    for cond in conds:
+        df_per_cond = df_per[df_per.cond == cond]
+        pwr_col1 = bands[0] + '_fm_powers_max_log'
+        pwr_col2 = bands[1] + '_fm_powers_max_log'
+        ch_max1 = f'ch_chmax_{pwr_col1}_{cond}'
+        ch_max2 = f'ch_chmax_{pwr_col2}_{cond}'
+        df_plot1 = df_per_cond[df_per_cond[ch_max1]].dropna(subset=pwr_col1)
+        df_plot2 = df_per_cond[df_per_cond[ch_max2]].dropna(subset=pwr_col2)
+
+        # Equalize subjects between pwr cols for periodic framework.
+        # For example, low beta max could be LFP_1-2 and high beta max LFP_2-3.
+        # If LFP_1-2 fooof fit bad can lead to unequal sample size between low
+        # and high beta.
+        sub_hemi1 = set(df_plot1.sub_hemi_cond.unique())
+        sub_hemi2 = set(df_plot2.sub_hemi_cond.unique())
+        sub_hemi = list(sub_hemi1.intersection(sub_hemi2))
+        sub_hemis += sub_hemi
+    df_norm = df_norm[df_norm.sub_hemi_cond.isin(sub_hemis)]
+    df_abs = df_abs[df_abs.sub_hemi_cond.isin(sub_hemis)]
 
     # Collect kind data
     rhos_high_beta_off = []
@@ -134,7 +157,6 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
     yvalues_kinds = []
 
     # Settings
-    kinds = ['normalized', 'absolute', 'periodic']
     color_dict = dict(off='k', on='dimgrey')
     y = 'sweet_spot_distance'
     for prefix, kind in enumerate(kinds, start=1):
@@ -158,7 +180,12 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
             if output_file:
                 print(f'{band}:\n', file=output_file)
             pwr_col = band + pwr
-            ax = axes[i]
+
+            if len(bands) > 1:
+                ax = axes[i]
+            else:
+                ax = axes
+
             rhos = []
             sample_sizes = []
             labels = []
@@ -167,10 +194,11 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                 color_dict['off'] = cfg.BAND_COLORS[band]
             except KeyError:
                 color_dict['off'] = 'k'
-            for cond in ['on', 'off']:
+            for cond in conds:
+
+                df_cond = df_kind[df_kind.cond == cond]
                 ch_max = f'ch_chmax_{pwr_col}_{cond}'
-                df_plot = df_kind[df_kind[ch_max].fillna(False)]
-                df_plot = df_plot[df_plot.cond == cond]
+                df_plot = df_cond[df_cond[ch_max]]
 
                 sns.regplot(ax=ax, data=df_plot, x=pwr_col, y=y,
                             color=color_dict[cond], ci=CI,
@@ -197,7 +225,8 @@ def plot_sweetspot_distance(df, adjacent=True, fig_dir='Figure5',
                 sample_sizes.append(sample_size)
                 labels.append(label)
                 if output_file:
-                    print(f'{cond}: {label}', file=output_file)
+                    print(f'{cond}: {label}, n={sample_size}',
+                          file=output_file)
                 weights.append(weight)
                 handles, _ = ax.get_legend_handles_labels()
             _plot_legend(ax, pwr_col, y, labels, weights, 'cond', rhos,
