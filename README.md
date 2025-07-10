@@ -7,7 +7,7 @@
 
 #### Files:
 - [environment.yml](environment.yml): YAML file to create conda environment
-- [scripts]: Processing and plotting scripts for the article
+- [scripts](scripts): Processing and plotting scripts for the article
 
 Patient data cannot be published due to patient data privacy restrictions.
 
