@@ -8,6 +8,7 @@ dependencies:
   - numba=0.60
   - seaborn=0.13.2
   - pingouin=0.5.5
+  - scikit-posthocs=0.11.4
   - statsmodels=0.14.4
   - statannotations=0.7.1  # for df stats
   - openpyxl=3.1.5  # to open excel
