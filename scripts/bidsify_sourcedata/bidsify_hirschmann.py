@@ -220,8 +220,7 @@ def _rename_channels(raw, bids_path):
 
 
 def _add_bad_channels(raw: Raw, bids_path: BIDSPath):
-    anno_dic = dict(root=cfg.ANNOTATIONS,
-                    extensions='.json',
+    anno_dic = dict(root=cfg.ANNOTATIONS, extensions='.json',
                     suffixes='channels', descriptions=None,
                     subjects=bids_path.subject, datatypes=bids_path.datatype,
                     sessions=bids_path.session, tasks=bids_path.task,
@@ -244,8 +243,7 @@ def _add_bad_channels(raw: Raw, bids_path: BIDSPath):
 
 
 def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
-    anno_dic = dict(root=cfg.ANNOTATIONS,
-                    extensions='.csv',
+    anno_dic = dict(root=cfg.ANNOTATIONS, extensions='.csv',
                     suffixes='events', descriptions=None,
                     subjects=bids_path.subject, datatypes=bids_path.datatype,
                     sessions=bids_path.session, tasks=bids_path.task,
@@ -281,7 +279,9 @@ def _add_bad_segments(raw: Raw, bids_path: BIDSPath):
 #     bids_path = bids_path.copy().update(run=None, processing=None, task=None)
 #     anno_root = cfg.ANNOTATIONS
 #     bids_info = dict(subjects=bids_path.subject, sessions=bids_path.session,
-#                      tasks=bids_path.task, runs=bids_path.run, root=anno_root,
+#                      tasks=bids_path.task,
+#                      runs=bids_path.run,
+#                      root=anno_root,
 #                      extensions=extension, descriptions=None)
 #     anno_path = find_matching_paths(**bids_info)
 #     msg = f"More than one annotation file found for {bids_path}"
