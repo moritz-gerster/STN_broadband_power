@@ -161,6 +161,14 @@ def bidsify_onoff(bids_path, pick_wiest=False, only_cleaned=True):
         dir_cond = ("aperiodic exponent of subthalamic field potentials- "
                     f"Human- Meds- {cond}")
         source_path = join(cfg.SOURCEDATA, 'BIDS_TAN_EEG_LFP', dir_cond)
+
+        # check if directories exist
+        if not Path(source_path).exists():
+            msg = (f"Directory not found: {source_path}. Please download "
+                   "'Recordings ON medication' and 'Recordings OFF medication'"
+                   " from https://data.mrc.ox.ac.uk/stn-lfp-on-off-and-dbs")
+            raise FileNotFoundError(msg)
+
         for subj_old, subj_new in tqdm(subject_map.items(), position=1,
                                        desc=f"Bidsify subjects {cond}"):
             if subj_old in ['XG37', 'XG39'] and cond == "ON":
