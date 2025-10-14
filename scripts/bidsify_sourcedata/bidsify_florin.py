@@ -229,9 +229,7 @@ def _add_bad_segments(raw, bids_path, modify_bidspath=True, only_cleaned=True):
 def _get_annotation_path(bids_path, extension=None):
     anno_root = cfg.ANNOTATIONS
     bids_info = dict(subjects=bids_path.subject, sessions=bids_path.session,
-                     tasks=bids_path.task,
-                    #  runs=bids_path.run,
-                     root=anno_root,
+                     tasks=bids_path.task, root=anno_root,
                      extensions=extension, descriptions=None,
                      acquisitions=bids_path.acquisition)
     anno_path = find_matching_paths(**bids_info)
