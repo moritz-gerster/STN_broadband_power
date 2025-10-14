@@ -80,7 +80,7 @@ COLOR_DIC = dict(
     all=to_rgb('k'),
     all2=to_rgb('grey'),
     all3=get_mean_color(to_rgb('k'), to_rgb('grey')),
-)
+                 )
 
 KIND_DICT = dict(normalized='Relative', absolute='Absolute',
                  periodic='Periodic', periodicAP='Aperiodic',
@@ -215,7 +215,7 @@ for band, band_nme in cfg.BAND_NAMES_GREEK.items():
     band_dic[f"{band}_abs_mean_log"] = f"{band_nme} mean"
     band_dic[f"{band}_abs_min"] = f"{band_nme} min"
     band_dic[f"{band}_abs_min_log"] = f"{band_nme} min"
-    band_dic[f"{band}_abs_max5Hz_log"] = f"{band_nme} 5 Hz max"
+    band_dic[f"{band}_abs_max5Hz_log"] = f"{band_nme} "r"$\pm$"" 2.5 Hz max"
     band_dic[f"{band}_abs_max_freq"] = f"{band_nme} peak freq."
     band_dic[f"{band}_fm_mean"] = f"{band_nme} mean"
     band_dic[f"{band}_fm_mean_log"] = f"{band_nme} mean"
@@ -237,7 +237,7 @@ PLOT_LABELS = {
     **KIND_DICT, **COND_DICT}
 
 PLOT_LABELS_SHORT = {**aperiodic_dic_short,
-                     'full_fm_band_aperiodic_log': 'Aper. power'}
+                     'full_fm_band_aperiodic_log': 'Ap. pwr.'}
 for band, band_nme in cfg.BAND_NAMES_GREEK_SHORT.items():
     # total power
     PLOT_LABELS_SHORT[f"{band}_abs_max"] = f"{band_nme} max"
@@ -247,7 +247,7 @@ for band, band_nme in cfg.BAND_NAMES_GREEK_SHORT.items():
     PLOT_LABELS_SHORT[f"{band}_abs_mean_log"] = f"{band_nme} mean"
     PLOT_LABELS_SHORT[f"{band}_abs_min"] = f"{band_nme} min"
     PLOT_LABELS_SHORT[f"{band}_abs_min_log"] = f"{band_nme} min"
-    PLOT_LABELS_SHORT[f"{band}_abs_max5Hz_log"] = f"{band_nme} 5 Hz max"
+    PLOT_LABELS_SHORT[f"{band}_abs_max5Hz_log"] = f"{band_nme} "r"$\pm$"" 2.5 Hz max"
     PLOT_LABELS_SHORT[f"{band}_abs_max_freq"] = f"{band_nme} peak freq."
     PLOT_LABELS_SHORT[f"{band}_fm_mean"] = f"{band_nme} mean"
     PLOT_LABELS_SHORT[f"{band}_fm_mean_log"] = f"{band_nme} mean"
