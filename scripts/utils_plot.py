@@ -1,22 +1,22 @@
 """Helping plotting functions."""
+import warnings
+from itertools import product
 from os.path import join
 from pathlib import Path
-import warnings
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from itertools import product
-from statannotations.Annotator import Annotator
 from scipy.stats import wilcoxon
+from statannotations.Annotator import Annotator
+
 from scripts import config as cfg
 from scripts.cluster_stats import lineplot_compare
-from scripts.corr_stats import (corr_freq_pvals, p_value_df, sample_size_df,
-                                _get_freqs_correlation, _corr_results,
-                                independent_corr,
-                                _correct_sample_size)
+from scripts.corr_stats import (_corr_results, _correct_sample_size,
+                                _get_freqs_correlation, corr_freq_pvals,
+                                independent_corr, p_value_df, sample_size_df)
 
 
 def _save_fig(fig, fig_name, save_dir, close=True, transparent=False,
@@ -109,7 +109,7 @@ def plot_corrs(df, X, Y, hue=None, corr_method="spearman", figsize=None,
         if len(projects) == 5:
             projects = ['all']
     except AttributeError:
-        pass
+        title = title
     else:
         if hue == 'cond':
             add_cond = ''
@@ -147,6 +147,8 @@ def plot_corrs(df, X, Y, hue=None, corr_method="spearman", figsize=None,
             title = ""
         elif title is True:
             title = f'{add_cond} {add_kind} {add_project}'
+        elif isinstance(title, str):
+            title = title
     plt.suptitle(title)
     plt.tight_layout()
     if fig_name:
@@ -464,6 +466,7 @@ def _add_raincloud_and_stats_single(df, ax, x, y, test="Wilcoxon", order=None,
                                     xlabel=None, ylabel=None, title=None):
     import ptitprince as pt
     from statannotations.Annotator import Annotator
+
     # give effect sizes without equal sample sizes
     effect_sizes = []
     for project in order:
@@ -906,7 +909,6 @@ def plot_rm_corr(
     line_kws={},
     scatter_kws={},
     subs_special=[],
-    lw=.2
 ):
     """Plot a repeated measures correlation.
 
@@ -1017,6 +1019,10 @@ def plot_rm_corr(
     data = data.copy()
     data["pred"] = model.fittedvalues
 
+    if 'lw' in line_kws:
+        lw = line_kws['lw']
+    else:
+        lw = .2
     data['line_width'] = lw
     subjects = data[subject].unique()
     n_subs = len(subjects)
@@ -1028,10 +1034,12 @@ def plot_rm_corr(
     data['subs_special'] = data[subject].isin(subs_special)
 
     # Use larger linewidths and points for special subjects
-    # data.loc[~data.subs_special, 'line_width'] = lw
     data.loc[data.subs_special, 'line_width'] = 4 * lw
-    point_size_normal = 10
-    point_size_special = 8
+    if 'size' in scatter_kws:
+        point_size_normal = scatter_kws['size']
+    else:
+        point_size_normal = 10
+    point_size_special = 1.2 * point_size_normal
     # Define order of plotting:
     # normal scatter → normal lines → special lines → special scatter
     zorder_scatter_normal = 1
@@ -1050,7 +1058,6 @@ def plot_rm_corr(
 
         # Change order of subjects to plot special subs last
         normal_subs = data[~data.subs_special].subject.unique().tolist()
-        # indicated_subs = subs_special
         hue_order = normal_subs + subs_special
         data = pd.concat([data[~data.subs_special], data[data.subs_special]])
 
@@ -1065,6 +1072,9 @@ def plot_rm_corr(
     # Plot indicated subject regression lines
     for sub in hue_order:
         data_sub = data[data[subject] == sub]
+        if data_sub.empty:
+            warnings.warn(f"No data for {sub}")
+            continue
         line_width = data_sub.line_width.values[0]
         line_kws['lw'] = line_width
         line_kws['zorder'] = data_sub.zorder_lines.values[0]
@@ -1072,24 +1082,19 @@ def plot_rm_corr(
                     scatter=False,
                     ci=None, truncate=True,
                     color=palette[sub],
-                    line_kws=line_kws,
-                    scatter_kws=scatter_kws,
-                    )
+                    line_kws=line_kws)
     # Plot scatter separately to avoid straight lines between scatter points
-    scatter_kws['zorder'] = zorder_scatter_normal
     sns.scatterplot(x=x, y=y, data=data[~data.subs_special], ax=ax,
                     hue=subject, palette=palette, s=point_size_normal,
                     style='subject', markers=markers,
-                    **scatter_kws
-                    )
-    scatter_kws['zorder'] = zorder_scatter_special
+                    zorder=zorder_scatter_normal)
     if not data[data.subs_special].empty:
         sns.scatterplot(x=x, y=y, data=data[data.subs_special], ax=ax,
                         hue=subject, palette=palette, s=point_size_special,
                         style='subject', markers=markers,
-                        **scatter_kws
-                        )
+                        zorder=zorder_scatter_special)
     ax.legend().remove()
+    line_kws['lw'] = lw  # reset dic to original value
     return ax
 
 
@@ -1199,7 +1204,7 @@ def plot_psd_df(df, freqs="psd_freqs", psd="asd", hue="cond",
         else:
             col_order = None
     elif col_order is not None:
-        pass
+        col_order = col_order
     else:
         col_order = None
     if ylabel is None:
@@ -1270,7 +1275,7 @@ def _get_sample_sizes(df, project, x, y):
 def _add_band(bands, g, alpha=.3, labels=False):
     if not bands:
         return None
-    if isinstance(bands, str):
+    elif isinstance(bands, str):
         colors = [cfg.BAND_COLORS[bands]]
         band_ranges = [cfg.BANDS[bands]]
         if labels:
@@ -1304,7 +1309,7 @@ def _add_band(bands, g, alpha=.3, labels=False):
             g.add_patch(rect)
 
 
-def _add_band_annotations(bands, g, fontsize=5, short=False, y=1.05,
+def _add_band_annotations(bands, g, fontsize=5, short=False, y=1.057,
                           invisible=False):
     if not bands:
         return None
@@ -1353,6 +1358,7 @@ def _leg_titles(rhos, sample_sizes, title=None, corr_comparison=False,
             title = r'$p_{\text{off vs on}}$'f"={p_cond:.2f}"
         title_fontproperties = {'weight': weight}
     else:
+        title = title
         title_fontproperties = None
     return title, title_fontproperties
 
@@ -1613,8 +1619,6 @@ def _mni_coords_datasets(fig_dir=None, prefix=''):
     values = rename.values()
 
     bip_chs = ['LFP_1-2', 'LFP_2-3', 'LFP_3-4']
-    # bip_chs = ['LFP_1-3', 'LFP_2-4']  # dist channels don't exist in excel
-    # sheet
     df = df[df.ch.isin(bip_chs)]
     # rename channels
     rename = {'LFP_1-2': '1-2', 'LFP_2-3': '2-3', 'LFP_3-4': '3-4'}
@@ -1630,36 +1634,26 @@ def _mni_coords_datasets(fig_dir=None, prefix=''):
     # y = 'mni_xr'
     hue = 'project'
 
-    pairs = [(('1-2', 'Berlin'), ('1-2', 'London')),
-             (('1-2', 'Berlin'), ('1-2', 'Düsseldorf1')),
-             (('1-2', 'London'), ('1-2', 'Düsseldorf1')),
-             (('2-3', 'Berlin'), ('2-3', 'London')),
-             (('2-3', 'Berlin'), ('2-3', 'Düsseldorf1')),
-             (('2-3', 'London'), ('2-3', 'Düsseldorf1')),
-             (('3-4', 'Berlin'), ('3-4', 'London')),
-             (('3-4', 'Berlin'), ('3-4', 'Düsseldorf1')),
-             (('3-4', 'London'), ('3-4', 'Düsseldorf1'))]
-    # pairs=[(('LFP_1-2', 'Berlin'), ('LFP_1-2', 'London')),
-    #        (('LFP_1-2', 'Berlin'), ('LFP_1-2', 'Düsseldorf1')),
-    #        (('LFP_1-2', 'London'), ('LFP_1-2', 'Düsseldorf1')),
-    #        (('LFP_2-3', 'Berlin'), ('LFP_2-3', 'London')),
-    #        (('LFP_2-3', 'Berlin'), ('LFP_2-3', 'Düsseldorf1')),
-    #        (('LFP_2-3', 'London'), ('LFP_2-3', 'Düsseldorf1')),
-    #        (('LFP_3-4', 'Berlin'), ('LFP_3-4', 'London')),
-    #        (('LFP_3-4', 'Berlin'), ('LFP_3-4', 'Düsseldorf1')),
-    #        (('LFP_3-4', 'London'), ('LFP_3-4', 'Düsseldorf1'))]
+    pairs=[(('1-2', 'Berlin'), ('1-2', 'London')),
+           (('1-2', 'Berlin'), ('1-2', 'Düsseldorf1')),
+           (('1-2', 'London'), ('1-2', 'Düsseldorf1')),
+           (('2-3', 'Berlin'), ('2-3', 'London')),
+           (('2-3', 'Berlin'), ('2-3', 'Düsseldorf1')),
+           (('2-3', 'London'), ('2-3', 'Düsseldorf1')),
+           (('3-4', 'Berlin'), ('3-4', 'London')),
+           (('3-4', 'Berlin'), ('3-4', 'Düsseldorf1')),
+           (('3-4', 'London'), ('3-4', 'Düsseldorf1'))]
 
-    # pairs = [
-    #     (('LFP_1-3', 'Berlin'), ('LFP_1-3', 'London')),
-    #     (('LFP_1-3', 'Berlin'), ('LFP_1-3', 'Düsseldorf1')),
-    #     (('LFP_1-3', 'London'), ('LFP_1-3', 'Düsseldorf1')),
-    #     (('LFP_2-4', 'Berlin'), ('LFP_2-4', 'London')),
-    #     (('LFP_2-4', 'Berlin'), ('LFP_2-4', 'Düsseldorf1')),
-    #     (('LFP_2-4', 'London'), ('LFP_2-4', 'Düsseldorf1'))
-    # ]
+    # Strict bonferroni correction (9*3 = 27 comparisons):
+    # alpha = 0.05 / len(values) / len(pairs)  # Bonferroni correction
+    ## -> too strict, just compare within each coordinate
 
-    stat_params = dict(test='Mann-Whitney', text_format='star', loc='outside',
-                       verbose=False, show_test_name=False, line_width=0.3)
+    stat_params = dict(test='Mann-Whitney',
+                       text_format='star',
+                       loc='outside',
+                       verbose=False, show_test_name=False, line_width=0.3,
+                       comparisons_correction='bonferroni'
+                       )
     params = dict(data=df, x=x, order=order, hue=hue, hue_order=hue_order,
                   fliersize=0.1, saturation=1, linewidth=0.2)
 
@@ -1842,6 +1836,245 @@ def _dataset_comparison(df, save_dir=None, save=None):
         plt.show()
 
 
+def _dataset_histograms(df, save_dir=None, save=None, prefix='',
+                        output_file=None):
+    # Prepare df
+    df = df.copy()
+    hue_order = [proj for proj in cfg.PROJECT_NAMES
+                 if proj in df.project_nme.unique()]
+
+    fig, axes = plt.subplots(1, 4, figsize=(3.5, .9),
+                             width_ratios=[1, .6, 1, 1.1]
+                             )
+
+    # Sample sizes subject ####################################################
+    ax = axes[0]
+
+    sample_sizes = [len(df[df.project_nme == proj].drop_duplicates(
+        subset=['subject'])) for proj in hue_order]
+
+    duplicates = ['project', 'subject']
+    df_sub = df.drop_duplicates(subset=duplicates)
+
+    # Plot horizontal bars
+    df_sample_sizes = pd.DataFrame({'project_nme': hue_order,
+                                    'sample_size': sample_sizes})
+    print(df_sample_sizes, file=output_file)
+
+    sns.histplot(data=df_sample_sizes,
+                 y='project_nme',          # Project names on the y-axis
+                 weights='sample_size',    # Use sample sizes as weights
+                 hue='project_nme',        # Hue for coloring each dataset
+                 palette=cfg.COLOR_DIC,    # Custom color palette
+                 multiple='dodge',         # Prevent overlapping bars
+                 shrink=35,               # Slightly shrink bars for aesthetics
+                 ax=ax,                    # Use the existing subplot axis
+                 stat='count',             # Display raw counts (sample sizes)
+                 legend=False,
+                 )
+    # Set labels
+    # ax.set_xlabel('Number of patients 'r'(n$_{\mathrm{pat}}$)')
+    ax.set_xlabel('Number of patients')
+    ax.set_ylabel(None)
+    yticks = np.linspace(-14.5, 19.5, len(hue_order))
+    ax.set_yticks(yticks, labels=hue_order)
+    ax.set_ylim(24.5, -19.5)
+    ###########################################################################
+
+    # Sex  ####################################################################
+    ax = axes[1]
+
+    # don't plot unknown sex because not informative
+    df_sub_gender = df_sub[df_sub.patient_sex.isin(['male', 'female'])]
+    df_sub_gender = df_sub_gender[df_sub_gender.project_nme != 'all']
+    df_sub_gender.loc[:, 'patient_sex'] = df_sub_gender[
+        'patient_sex'].map({'male': 'M', 'female': 'F'})
+
+    # columns without variance cannot be plotted with kdeplot
+    sns.histplot(ax=ax, data=df_sub_gender, x='patient_sex', hue='project_nme',
+                 palette=cfg.COLOR_DIC,
+                 multiple='dodge', legend=False,
+                #  shrink=0.8,
+                 hue_order=hue_order,
+                 stat='percent',
+                 common_norm=False)
+    ax.set_yticks([0, 50, 100])
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax.set_ylabel(None)
+    ax.set_xlabel('Sex')
+    ###########################################################################
+
+
+    # UPDRS pre-post operative  ###############################################
+    ax = axes[2]
+
+    df_UPDRS = df[(df.cond == 'off') & (df.project != 'all') &
+                  df_sub.UPDRS_pre_III.notna() | df_sub.UPDRS_post_III.notna()]
+    df_UPDRS = df_UPDRS.drop_duplicates('subject')
+    df_UPDRS['UPDRS_preOp'] = df_sub.UPDRS_pre_III.notna()
+    df_UPDRS['UPDRS_postOp'] = df_sub.UPDRS_post_III.notna()
+    df_UPDRS = df_UPDRS[['project_nme', 'subject',
+                         'UPDRS_preOp', 'UPDRS_postOp']]
+
+
+    # Total sample sizes per project
+    total_counts = df_UPDRS.groupby('project_nme')['subject'].count()
+
+    # Count of available pre-operative scores per project
+    pre_op_counts = df_UPDRS[df_UPDRS.UPDRS_preOp]
+    pre_op_counts = pre_op_counts.groupby('project_nme')['subject'].count()
+
+    # Count of available post-operative scores per project
+    post_op_counts = df_UPDRS[df_UPDRS.UPDRS_postOp]
+    post_op_counts = post_op_counts.groupby('project_nme')['subject'].count()
+
+    # Combine into a single DataFrame
+    df_UPDRS_prepost = pd.DataFrame({'Pre-Op': pre_op_counts,
+                                     'Post-Op': post_op_counts}).fillna(0)
+
+    # Reset the index for a cleaner display
+    df_UPDRS_prepost = df_UPDRS_prepost.reset_index()
+
+    # Reshape the DataFrame to long format for Seaborn
+    df_UPDRS_prepost = pd.melt(df_UPDRS_prepost,
+                       id_vars='project_nme',
+                       value_vars=['Pre-Op', 'Post-Op'],
+                       var_name='prepost',
+                       value_name='counts')
+
+    # Combine into a single DataFrame
+    df_UPDRS_all = pd.DataFrame({'Pre-Op': total_counts,
+                                 'Post-Op': total_counts}).fillna(0)
+
+    # Reset the index for a cleaner display
+    df_UPDRS_all = df_UPDRS_all.reset_index()
+
+    df_UPDRS_all = pd.melt(df_UPDRS_all,
+                           id_vars='project_nme',
+                           value_vars=['Pre-Op', 'Post-Op'],
+                           var_name='prepost',
+                           value_name='counts')
+
+    hist_kwargs = dict(x='prepost', hue='project_nme', palette=cfg.COLOR_DIC,
+                       multiple='dodge', hue_order=hue_order, ax=ax,
+                       stat='count', legend=False, weights='counts',
+                       shrink=0.9)
+
+    sns.histplot(data=df_UPDRS_prepost, **hist_kwargs, lw=0)
+    sns.histplot(data=df_UPDRS_all, fill=False, **hist_kwargs)
+
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(['Pre', 'Post'])
+    # ax.set_yticks([0, .5, 1])
+    # ax.yaxis.set_major_formatter(mtick.PercentFormatter(100))
+    # # ax.set_yticklabels([])
+    # ax.set_yticks([0, 10, 20, 30])
+    # ax.set_yticklabels([0, 10, 20, '30 'r'n$_{\mathrm{pat}}$'], rotation=90)
+    ax.set_ylabel(None)
+    # # ax.set_ylabel('# Patients')
+    ax.set_xlabel('Pre/post surgery')
+
+    ###########################################################################
+
+    # Recording  ##############################################################
+    ax = axes[3]
+
+    df_sub = df_sub[df_sub.project != 'all']
+    sns.histplot(ax=ax, data=df_sub, x='patient_days_after_implantation',
+                 hue='project_nme',
+                 palette=cfg.COLOR_DIC,
+                 discrete=True,
+                 stat='count',  # count, frequency, proportion, density, percent
+                #  common_bins=True,
+                 common_norm=True,
+                 multiple='stack',
+                 legend=False,
+                 shrink=0.8,
+                 hue_order=hue_order,
+                 )
+    xticks = range(1, 8)
+    ax.set_xticks(xticks)
+    ax.set_xlabel('Days after surgery')
+    ax.set_ylabel(None)
+
+    ###########################################################################
+
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=1)
+    if save:
+        _save_fig(fig, f'{prefix}histograms_multicenter_comparison',
+                  save_dir, close=False,
+                  transparent=True, bbox_inches=None)
+    else:
+        plt.show()
+
+
+def _dataset_density_plots(df, save_dir=None, save=None, prefix=''):
+    # Prepare df
+    df = df.copy()
+    hue_order = [proj for proj in cfg.PROJECT_NAMES
+                 if proj in df.project_nme.unique()]
+    df_sub = df.drop_duplicates(subset=['project', 'subject'])
+    df_sub = df_sub[df_sub.project != 'all']
+
+    kwargs = dict(hue='project_nme', palette=cfg.COLOR_DIC,
+                  legend=False, hue_order=hue_order,
+                  common_norm=False,  # True overemphasizes 'all'
+                  common_grid=True, bw_method=0.5, cut=0.1)
+
+    fig, axes = plt.subplots(1, 5, figsize=(3.5, .8))
+    # Age #####################################################################
+    ax = axes[0]
+    sns.kdeplot(ax=ax, data=df_sub, x='patient_age', **kwargs)
+    ax.set_xlabel('Age [yrs]')
+    ax.set_ylabel('Density')
+    ax.set_yticks([])
+    ###########################################################################
+
+    # Disease duration ########################################################
+    ax = axes[1]
+    sns.kdeplot(ax=ax, data=df_sub, x='patient_disease_duration', **kwargs)
+    ax.set_xlabel('PD duration [yrs]')
+    ax.set_yticks([])
+    ax.set_ylabel(None)
+    ###########################################################################
+
+    # Symptoms  ###############################################################
+    df_updrs = df.drop_duplicates(subset=['project', 'subject', 'cond',
+                                          'ch_hemisphere'])
+    # remove pooled data from UPDRS scores -> confusing because too many lines
+    # and colors and no pooled data for other graphs
+    df_updrs = df_updrs[(df_updrs.project != 'all') & (df_updrs.cond == 'off')]
+
+    symptoms = ['UPDRS_bradyrigid_contra', 'UPDRS_tremor_contra', 'UPDRS_III']
+    xlabels = ['Bradykinesia-\nrigidity', 'Tremor', 'Total UPDRS-III']
+    symptoms = symptoms[::-1]
+    xlabels = xlabels[::-1]
+    # symptoms = ['UPDRS_bradyrigid_contra', 'UPDRS_tremor_contra', 'UPDRS_III']
+    # xlabels = ['Bradykinesia-rigidity', 'Tremor', 'Total UPDRS-III']
+    # for j, cond in enumerate(['off']):
+    for i, symptom in enumerate(symptoms):
+        no_tremor = ['Tan'] if 'tremor' in symptom else []
+        # mask = (df_updrs.cond == cond) & ~df_updrs.project.isin(no_tremor)
+        mask = ~df_updrs.project.isin(no_tremor)
+        ax = axes[-(i+1)]
+        sns.kdeplot(ax=ax, data=df_updrs[mask], x=symptom, **kwargs)
+        ax.set_xlabel(None)
+        ax.set_ylabel(None)
+        ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+        ax.set_xlabel(xlabels[i])
+        ax.set_yticks([])
+    ###########################################################################
+
+    plt.tight_layout()
+    if save:
+        _save_fig(fig, f'{prefix}density_multicenter_comparison',
+                  save_dir, close=False,
+                  transparent=True, bbox_inches=None)
+    else:
+        plt.show()
+
+
 def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
     # Prepare df
     df = df.copy()
@@ -2017,49 +2250,47 @@ def _dataset_overview(df_n, fig_dir=None, prefix=''):
     mask_on = (mask & df_n.asymmetric_on & df_n.both_hemis_on_available
                & df_n.dominant_side_consistent)
     # sort projects in df_n according to cfg.PROJECT_NAMES
-    df_n['project_nme'] = pd.Categorical(
-        df_n['project_nme'], categories=cfg.PROJECT_NAMES, ordered=True
-    )
+    project_names = cfg.PROJECT_NAMES
+    project_names.pop(project_names.index('all'))
+    df_n['project_nme'] = pd.Categorical(df_n['project_nme'],
+                                         categories=project_names,
+                                         ordered=True)
 
-    fig, ax = plt.subplots(1, 1, figsize=(1.55, 1.5), sharey=True)
+    fig, ax = plt.subplots(1, 1, figsize=(2.1, 1.5), sharey=True)
 
     # Full data
-    sns.histplot(
-        data=df_n, x='project_nme', discrete=True, stat="count", ax=ax,
-        label='Original'
-    )
+    sns.histplot(data=df_n, x='project_nme', discrete=True, stat="count",
+                 ax=ax, label='Original')
 
     # Iterate through each bar and set the color based on the project name
     for i, patch in enumerate(ax.patches):
-        project = cfg.PROJECT_NAMES[i]
+        project = project_names[i]
         patch.set_facecolor(cfg.COLOR_DIC[project])
         patch.set_alpha(0.2)
 
     # Filtered data Off
-    sns.histplot(
-        data=df_n[mask_off], x='project_nme', discrete=True, stat="count",
-        ax=ax, label=f'Asymmetric {cfg.COND_DICT["off"]}'
-    )
+    sns.histplot(data=df_n[mask_off], x='project_nme', discrete=True,
+                 stat="count", ax=ax,
+                 label=f'Asymmetric {cfg.COND_DICT["off"]}')
     for i, patch in enumerate(ax.patches[5:]):
-        project = cfg.PROJECT_NAMES[i]
+        project = project_names[i]
         patch.set_facecolor(cfg.COLOR_DIC[project])
         patch.set_alpha(0.4)
 
-
     # Filtered data On
-    sns.histplot(
-        data=df_n[mask_on], x='project_nme', discrete=True, stat="count",
-        ax=ax, label=f'Asymmetric {cfg.COND_DICT["on"]}'
-    )
+    sns.histplot(data=df_n[mask_on], x='project_nme', discrete=True,
+                 stat="count", ax=ax,
+                 label=f'Asymmetric {cfg.COND_DICT["on"]}')
     for i, patch in enumerate(ax.patches[10:]):
-        project = cfg.PROJECT_NAMES[i]
+        project = project_names[i]
         patch.set_facecolor(cfg.COLOR_DIC[project])
 
     ax.legend()
     ax.set_xlabel(None)
-    ax.set_xticks(range(len(cfg.PROJECT_NAMES)))
-    ax.set_xticklabels(cfg.PROJECT_NAMES, rotation=40, ha='right')
-    ax.tick_params(axis='x', pad=0.5)
+    ax.set_xticks(range(len(project_names)))
+    # rename Düsseldorf1 to Düss1 and Düsseldorf2 to Düss2 in project_names
+    project_names = [proj.replace('Düsseldorf', 'Düss') for proj in project_names]
+    ax.set_xticklabels(project_names)
     ax.set_ylabel(r'$n_{\text{sub}}$')
 
     plt.tight_layout()
@@ -2694,7 +2925,7 @@ def _patient_symptoms_flat(df, conds=['off', 'on', 'offon_abs'],
                                     'ch_hemisphere'])
 
     hue_order = [proj for proj in cfg.PROJECT_NAMES
-                 if proj in df.project_nme.unique()]
+                 if proj in df.project_nme.unique() and proj != 'all']
 
     # indicate that tremor score missing for litvak and tan
     symptoms = ['UPDRS_bradyrigid_contra', 'UPDRS_tremor_contra', 'UPDRS_III']
@@ -2710,12 +2941,12 @@ def _patient_symptoms_flat(df, conds=['off', 'on', 'offon_abs'],
                   common_grid=True, bw_method=0.5, cut=0.1)
     conds_symptoms = list(product(conds, symptoms))
     for i, (cond, symptom) in enumerate(conds_symptoms):
-        no_tremor = ['Tan', 'Litvak'] if 'tremor' in symptom else []
-        mask = (df.cond == cond) & ~df.project.isin(no_tremor)
-        ax = axes[0, i]
-        sns.kdeplot(ax=ax, data=df[mask], x=symptom, **kwargs)
-        ax.set_xlabel(symptom_dic[symptom])
-        ax.set_ylabel(None)
+            no_tremor = ['Tan'] if 'tremor' in symptom else []
+            mask = (df.cond == cond) & ~df.project.isin(no_tremor)
+            ax = axes[0, i]
+            sns.kdeplot(ax=ax, data=df[mask], x=symptom, **kwargs)
+            ax.set_xlabel(symptom_dic[symptom])
+            ax.set_ylabel(None)
     if show_yticks:
         [ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1,
          decimals=0)) for ax in axes.flatten()]
@@ -2868,7 +3099,7 @@ def _patient_sample_size(df, save=True, save_dir=None):
 
 
 def _wilcoxon_stats(df_sub, y, hue, ch_selection=None, mask=None):
-    from statannotations.stats.StatTest import wilcoxon_anno
+    from statannotations.stats.StatTest import wilcoxon as wilcoxon_anno
     if not len(df_sub) or df_sub[hue].nunique() < 2:
         return np.nan, 0
     if ch_selection == 'Max. Beta':
@@ -2895,6 +3126,7 @@ def _cohen_stats(df_sub, y, hue):
 
 
 def plot_psd_units(raw, title='Amplifier'):
+    import matplotlib.pyplot as plt
     import scipy.signal as sig
     fmax = raw.info["lowpass"]
     freqs, psd = sig.welch(raw.get_data(), fs=raw.info["sfreq"],
@@ -3015,7 +3247,7 @@ def _stat_anno(ax, df, x, y, groupby='subject', alternative='two-sided',
     vals = df.copy().sort_values([groupby, x]).groupby(groupby)[y]
     xy_diff = vals.diff().dropna()
     pvalue = wilcoxon(xy_diff, alternative=alternative)[1]
-    # print(pvalue)
+    print(f'{x}, {y}: p={pvalue:.3f}')
     text = convert_pvalue_to_asterisks(pvalue, print_ns=True)
 
     # Place the text above the line
