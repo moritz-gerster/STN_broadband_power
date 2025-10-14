@@ -23,10 +23,11 @@ def organize_df(bands=cfg.BANDS.keys()):
     df = pd.read_pickle(join(cfg.DF_PATH, cfg.DF_FOOOF_RAW))
     _correct_types(df)
     _correct_sex(df)
+    _PD_onset_age(df)
     _get_neumann_days_afer_surgery(df)
     _same_amp_cond(df)
     _add_ch_colors(df)
-    df = _updrs_add_bradyrigid(df)
+    df = _updrs_add_subscores(df)
     df = _updrs_ipsi_contra(df)
     _fill_missing_updrs(df)
     df = _symptom_dominant_side(df)
@@ -152,6 +153,13 @@ def _correct_sex(df):
     sex_dic = {'m': 'male', 'M': 'male', 'f': 'female', 'F': 'female',
                'male': 'male', 'female': 'female', 'unknown': 'unknown'}
     df['patient_sex'] = df.patient_sex.apply(sex_dic.get)
+
+
+def _PD_onset_age(df):
+    """Add age of PD onset to dataframe."""
+    age = df.patient_age
+    duration = df.patient_disease_duration
+    df.loc[:, 'patient_PD_onset_age'] = age - duration
 
 
 def first_value(series):
@@ -400,15 +408,14 @@ def _select_max_band(df, exclude_bad=True, bands=None):
                 df.loc[ch_band_max, col_ch_cond] = True
 
 
-def _updrs_add_bradyrigid(df):
-    """Combine bradykinesia and rigditiy UPDRS subscores to bradyrigid.
-
-    Also add total bradyrigid scores for both hemispheres."""
+def _updrs_add_subscores(df):
+    """Combine UPDRS to subscores."""
     for prepost in ["_pre", "_post"]:
-        # Add bradyrigid scores left and right
         for project in df.project.unique():
             mask = (df.project == project)
             df_project = df[mask]
+
+            # Add bradyrigid scores left and right
             col = f"UPDRS{prepost}_bradyrigid_left"
             no_bradyrigid = (col not in df_project.columns
                              or df_project[col].isna().all())
@@ -427,41 +434,34 @@ def _updrs_add_bradyrigid(df):
                 both_right = f"UPDRS{prepost}_bradyrigid_right"
                 df.loc[mask, both_left] = bradyrigid_left
                 df.loc[mask, both_right] = bradyrigid_right
+                # Add also to df_project for retrieval later for hemi subscore
+                df_project.loc[mask, both_left] = bradyrigid_left
+                df_project.loc[mask, both_right] = bradyrigid_right
 
-        # Add total scores
-        for project in df.project.unique():
-            mask = (df.project == project)
-            df_project = df[mask]
-            for score in ["bradyrigid", "bradykinesia", 'rigidity', 'tremor']:
-                col = f"UPDRS{prepost}_{score}_total"
-                no_total_score = (col not in df_project.columns
-                                  or df_project[col].isna().all())
-                # Florin and Neumann have total scores already
-                if no_total_score:
-                    # make total bradyrigid score from total bradykinesia
-                    # and rigidity scores. More precise than using left
-                    # and right scores.
-                    col_brady = col.replace(score, "bradykinesia")
-                    col_rigid = col.replace(score, "rigidity")
-                    if (col_brady in df_project.columns
-                            and len(df_project[col_brady].dropna())
-                            and score == "bradyrigid"):
-                        score_brady = df_project[col_brady]
-                        score_rigid = df_project[col_rigid]
-                        assert col_rigid in df_project.columns
-                        score_total = score_brady + score_rigid
-                        df.loc[mask, col] = score_total
-                    else:
-                        # If no total scores, make from left and right hemi
-                        col_left = f"UPDRS{prepost}_{score}_left"
-                        col_right = f"UPDRS{prepost}_{score}_right"
-                        if col_left not in df_project.columns:
-                            # pre UPDRS might not exist
-                            continue
-                        score_left = df_project[col_left]
-                        score_right = df_project[col_right]
-                        score_total = score_left + score_right
-                        df.loc[mask, col] = score_total
+            # Add UPDRS hemi scores left and right
+            col = f"UPDRS{prepost}_hemi_left"
+            no_hemi = (col not in df_project.columns
+                       or df_project[col].isna().all())
+            if no_hemi:  # should apply to all projects
+                col_BR_left = f"UPDRS{prepost}_bradyrigid_left"
+                col_T_left = f"UPDRS{prepost}_tremor_left"
+                col_BR_right = f"UPDRS{prepost}_bradyrigid_right"
+                col_T_right = f"UPDRS{prepost}_tremor_right"
+                if (col_BR_left not in df_project.columns
+                    or col_T_left not in df_project.columns):
+                    # tremor might not exist
+                    continue
+                bradyrigid_left = df_project[col_BR_left]
+                tremor_left = df_project[col_T_left]
+                bradyrigid_right = df_project[col_BR_right]
+                tremor_right = df_project[col_T_right]
+
+                hemi_left = (bradyrigid_left + tremor_left)
+                hemi_right = (bradyrigid_right + tremor_right)
+                both_left = f"UPDRS{prepost}_hemi_left"
+                both_right = f"UPDRS{prepost}_hemi_right"
+                df.loc[mask, both_left] = hemi_left
+                df.loc[mask, both_right] = hemi_right
     return df
 
 
@@ -483,11 +483,13 @@ def _updrs_ipsi_contra(df):
                   "UPDRS_pre_rigidity",
                   "UPDRS_pre_tremor",
                   "UPDRS_pre_bradyrigid",
+                  "UPDRS_pre_hemi",
 
                   "UPDRS_post_bradykinesia",
                   "UPDRS_post_rigidity",
                   "UPDRS_post_tremor",
                   "UPDRS_post_bradyrigid",
+                  "UPDRS_post_hemi",
                   ]
     lr_opposite = dict(left="R", right="L")
     for col in updrs_cols:
@@ -506,29 +508,67 @@ def _updrs_ipsi_contra(df):
 
 def _symptom_dominant_side(df):
     # Calc symptom dominant side according to bradykinesia-rigidity subscores
-    contra_stronger = df.UPDRS_bradyrigid_contra > df.UPDRS_bradyrigid_ipsi
-    ipsi_stronger = df.UPDRS_bradyrigid_contra < df.UPDRS_bradyrigid_ipsi
-    equal = df.UPDRS_bradyrigid_contra == df.UPDRS_bradyrigid_ipsi
-    df.loc[contra_stronger, "patient_symptom_dominant_side_BR"] = "severe side"
-    df.loc[ipsi_stronger, "patient_symptom_dominant_side_BR"] = "mild side"
-    df.loc[equal, "patient_symptom_dominant_side_BR"] = "equal"
+    contra_stronger_BR = df.UPDRS_bradyrigid_contra > df.UPDRS_bradyrigid_ipsi
+    ipsi_stronger_BR = df.UPDRS_bradyrigid_contra < df.UPDRS_bradyrigid_ipsi
+    equal_BR = df.UPDRS_bradyrigid_contra == df.UPDRS_bradyrigid_ipsi
+    df.loc[contra_stronger_BR, "patient_symptom_dominant_side_BR"] = "severe side"
+    df.loc[ipsi_stronger_BR, "patient_symptom_dominant_side_BR"] = "mild side"
+    df.loc[equal_BR, "patient_symptom_dominant_side_BR"] = "equal"
+
+    contra_stronger_T = df.UPDRS_tremor_contra > df.UPDRS_tremor_ipsi
+    ipsi_stronger_T = df.UPDRS_tremor_contra < df.UPDRS_tremor_ipsi
+    equal_T = df.UPDRS_tremor_contra == df.UPDRS_tremor_ipsi
+    df.loc[contra_stronger_T, "patient_symptom_dominant_side_T"] = "severe side"
+    df.loc[ipsi_stronger_T, "patient_symptom_dominant_side_T"] = "mild side"
+    df.loc[equal_T, "patient_symptom_dominant_side_T"] = "equal"
+
+    contra_stronger_BRT = df.UPDRS_hemi_contra > df.UPDRS_hemi_ipsi
+    ipsi_stronger_BRT = df.UPDRS_hemi_contra < df.UPDRS_hemi_ipsi
+    equal_BRT = df.UPDRS_hemi_contra == df.UPDRS_hemi_ipsi
+    df.loc[contra_stronger_BRT, "patient_symptom_dominant_side_BRT"] = "severe side"
+    df.loc[ipsi_stronger_BRT, "patient_symptom_dominant_side_BRT"] = "mild side"
+    df.loc[equal_BRT, "patient_symptom_dominant_side_BRT"] = "equal"
 
     # Calc symptom dominant side by condition
     for cond in ['off', 'on']:
-        colBR = f"patient_symptom_dominant_side_BR_{cond}"
         mask = (df.cond == cond)
 
         # Recalculate bradykinesia-rigidity dominance for each condition
         con = 'UPDRS_bradyrigid_contra'
         ipsi = 'UPDRS_bradyrigid_ipsi'
-        contra_stronger = df.loc[mask, con] > df.loc[mask, ipsi]
-        ipsi_stronger = df.loc[mask, con] < df.loc[mask, ipsi]
-        equal = df.loc[mask, con] == df.loc[mask, ipsi]
+        contra_stronger_BR = df.loc[mask, con] > df.loc[mask, ipsi]
+        ipsi_stronger_BR = df.loc[mask, con] < df.loc[mask, ipsi]
+        equal_BR = df.loc[mask, con] == df.loc[mask, ipsi]
 
         # Assign dominant side based on condition and calculated values
-        df.loc[mask & contra_stronger, colBR] = "severe side"
-        df.loc[mask & ipsi_stronger, colBR] = "mild side"
-        df.loc[mask & equal, colBR] = "equal"
+        colBR = f"patient_symptom_dominant_side_BR_{cond}"
+        df.loc[mask & contra_stronger_BR, colBR] = "severe side"
+        df.loc[mask & ipsi_stronger_BR, colBR] = "mild side"
+        df.loc[mask & equal_BR, colBR] = "equal"
+
+        # Recalculate tremor dominance for each condition
+        con = 'UPDRS_tremor_contra'
+        ipsi = 'UPDRS_tremor_ipsi'
+        contra_stronger_T = df.loc[mask, con] > df.loc[mask, ipsi]
+        ipsi_stronger_T = df.loc[mask, con] < df.loc[mask, ipsi]
+        equal_T = df.loc[mask, con] == df.loc[mask, ipsi]
+
+        colT = f"patient_symptom_dominant_side_T_{cond}"
+        df.loc[mask & contra_stronger_T, colT] = "severe side"
+        df.loc[mask & ipsi_stronger_T, colT] = "mild side"
+        df.loc[mask & equal_T, colT] = "equal"
+
+        # Recalculate hemi dominance for each condition
+        con = 'UPDRS_hemi_contra'
+        ipsi = 'UPDRS_hemi_ipsi'
+        contra_stronger_BRT = df.loc[mask, con] > df.loc[mask, ipsi]
+        ipsi_stronger_BRT = df.loc[mask, con] < df.loc[mask, ipsi]
+        equal_BRT = df.loc[mask, con] == df.loc[mask, ipsi]
+
+        colBRT = f"patient_symptom_dominant_side_BRT_{cond}"
+        df.loc[mask & contra_stronger_BRT, colBRT] = "severe side"
+        df.loc[mask & ipsi_stronger_BRT, colBRT] = "mild side"
+        df.loc[mask & equal_BRT, colBRT] = "equal"
 
     def fill_missing_sides(group):
         # Fill missing 'on' values with 'off' values, and vice versa
@@ -556,8 +596,54 @@ def _symptom_dominant_side(df):
     # 'on' conditions. Value is False if one condition is missing.
     df.loc[:, 'dominant_side_consistent'] = df[col_off] == df[col_on]
     # Value is False if no dominant side in off or on state
-    equal = (df[col_off] == 'equal') | (df[col_on] == 'equal')
-    df.loc[equal, 'dominant_side_consistent'] = False
+    equal_BR = (df[col_off] == 'equal') | (df[col_on] == 'equal')
+    df.loc[equal_BR, 'dominant_side_consistent'] = False
+
+    # Ensure the correct values are assigned for both 'on' and 'off' conditions
+    col_off = 'patient_symptom_dominant_side_BRT_off'
+    col_on = 'patient_symptom_dominant_side_BRT_on'
+    # Apply the function per subject and hemisphere
+    df = df.groupby(['subject', 'ch_hemisphere']).apply(fill_missing_sides)
+    df = df.reset_index(drop=True)
+
+    # Testing
+    subset = ['UPDRS_hemi_contra', 'UPDRS_hemi_ipsi']
+    df_off = df[df.cond == 'off'].dropna(subset=subset)
+    df_on = df[df.cond == 'on'].dropna(subset=subset)
+    assert np.all(df_off.patient_symptom_dominant_side_BRT
+                  == df_off.patient_symptom_dominant_side_BRT_off)
+    assert np.all(df_on.patient_symptom_dominant_side_BRT
+                  == df_on.patient_symptom_dominant_side_BRT_on)
+
+    # Add column 'dominant_side_OffvsOn' based on comparison between 'off' and
+    # 'on' conditions. Value is False if one condition is missing.
+    df.loc[:, 'dominant_side_consistent_BRT'] = df[col_off] == df[col_on]
+    # Value is False if no dominant side in off or on state
+    equal_BRT = (df[col_off] == 'equal') | (df[col_on] == 'equal')
+    df.loc[equal_BRT, 'dominant_side_consistent_BRT'] = False
+
+    # Ensure the correct values are assigned for both 'on' and 'off' conditions
+    col_off = 'patient_symptom_dominant_side_T_off'
+    col_on = 'patient_symptom_dominant_side_T_on'
+    # Apply the function per subject and hemisphere
+    df = df.groupby(['subject', 'ch_hemisphere']).apply(fill_missing_sides)
+    df = df.reset_index(drop=True)
+
+    # Testing
+    subset = ['UPDRS_tremor_contra', 'UPDRS_tremor_ipsi']
+    df_off = df[df.cond == 'off'].dropna(subset=subset)
+    df_on = df[df.cond == 'on'].dropna(subset=subset)
+    assert np.all(df_off.patient_symptom_dominant_side_T
+                  == df_off.patient_symptom_dominant_side_T_off)
+    assert np.all(df_on.patient_symptom_dominant_side_T
+                  == df_on.patient_symptom_dominant_side_T_on)
+
+    # Add column 'dominant_side_OffvsOn' based on comparison between 'off' and
+    # 'on' conditions. Value is False if one condition is missing.
+    df.loc[:, 'dominant_side_consistent_T'] = df[col_off] == df[col_on]
+    # Value is False if no dominant side in off or on state
+    equal_T = (df[col_off] == 'equal') | (df[col_on] == 'equal')
+    df.loc[equal_T, 'dominant_side_consistent_T'] = False
     return df
 
 
@@ -572,7 +658,9 @@ def _fill_missing_updrs(df):
                   "UPDRS_bradyrigid_contra",
                   "UPDRS_bradyrigid_ipsi",
                   "UPDRS_tremor_contra",
-                  "UPDRS_tremor_ipsi"]
+                  "UPDRS_tremor_ipsi",
+                  "UPDRS_hemi_contra",
+                  "UPDRS_hemi_ipsi"]
 
     for col in updrs_cols:
         col_pre = col.replace("UPDRS_", "UPDRS_pre_")
@@ -584,8 +672,10 @@ def _fill_missing_updrs(df):
             df.loc[mask, col] = df.loc[mask, col_pre]
 
 
-def _brady_severity(df, updrs_kinds=['UPDRS_bradyrigid_contra', 'UPDRS_III']):
-    """Calculate bradykinesia severity categories."""
+def _brady_severity(df, updrs_kinds=['UPDRS_bradyrigid_contra', 'UPDRS_III',
+                                    #  'UPDRS_tremor_contra',
+                                     'UPDRS_hemi_contra']):
+    """Calculate severity categories. """
     assert 'all' not in df.project.unique(), "Calc quartiles project basesd"
     if df.subject.nunique() < 3:
         return df
@@ -626,7 +716,7 @@ def _brady_severity(df, updrs_kinds=['UPDRS_bradyrigid_contra', 'UPDRS_III']):
         # merge back to df
         df = df.merge(df_severity, on=no_duplicates + add_hemi, how='left')
 
-    # testing
+    # testing for bradyrigid
     msg = 'Counts dont match'
     for project in df.project.unique():
         for cond in ['off', 'on', 'offon_abs']:
