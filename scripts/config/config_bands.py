@@ -14,8 +14,8 @@ BANDS = {
     "gamma_low": (30, 45),
     "gamma_mid": (45, 60),
     "gamma": (30, 60),
-    "full": (1, 60),
-}
+    "full": (2, 60),
+    }
 
 NOISE_FLOORS = {
     "Neumann": (95, 295),
@@ -23,7 +23,7 @@ NOISE_FLOORS = {
     "Litvak": (95, 595),
     "Hirschmann": (95, 495),
     "Tan": (95, 250)
-}
+    }
 
 BAND_NAMES_GREEK = {
     'delta': r'$\delta$',
@@ -38,10 +38,12 @@ BAND_NAMES_GREEK = {
     'gamma_low': r'Low $\gamma$',
     "gamma_mid": r'Mid $\gamma$',
     "gamma": r'$\gamma$ (30-60 Hz)',
-    'full': '1-60 Hz',
+    'full': '2-60 Hz',
     'fm_exponent': '1/f exponent',
     'fm_offset_log': 'Offset',
     'fm_offset': 'Offset',
+    'full_fm_band_aperiodic_log': 'Aperiodic broadband power',
+    'patient_age': 'Patient age'
 }
 
 BAND_NAMES_GREEK_SHORT = {
@@ -57,7 +59,7 @@ BAND_NAMES_GREEK_SHORT = {
     'gamma_low': r'L$\gamma$',
     "gamma_mid": r'M$\gamma$',
     'gamma': r'$\gamma$',
-    'full': '1-60 Hz',
+    'full': '2-60 Hz',
     'fm_exponent': '1/f',
     'fm_offset_log': 'Offset',
     'fm_offset': 'Offset',
@@ -80,7 +82,7 @@ BAND_COLORS = {
     "gamma_mid": c7,
     "gamma": c7,
     "FTG": c7,
-}
+    }
 
 BAND_LOCALIZATION = [
     'alpha_beta',  # reproduce Shreve 2017
