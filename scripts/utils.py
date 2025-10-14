@@ -40,7 +40,8 @@ def _check_duplicated_df_rows(df):
 
 
 def _delete_dirty_files(bids_path):
-    """Files without annotations are saved in rawdata/ with the descriptions
+    """
+    Files without annotations are saved in rawdata/ with the descriptions
     tag 'uncleaned'. Once annotations are added and bidsify_sourcedata is run
     again, this function automatically checks whether an uncleaned version is
     present and deletes it to save up space and to avoid duplicate processing
@@ -257,7 +258,8 @@ def elec_phys_signal(exponent: float,
                      random_ap_phases=True,
                      random_per_phases=True,
                      seed: int = 1):
-    """Generate 1/f noise with optionally added oscillations.
+    """
+    Generate 1/f noise with optionally added oscillations.
 
     Parameters
     ----------
@@ -374,14 +376,15 @@ def _extract_ml_performance(df_ml):
     return performance_dict
 
 
-def _average_hemispheres(df, x, y):
+def _average_hemispheres(df, x, y, dropna=True):
     df = df.copy()
     group = df.groupby(["subject", "cond"])
     df[x] = group[x].transform("mean")
     df[y] = group[y].transform("mean")
     # select left hemisphere
     df = df.drop_duplicates(subset=["subject", "cond"])
-    df = df.dropna(subset=[y, x])
+    if dropna:
+        df = df.dropna(subset=[y, x])
     return df
 
 
@@ -458,9 +461,7 @@ def get_correlation_df(df_plot, y, total_power=True, average_hemispheres=False,
             df_corrs.append(dic)
             proj_nme = df_sub.project_nme.unique()[0]
             if proj_nme == 'all':
-                print(
-                    f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval:.2f}",
-                    file=output_file
-                )
+                print(f"{proj_nme} {band_nmes[i]}: rho={rho:.2f}, p={pval}",
+                      file=output_file)
     df_corrs = pd.DataFrame(df_corrs)
     return df_corrs
