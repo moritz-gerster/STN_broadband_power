@@ -350,7 +350,7 @@ def _get_patient_dic(bids_path):
     if bids_path.subject.endswith("Emptyroom"):
         pass
     elif bids_path.recording == 'Florin':
-        fpath = join(cfg.SOURCEDATA_FLORIN, "Details.xlsx")
+        fpath = join(cfg.SOURCEDATA_FLORIN, "Details_ms.xlsx")
         patient_table = pd.read_excel(fpath)
         # filter for subject
         sub_old = cfg.FLORIN_SUBJECT_MAP_REV[bids_path.subject]
@@ -358,12 +358,14 @@ def _get_patient_dic(bids_path):
         patient_table = patient_table[mask_sub]
         # drop columns
         drop = ['Subject ', 'MMSE pre', 'BDI pre ', 'UPDRS_peri',
-                'UPDRS_peri.1', 'current side ', 'of impairment']
+                'UPDRS_peri.1', 'current side ', 'of impairment',
+                'Age of PD onset']
         patient_table.drop(columns=drop, inplace=True)
         # rename columns
         rename_cols = {"Age ": 'patient_age', 'Sex ': 'patient_sex',
                        'Handness ': 'patient_handedness',
-                       'Dose (mg)': 'patient_LEDD'}
+                       'Dose (mg)': 'patient_LEDD',
+                       'Disease duration': 'patient_disease_duration'}
         patient_table.rename(columns=rename_cols, inplace=True)
         patient_dic = patient_table.iloc[0].to_dict()
         day = cfg.FLORIN_DAYS_RECORDING[sub_old]
@@ -802,18 +804,21 @@ def _get_updrs_dic(bids_path, multiple_scores="average_sessions"):
     if bids_path.recording == 'Litvak':
         # load excel file
         fpath = join(cfg.SOURCEDATA_LIT, 'meta_infos',
-                     'Details_Moritz.xlsx')
+                     'Details_Moritz_2.xlsx')
         updrs_table = pd.read_excel(fpath)
         # filter for subject
         sub = int(bids_path.subject.replace('LitML', ''))
         updrs_table = updrs_table[(updrs_table.Subject == sub)]
         # filter for condition: columns 2-6 are OFF, the last 5 cols are ON
         if cond_path == 'off':
-            mask_cond = [True, True, True, True, True, True, False,
-                         False, False, False, False, False]
+            mask_cond = [True, True, True, True, True, True, True, True,
+                         False, False, False, False, False, False,
+                         False, False, False, False, False, False]
         elif cond_path == 'on':
-            mask_cond = [True, False, False, False, False, False, False,
-                         True, True, True, True, True]
+            mask_cond = [True,
+                         False, False, False, False, False, False,
+                         False, False, False, False, False, False,
+                         True, True, True, True, True, True, True]
         updrs_table = updrs_table.iloc[:, mask_cond]
 
         # rename columns
@@ -822,11 +827,15 @@ def _get_updrs_dic(bids_path, multiple_scores="average_sessions"):
                        'Hemibody rigidity R': 'rigidity_right',
                        'Hemibody bradykinesia L': 'bradykinesia_left',
                        'Hemibody rigidity L ': 'rigidity_left',
+                       'Tremor L': 'tremor_left',
+                       'Tremor R': 'tremor_right',
                        # ON columns are renamed by pandas to avoid duplicates
                        'Hemibody bradykinesia R.1': 'bradykinesia_right',
                        'Hemibody rigidity R.1': 'rigidity_right',
                        'Hemibody bradykinesia L.1': 'bradykinesia_left',
-                       'Hemibody rigidity L .1': 'rigidity_left'}
+                       'Hemibody rigidity L .1': 'rigidity_left',
+                       'Tremor L.1': 'tremor_left',
+                       'Tremor R.1': 'tremor_right'}
         rename_cols = {key: f"UPDRS_pre_{val}" for key, val
                        in rename_cols.items()}
         updrs_table.rename(columns=rename_cols, inplace=True)
