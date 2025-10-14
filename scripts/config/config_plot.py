@@ -90,7 +90,8 @@ KIND_DICT = dict(normalized='Relative', absolute='Absolute',
 PROJECT_ORDER = ["Neumann", "Litvak", 'Florin', "Hirschmann", "Tan",
                  "Oxford_SG_Saga", "Oxford_SG_Porti",
                  "Oxford_K_Saga", "Oxford_K_Porti", 'TMSi_amplifier', 'all']
-PROJECT_ORDER_SLIM = ["Neumann", "Litvak", 'Florin', "Hirschmann", "Tan", 'all']
+PROJECT_ORDER_SLIM = ["Neumann", "Litvak", 'Florin', "Hirschmann", "Tan",
+                      'all']
 PROJECT_ORDER_PALETTE = [COLOR_DIC[proj] for proj in PROJECT_ORDER]
 COND_ORDER = ["off", "on", 'offon_rel', 'offon_abs']
 PROJECT_DICT_ = dict(Tan='Oxford      ',
@@ -247,7 +248,8 @@ for band, band_nme in cfg.BAND_NAMES_GREEK_SHORT.items():
     PLOT_LABELS_SHORT[f"{band}_abs_mean_log"] = f"{band_nme} mean"
     PLOT_LABELS_SHORT[f"{band}_abs_min"] = f"{band_nme} min"
     PLOT_LABELS_SHORT[f"{band}_abs_min_log"] = f"{band_nme} min"
-    PLOT_LABELS_SHORT[f"{band}_abs_max5Hz_log"] = f"{band_nme} "r"$\pm$"" 2.5 Hz max"
+    PLOT_LABELS_SHORT[f"{band}_abs_max5Hz_log"] = (f"{band_nme} "
+                                                   r"$\pm$"" 2.5 Hz max")
     PLOT_LABELS_SHORT[f"{band}_abs_max_freq"] = f"{band_nme} peak freq."
     PLOT_LABELS_SHORT[f"{band}_fm_mean"] = f"{band_nme} mean"
     PLOT_LABELS_SHORT[f"{band}_fm_mean_log"] = f"{band_nme} mean"
@@ -256,7 +258,8 @@ for band, band_nme in cfg.BAND_NAMES_GREEK_SHORT.items():
     PLOT_LABELS_SHORT[f"{band}_fm_auc_log"] = f"{band_nme} AUC"
     PLOT_LABELS_SHORT[f"{band}_fm_powers_max"] = f"{band_nme} peak"
     PLOT_LABELS_SHORT[f"{band}_fm_powers_max_log"] = f"{band_nme} peak"
-    PLOT_LABELS_SHORT[f"{band}_fm_centerfreqs_max"] = f"{band_nme} max. per. freq."
+    PLOT_LABELS_SHORT[f"{band}_fm_centerfreqs_max"] = (f"{band_nme} max. "
+                                                       "per. freq.")
     PLOT_LABELS_SHORT[f"{band}_fm_stds_max"] = f"{band_nme} peak width"
     PLOT_LABELS_SHORT[f"{band}_fm_peak_count"] = f"{band_nme} # per. peaks"
     PLOT_LABELS_SHORT[f"{band}_fm_band_aperiodic"] = f"{band_nme} aper. power"
