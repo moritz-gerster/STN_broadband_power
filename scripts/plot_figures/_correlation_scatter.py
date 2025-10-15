@@ -131,6 +131,7 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
     bands = [band.replace('_abs_mean_log', '').replace('_fm_mean_log', '')
              for band in X]
     bands = [cfg.BAND_NAMES_GREEK_SHORT[band] for band in bands]
+    sig_threshold = 0.05 / len(bands)
     feature_nme = f"Lin. reg. ({', '.join(bands)})"
     X.append(feature_nme)
     full_model_abic = f'AICc: {AICc_linreg:.0f}, BIC: {BIC_linreg:.0f}'
@@ -152,6 +153,7 @@ def plot_all(df, X, y, kind, add_constant=True, fig_dir='Figure3', prefix='',
         else:
             model_abic = full_model_abic
         corr_results = _corr_results(df, x, y, 'pearson', None,
+                                     sig_threshold=sig_threshold,
                                      add_sample_size=add_sample_size,
                                      n_perm=N_PERM_CORR)
         r_pearson, _, label, weight, _ = corr_results
@@ -364,10 +366,10 @@ def find_best_model(df, y, kind, bands=cfg.BANDS.keys(), power='mean',
 def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
                                 fig_dir='Figure2', prefix='',
                                 xlabel=True, title=True, output_file=None,
-                                figsize=(1.2, 1.4),
+                                figsize=(1.2, 1.4), average_hemispheres=False,
                                 n_perm=N_PERM_CORR):
     df_plot = df_norm[(df_norm.cond == cond) & (df_norm.project == 'all')]
-    if y == 'UPDRS_III':
+    if y == 'UPDRS_III' or average_hemispheres:
         # average hemispheres
         keep = ['subject', 'cond', 'project', 'color']
         df_plot = df_plot.groupby(keep).mean(numeric_only=True).reset_index()
@@ -389,7 +391,10 @@ def representative_scatter_plot(df_norm, x, y, cond, corr_method='spearman',
         print(label, file=output_file)
     band_nme = x.replace('_abs_mean_log', '')
     band_label = cfg.BAND_NAMES_GREEK[band_nme]
-    xlabel = f'Relative {band_label} [%]' if xlabel else None
+    if isinstance(xlabel, str):
+        xlabel = band_label
+    elif isinstance(xlabel, bool) and xlabel:
+        xlabel = f'Relative {band_label} [%]'
     ax.set_xlabel(xlabel)
     ax.set_ylabel(cfg.PLOT_LABELS[y])
     plt.tight_layout()
