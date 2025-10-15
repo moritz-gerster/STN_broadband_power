@@ -117,4 +117,4 @@ def _select_maxima(df, pwr_cols, only_maxima=True, keep_zero=False):
 
 if __name__ == "__main__":
     export_localization_table()
-    print(f'{basename(__file__)} done.')
+    print(f"{basename(__file__).strip('.py')} done.")
