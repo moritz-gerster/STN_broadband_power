@@ -619,7 +619,7 @@ def simulate_gamma_vs_broadband(fig_dir=None, prefix=''):
 
     colors = [line.get_color() for line in ax[0, 0].lines]
     ax[0, 0].set_xlabel("Frequency [Hz]")
-    ax[0, 0].set_ylabel("Spectrum"r' [$\mu V^2/Hz$]')
+    ax[0, 0].set_ylabel(r"Spectrum [$\mu V^2/Hz$]")
     # add blue shading below first power in power_list from 2-60 Hz and
     # label "Aperiodic broadband power"
     y_min, y_max = ax[0, 0].get_ylim()
