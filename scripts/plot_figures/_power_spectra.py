@@ -297,14 +297,21 @@ def _forrest_plot_ax(ax, df_proj, kind, hue, bands=BANDS,
             data = (arr1 - arr2,)
         print(f'{band}: {value:.2f}', file=output_file)
         values.append(value)
+        # Multiple comparisons corrected confidence intervals
+        alpha = 0.05
+        multiple_comparisons = len(bands)
+        confidence_level = 1 - (alpha / multiple_comparisons)
+
         if n_boot is None:
             msg = 'Only effect size supports parametric'
             assert estimator == 'effect_size', msg
             # parametric (fast but more assumptions)
-            ci = pg.compute_esci(value, nx, ny, paired=paired)
+            ci = pg.compute_esci(value, nx, ny, paired=paired,
+                                 confidence=confidence_level)
         else:
             # nonparametric (slow but more correct)
             result = bootstrap(data, func, n_resamples=n_boot, paired=paired,
+                               confidence_level=confidence_level,
                                random_state=1)
             ci = result.confidence_interval
             # if distribution is degenerate (many 0 values), apply parametric
