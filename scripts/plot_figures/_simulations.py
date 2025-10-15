@@ -3,15 +3,15 @@ from os.path import join
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as sig
-
-import scripts.config as cfg
+from scipy.stats import pearsonr
 from specparam import SpectralModel
 from specparam.analysis import get_band_peak
 from specparam.sim import sim_power_spectrum
+
+import scripts.config as cfg
 from scripts.plot_figures.settings import XTICKS_FREQ_low
 from scripts.utils import elec_phys_signal
 from scripts.utils_plot import _save_fig
-from scipy.stats import pearsonr
 
 
 def _normalize(psd, freqs):
@@ -620,7 +620,8 @@ def simulate_gamma_vs_broadband(fig_dir=None, prefix=''):
     colors = [line.get_color() for line in ax[0, 0].lines]
     ax[0, 0].set_xlabel("Frequency [Hz]")
     ax[0, 0].set_ylabel("Spectrum"r' [$\mu V^2/Hz$]')
-    # add blue shading below first power in power_list from 2-60 Hz and label "Aperiodic broadband power"
+    # add blue shading below first power in power_list from 2-60 Hz and
+    # label "Aperiodic broadband power"
     y_min, y_max = ax[0, 0].get_ylim()
     y_min *= .4
     ax[0, 0].fill_between(freqs, y_min, power_list[0],
@@ -691,7 +692,7 @@ def simulate_gamma_vs_broadband(fig_dir=None, prefix=''):
 
     colors = [line.get_color() for line in ax[1, 0].lines]
     ax[1, 0].set_xlabel("Frequency [Hz]")
-    ax[1, 0].set_ylabel("Spectrum"r' [$\mu V^2/Hz$]')
+    ax[1, 0].set_ylabel(r"Spectrum [$\mu V^2/Hz$]")
 
     # add blue shading below first power in power_list from 2-60 Hz and
     # label "Aperiodic broadband power"
