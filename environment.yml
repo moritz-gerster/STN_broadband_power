@@ -17,6 +17,6 @@ dependencies:
   - pip
   - pip:
     - -e .  # scripts
-    - specparam==2.0
+    - specparam==2.0.0rc3  # latest available pre-release on PyPI
     - git+https://github.com/richardkoehler/pte-stats.git@paper-moritz-gerster
     - mat73==0.65  # to load London data
