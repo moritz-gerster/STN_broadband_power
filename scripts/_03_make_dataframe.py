@@ -12,8 +12,8 @@ from mne.time_frequency import read_spectrum
 from mne_bids import find_matching_paths
 from nilearn import image
 from specparam import SpectralModel
-from specparam.core.errors import DataError
-from specparam.utils.io import load_model
+from specparam.modutils.errors import DataError
+from specparam.io.models import load_model
 from tqdm import tqdm
 
 import scripts.config as cfg
