@@ -144,7 +144,7 @@ def pre_post_vs_symptoms(df_norm, fig_dir='Figure_S5', prefix=''):
                                                 corr_method, None,
                                                 n_perm=N_PERM_CORR)
 
-    fig, axes = plt.subplots(1, 4, figsize=(4.7, 2), sharey="row")
+    fig, axes = plt.subplots(1, 4, figsize=(4.7, 1.75), sharey="row")
 
     ax = axes[0]
     sns.regplot(ax=ax, data=df_plot, y=y_pre, x=x, ci=95,
@@ -156,7 +156,7 @@ def pre_post_vs_symptoms(df_norm, fig_dir='Figure_S5', prefix=''):
             transform=ax.transAxes, fontweight='bold')
     ax.set_title(label_pre, weight=weight, y=y_title)
     ax.set_xlabel(None)
-    ax.set_ylabel('UPDRS-III off')
+    ax.set_ylabel('UPDRS-III')
 
     ax = axes[1]
     sns.regplot(ax=ax, data=df_plot, y=y_post, x=x, ci=95,
@@ -190,7 +190,7 @@ def pre_post_vs_symptoms(df_norm, fig_dir='Figure_S5', prefix=''):
     band_nme = x.replace('_abs_max_log', '')
     band_nme = cfg.BAND_NAMES_GREEK[band_nme]
     ax.set_xlabel(None)
-    ax.set_ylabel('UPDRS-III off-on')
+    ax.set_ylabel(None)
 
     ax = axes[3]
     sns.regplot(ax=ax, data=df_plot, y=y_post, x=x, ci=95,
