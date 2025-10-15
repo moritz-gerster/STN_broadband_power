@@ -43,8 +43,9 @@ def get_dfs(df, ch_choice=None, chs=None, equalize_subjects_norm_abs=False):
     # Step 1: Group by subject, project, and hemisphere to check condition
     # availability
     cols = ['subject', 'project_nme', 'ch_hemisphere', 'UPDRS_exists',
-            'asymmetric_on',
-            'asymmetric_off', 'dominant_side_consistent', 'has_model']
+            'asymmetric_on', 'asymmetric_off',
+            'dominant_side_consistent_T', 'dominant_side_consistent_BRT',
+            'dominant_side_consistent', 'has_model']
     pivot = pivot.pivot_table(index=cols, columns='cond', aggfunc='size',
                               fill_value=0).reset_index()
 
@@ -62,6 +63,8 @@ def get_dfs(df, ch_choice=None, chs=None, equalize_subjects_norm_abs=False):
         asymmetric_on=('asymmetric_on', 'any'),
         asymmetric_off=('asymmetric_off', 'any'),
         dominant_side_consistent=('dominant_side_consistent', 'any'),
+        dominant_side_consistent_T=('dominant_side_consistent_T', 'any'),
+        dominant_side_consistent_BRT=('dominant_side_consistent_BRT', 'any'),
         has_model=('has_model', 'any'),
     ).reset_index()
 

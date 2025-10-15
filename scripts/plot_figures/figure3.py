@@ -88,7 +88,7 @@ def figure3d1(dataframes):
 
 
 def figure3d2(df_abs):
-    """Correlation by frequency bin."""
+    """Correlation by canonical frequency."""
     X = ['theta_abs_mean_log',
          'beta_low_abs_mean_log',
          'gamma_low_abs_mean_log']
@@ -109,7 +109,7 @@ def figure3h1(dataframes):
 
 
 def figure3h2(df_per):
-    """Correlation by frequency bin."""
+    """Correlation by canonical frequency."""
     X = ['fm_offset_log', 'beta_low_fm_mean_log', 'gamma_low_fm_mean_log']
     df_per = df_per[(df_per.cond == 'off')]
     output_file_path = join(FIG_PAPER, 'Figure3', "H2___output.txt")
