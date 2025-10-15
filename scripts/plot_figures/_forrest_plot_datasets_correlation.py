@@ -130,8 +130,8 @@ def forest_plot_correlation(df, X, y, n_perm=N_PERM_CORR, r_lim=(-1, 1),
         band_title = cfg.PLOT_LABELS[x].replace(' Peak', ''
                                                 ).replace(' mean', '')
         rho_string = r'$\rho_{\mathrm{all}}=$'f'{rho_all:.2f}'
-        pval_string = (f"(p={pval_all:1.0e})" if abs(pval_all) < 0.005
-                       else f"(p={pval_all:.2f})")
+        pval_string = (f"(p={pval_all:1.0e})" if abs(pval_all) < 0.001
+                       else f"(p={pval_all:.3f})")
         fontweight = 'bold' if pval_all < 0.05 else 'normal'
         stat_string = rho_string + ' ' + pval_string + required_n
         if xlabel:
