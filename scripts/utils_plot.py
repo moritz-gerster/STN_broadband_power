@@ -13,6 +13,7 @@ from scipy.stats import wilcoxon
 from statannotations.Annotator import Annotator
 
 from scripts import config as cfg
+from scripts.utils import _average_hemispheres
 from scripts.cluster_stats import lineplot_compare
 from scripts.corr_stats import (_corr_results, _correct_sample_size,
                                 _get_freqs_correlation, corr_freq_pvals,
@@ -2240,6 +2241,199 @@ def _dataset_comparison_divided(df, save_dir=None, save=None, prefix=''):
             save_dir = join(cfg.FIG_RESULTS, 'patients', 'DBSleads')
         _save_fig(fig, f'D3__multicenter_comparison', save_dir, close=False,
                   transparent=True, bbox_inches=None)
+    else:
+        plt.show()
+
+
+def _get_study_df(df):
+    """Get df with demographic and clinical info from other studies."""
+    projects_multicenter = ["Berlin", "London", "Düsseldorf1", "Düsseldorf2",
+                            "Oxford"]
+
+    # Rename studies for plotting
+    project_multistudy_old = ["all", "Lofredi2023", "Pardo2024",
+                              "Wilkins2023", "Eisinger2020", "Martin2018"]
+    project_multistudy_new = ["This study", "Lofredi 2023", "Pardo-Val. 2024",
+                              "Wilkins 2023", "Eisinger 2020", "Martin 2018"]
+    study_dic = dict(zip(project_multistudy_old, project_multistudy_new))
+
+    df_centers = df[(df.project_nme.isin(projects_multicenter))
+                    & (df.cond == 'off')].dropna(subset='UPDRS_III')
+    df_centers = _average_hemispheres(df_centers,
+                                      'UPDRS_bradyrigid_contra',
+                                      'beta_low_abs_mean_log')
+    df_centers = _average_hemispheres(df_centers,
+                                      'UPDRS_tremor_contra',
+                                      'beta_low_abs_mean_log', dropna=False)
+
+    sex_map = {'male': 0, 'M': 0, 'm': 0, 'female': 1, 'w': 1, 'F': 1}
+    df_centers['patient_sex'] = df_centers['patient_sex'].map(sex_map)
+
+    updrs_off_dic = {'UPDRS_III': 'UPDRS_III_off',
+                     'UPDRS_bradyrigid_contra': 'UPDRS_bradyrigid_mean_off',
+                     'UPDRS_tremor_contra': 'UPDRS_tremor_mean_off'}
+    df_centers.rename(columns=updrs_off_dic, inplace=True)
+
+    age = df_centers['patient_age']
+    duration = df_centers['patient_disease_duration']
+    df_centers['patient_PD_onset_age'] = age - duration
+
+    cols = ['project_nme', 'subject', 'patient_sex', 'patient_age',
+            'patient_disease_duration', 'patient_PD_onset_age',
+            'UPDRS_III_off', 'UPDRS_bradyrigid_mean_off',
+            'UPDRS_tremor_mean_off']
+    df_centers = df_centers[cols]
+    df_centers.reset_index(drop=True, inplace=True)
+
+    mask = (df.project_nme == 'all') & (df.cond == 'off')
+    df_studies = df[mask].dropna(subset='UPDRS_III')
+    df_studies = _average_hemispheres(df_studies,
+                                      'UPDRS_bradyrigid_contra',
+                                      'beta_low_abs_mean_log')
+    df_studies = _average_hemispheres(df_studies,
+                                      'UPDRS_tremor_contra',
+                                      'beta_low_abs_mean_log', dropna=False)
+
+    df_studies['patient_sex'] = df_studies['patient_sex'].map(sex_map)
+    df_studies.rename(columns=updrs_off_dic, inplace=True)
+
+    age = df_studies['patient_age']
+    duration = df_studies['patient_disease_duration']
+    df_studies['patient_PD_onset_age'] = age - duration
+
+    # UPDRS subscores not available in other studies
+    cols.remove('UPDRS_bradyrigid_mean_off')
+    cols.remove('UPDRS_tremor_mean_off')
+    df_studies = df_studies[cols]
+    df_studies.reset_index(drop=True, inplace=True)
+
+    # Load other studies excel sheet with extracted publication info
+    fname = join('sourcedata', 'study_comparison',
+                 'patient_demography_all.xlsx')
+    df_study = pd.read_excel(fname)
+
+    df_study['patient_sex'] = df_study['patient_sex'].map(sex_map)
+
+    age = df_study['patient_age']
+    duration = df_study['patient_disease_duration']
+    df_study['patient_PD_onset_age'] = age - duration
+
+    df_study = df_study[cols]
+    df_study.reset_index(drop=True, inplace=True)
+
+    # merge df_studies and df_study
+    df_studies = pd.concat([df_studies, df_study], ignore_index=True)
+    df_studies['project_nme'] = df_studies['project_nme'].map(study_dic)
+    return df_studies
+
+
+def study_comparison(df, save_dir=None):
+    # Prepare df
+    df = df.copy()
+
+    hue_order_studies = ["This study", "Lofredi 2023", "Pardo-Val. 2024",
+                         "Wilkins 2023", "Eisinger 2020", "Martin 2018"]
+    palette_studies = ['k'] + list(sns.color_palette('husl', 5))
+
+    fig, axes = plt.subplots(1, 6, figsize=(6, .9),
+                             width_ratios=[1.2, 1, 1, 1, 1, 1])
+
+    # Sample sizes subject ####################################################
+    ax = axes[0]
+
+    sample_sizes = [len(df[df.project_nme == proj].drop_duplicates(
+        subset=['subject'])) for proj in hue_order_studies]
+
+    # Plot horizontal bars
+    df_sample_sizes = pd.DataFrame({'project_nme': hue_order_studies,
+                                    'sample_size': sample_sizes})
+    print(df_sample_sizes)
+
+    sns.histplot(data=df_sample_sizes,
+                 y='project_nme',          # Project names on the y-axis
+                 weights='sample_size',    # Use sample sizes as weights
+                 hue='project_nme',        # Hue for coloring each dataset
+                 palette=palette_studies,    # Custom color palette
+                 multiple='dodge',         # Prevent overlapping bars
+                 shrink=35,               # Slightly shrink bars for aesthetics
+                 ax=ax,                    # Use the existing subplot axis
+                 stat='count',             # Display raw counts (sample sizes)
+                 legend=False,
+                 )
+    # Set labels
+    ax.set_xlabel('Number of patients')
+    ax.set_ylabel(None)
+    yticks = np.linspace(-14.5, 19.5, len(hue_order_studies))
+    ax.set_yticks(yticks, labels=hue_order_studies)
+    ax.set_ylim(24.5, -19.5)
+    ###########################################################################
+
+    # Sex  ####################################################################
+    ax = axes[1]
+
+    # don't plot unknown sex because not informative
+    df.patient_sex = df['patient_sex'].map({0: 'M', 1: 'F'})
+
+    # columns without variance cannot be plotted with kdeplot
+    sns.histplot(ax=ax, data=df, x='patient_sex', hue='project_nme',
+                 palette=palette_studies,
+                 multiple='dodge', legend=False,
+                 shrink=0.8,
+                 hue_order=hue_order_studies,
+                 stat='percent',
+                 common_norm=False)
+    ax.set_yticks([0, 50, 100])
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax.set_ylabel(None)
+    ax.set_xlabel('Sex')
+    ###########################################################################
+
+    ###########################################################################
+    kwargs = dict(hue='project_nme', palette=palette_studies,
+                  legend=False, hue_order=hue_order_studies,
+                  common_norm=False,  # True overemphasizes 'all'
+                  common_grid=True, bw_method=0.5, cut=0.1)
+
+    # Age #####################################################################
+    ax = axes[2]
+    sns.kdeplot(ax=ax, data=df, x='patient_age', **kwargs)
+    ax.set_xlabel('Age [yrs]')
+    ax.set_ylabel('Density')
+    ax.set_yticks([])
+    ###########################################################################
+
+    # Disease duration ########################################################
+    ax = axes[3]
+    sns.kdeplot(ax=ax, data=df, x='patient_disease_duration', **kwargs)
+    ax.set_xlabel('PD duration [yrs]')
+    ax.set_yticks([])
+    ax.set_ylabel(None)
+    ###########################################################################
+
+    # PD onset age ########################################################
+    ax = axes[4]
+    sns.kdeplot(ax=ax, data=df, x='patient_PD_onset_age', **kwargs)
+    ax.set_xlabel('PD onset age [yrs]')
+    ax.set_yticks([])
+    ax.set_ylabel(None)
+    ###########################################################################
+
+    # Symptoms  ###############################################################
+    # remove pooled data from UPDRS scores -> confusing because too many lines
+    # and colors and no pooled data for other graphs
+    ax = axes[5]
+    sns.kdeplot(ax=ax, data=df, x='UPDRS_III_off', **kwargs)
+    ax.set_xlabel(None)
+    ax.set_ylabel(None)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=0))
+    ax.set_xlabel('Total UPDRS-III off')
+    ax.set_yticks([])
+    ###########################################################################
+
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.5)
+    if save_dir:
+        _save_fig(fig, 'FigS6', save_dir)
     else:
         plt.show()
 
