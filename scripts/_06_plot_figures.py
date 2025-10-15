@@ -8,8 +8,9 @@ import scripts.config as cfg
 from scripts.plot_figures import (figure1, figure2, figure3, figure4, figure5,
                                   figure6, figure7, supp_figure1, supp_figure2,
                                   supp_figure3, supp_figure4, supp_figure5,
-                                  supp_figure6, supp_figure7, supp_figure8)
-
+                                  supp_figure6, supp_figure7, supp_figure8,
+                                  supp_figure9, supp_figure10, supp_figure11,
+                                  supp_figure12)
 
 def all_figures():
     """Plot all figures for the publication."""
@@ -34,6 +35,10 @@ def all_figures():
     supp_figure6(df_orig)
     supp_figure7(df_orig)
     supp_figure8(df_orig)
+    supp_figure9(df_orig)
+    supp_figure10(df_orig)
+    supp_figure11(df_orig)
+    supp_figure12(df_orig)
     print(f"{basename(__file__).strip('.py')} done.")
     return None
 

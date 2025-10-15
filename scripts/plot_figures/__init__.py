@@ -11,6 +11,9 @@ from .supp_figure3 import supp_figure3
 from .supp_figure4 import supp_figure4
 from .supp_figure5 import supp_figure5
 from .supp_figure6 import supp_figure6
-from .supp_figure6 import supp_figure6
 from .supp_figure7 import supp_figure7
 from .supp_figure8 import supp_figure8
+from .supp_figure9 import supp_figure9
+from .supp_figure10 import supp_figure10
+from .supp_figure11 import supp_figure11
+from .supp_figure12 import supp_figure12
