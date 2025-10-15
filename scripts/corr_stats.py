@@ -264,7 +264,7 @@ def _get_freqs_correlation_stats(df, x, y, average_hemispheres=False,
     assert len(df.cond.unique()) == 1, "More than one condition"
     assert len(df.project.unique()) == 1, "More than one project"
     # Averaging only possible across subjects, not within
-    if corr_method .startswith('within'):
+    if corr_method.startswith('within'):
         assert not average_hemispheres, "No averaging for within"
 
     df_corr = _get_freqs_correlation(df, x, y, x_max=xmax,
@@ -478,7 +478,7 @@ def corr_freq_pvals(ax, df_both, X, Y, y_height=0):
             markersize=1, label=f"p < {psig}")
 
 
-def _corr_results(df_rho, x, y, corr_method, row_idx=None,
+def _corr_results(df_rho, x, y, corr_method, row_idx=None, sig_threshold=0.05,
                   repeated_m="subject", add_sample_size=True, R2=False,
                   n_perm=10000, pval_string=True, remove_ties=True):
     if row_idx is None:
@@ -498,7 +498,7 @@ def _corr_results(df_rho, x, y, corr_method, row_idx=None,
         raise ValueError(f"corr_method '{corr_method}' not recognized")
     rho, pval, sample_size, ci = vals
 
-    weight = "bold" if pval < 0.05 else "normal"
+    weight = "bold" if pval < sig_threshold else "normal"
 
     # Legend entry:
     if corr_method.startswith('within'):
@@ -524,7 +524,7 @@ def _corr_results(df_rho, x, y, corr_method, row_idx=None,
                     hue_str = ''
     hue_str = '' if hue_str == 'slice(None, None, None)' else hue_str
     if pval_string:
-        pval = f"p={pval:1.0e}" if abs(pval) < 0.005 else f"p={pval:.2f}"
+        pval = f"p={pval:1.0e}" if abs(pval) < 0.001 else f"p={pval:.3f}"
         pval = hue_str + n + corr + pval
     return rho, sample_size, pval, weight, ci
 
