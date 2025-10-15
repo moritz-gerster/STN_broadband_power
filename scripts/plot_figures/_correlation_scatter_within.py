@@ -6,8 +6,6 @@ import scripts.config as cfg
 from scripts.plot_figures.settings import N_PERM_CORR
 from scripts.utils_plot import _save_fig, plot_corr
 
-ylabel = 'Bradykinesia-rigidity'
-
 
 def _rank_df(df, x, y, repeated_m="subject", remove_ties=True):
     """Convert float values for x and y to rank integers.
@@ -85,7 +83,8 @@ def normalized_beta_within(df_norm, fig_dir='Figure7', prefix='', fontsize=6):
         )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.5, 1.5))
-    plot_corr(axes[0], df_norm_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
+    plot_corr(axes[0], df_norm_off, x, Y, leg_kws=leg_kws1,
+              ylabel='Bradykinesia-rigidity',
               **plot_kwargs)
     plot_corr(axes[1], df_norm_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
@@ -121,7 +120,7 @@ def periodic_gamma_within(df_per, fig_dir='Figure7', prefix='',
         corr_method=corr_method,
         n_perm=N_PERM_CORR,
         xlabel=r'$\gamma$ power',
-        ylabel=ylabel,
+        ylabel='Bradykinesia-rigidity',
         add_sample_size=True,
         subs_special=exemplary_subs,
         )
@@ -161,7 +160,8 @@ def absolute_gamma_within(df_abs, fig_dir='Figure8', prefix='', fontsize=6):
         )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
-    plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
+    plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1,
+              ylabel='Bradykinesia-rigidity',
               **plot_kwargs)
     plot_corr(axes[1], df_abs_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
@@ -202,7 +202,262 @@ def aperiodic_within(df_per, fig_dir='Figure8', prefix='', fontsize=6):
         )
 
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
-    plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1, ylabel=ylabel,
+    plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1,
+              ylabel='Bradykinesia-rigidity',
+              **plot_kwargs)
+    plot_corr(axes[1], df_per_on, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+
+def aperiodic_within_by_age(df_per, fig_dir='Figure8', prefix='', fontsize=6):
+    df_per = df_per[~df_per.project.isin(['all'])]
+    df_per_off = df_per[df_per.cond == 'off']
+    df_per_on = df_per[df_per.cond.isin(['on'])
+                       & df_per.dominant_side_consistent]
+
+    # extract young patients from df_per_off by splitting a median age
+    df_per_off_young = df_per_off[df_per_off.patient_age
+                                  < df_per_off.patient_age.median()]
+    df_per_off_old = df_per_off[df_per_off.patient_age
+                                >= df_per_off.patient_age.median()]
+
+    df_per_on_young = df_per_on[df_per_on.patient_age
+                                < df_per_on.patient_age.median()]
+    df_per_on_old = df_per_on[df_per_on.patient_age
+                              >= df_per_on.patient_age.median()]
+    kind = 'periodic'
+    corr_method = 'withinRank'
+    x = 'full_fm_band_aperiodic_log'
+    Y = 'UPDRS_bradyrigid_contra'
+    consistent_str = '_consistent'
+    fname = f'{prefix}corr_{corr_method}_{kind}_off&on_{x}_{Y}{consistent_str}'
+
+    # leg_kws needs to be passed separately for some reason
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.02, 1)
+
+    plot_kwargs = dict(
+        corr_method=corr_method,
+        n_perm=N_PERM_CORR,
+        # xlabel='Aperiodic power (2-60 Hz)',
+        xlabel='Aperiodic power',
+        add_sample_size=True,
+        subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
+        # scatter_kws=dict(size=10),
+        # line_kws=dict(lw=.3),
+        )
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(3.2, 1.3))
+    plot_corr(axes[0], df_per_off_young, x, Y, leg_kws=leg_kws1,
+              ylabel='Bradykinesia-rigidity',
+              **plot_kwargs)
+    plot_corr(axes[1], df_per_on_young, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname + '_young', join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.02, 1)
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(3.2, 1.3))
+    plot_corr(axes[0], df_per_off_old, x, Y, leg_kws=leg_kws1,
+              ylabel='Bradykinesia-rigidity',
+              **plot_kwargs)
+    plot_corr(axes[1], df_per_on_old, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname + '_old', join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+
+def absolute_gamma_within_tremor(df_abs, fig_dir='Figure8', prefix='',
+                                 fontsize=6):
+    df_abs = df_abs[~df_abs.project.isin(['all'])]
+    df_abs_off = df_abs[df_abs.cond == 'off']
+    df_abs_on = df_abs[df_abs.cond.isin(['on'])
+                       & df_abs.dominant_side_consistent_T]
+    kind = 'absolute'
+    corr_method = 'withinRank'
+    x = 'gamma_mid_abs_max5Hz_log'
+    Y = 'UPDRS_tremor_contra'
+    consistent_str = '_consistent_T'
+    fname = f'{prefix}corr_{corr_method}_{kind}_off&on_{x}_{Y}{consistent_str}'
+
+    # leg_kws needs to be passed separately for some reason
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.05, 1)
+
+    plot_kwargs = dict(
+        corr_method=corr_method,
+        n_perm=N_PERM_CORR,
+        xlabel=cfg.PLOT_LABELS[x],
+        add_sample_size=False,
+        subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
+        # scatter_kws=dict(size=10),
+        # line_kws=dict(lw=.3),
+        )
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
+    plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1, ylabel='Tremor',
+              **plot_kwargs)
+    plot_corr(axes[1], df_abs_on, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+
+def aperiodic_within_tremor(df_per, fig_dir='Figure8', prefix='', fontsize=6):
+    df_per = df_per[~df_per.project.isin(['all'])]
+    df_per_off = df_per[df_per.cond == 'off']
+    df_per_on = df_per[df_per.cond.isin(['on'])
+                       & df_per.dominant_side_consistent_T]
+    kind = 'periodic'
+    corr_method = 'withinRank'
+    x = 'full_fm_band_aperiodic_log'
+    Y = 'UPDRS_tremor_contra'
+    consistent_str = '_consistent_T'
+    fname = f'{prefix}corr_{corr_method}_{kind}_off&on_{x}_{Y}{consistent_str}'
+
+    # leg_kws needs to be passed separately for some reason
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.05, 1)
+
+    plot_kwargs = dict(
+        corr_method=corr_method,
+        n_perm=N_PERM_CORR,
+        # xlabel='Aperiodic power (2-60 Hz)',
+        xlabel='Aperiodic power',
+        add_sample_size=False,
+        subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
+        # scatter_kws=dict(size=10),
+        # line_kws=dict(lw=.3),
+        )
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
+    plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1, ylabel='Tremor',
+              **plot_kwargs)
+    plot_corr(axes[1], df_per_on, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+
+def absolute_gamma_within_hemi(df_abs, fig_dir='Figure8', prefix='',
+                               fontsize=6):
+    df_abs = df_abs[~df_abs.project.isin(['all'])]
+    df_abs_off = df_abs[df_abs.cond == 'off']
+    df_abs_on = df_abs[df_abs.cond.isin(['on'])
+                       & df_abs.dominant_side_consistent_BRT]
+    kind = 'absolute'
+    corr_method = 'withinRank'
+    x = 'gamma_mid_abs_max5Hz_log'
+    Y = 'UPDRS_hemi_contra'
+    consistent_str = '_consistent_BRT'
+    fname = f'{prefix}corr_{corr_method}_{kind}_off&on_{x}_{Y}{consistent_str}'
+
+    # leg_kws needs to be passed separately for some reason
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.05, 1)
+
+    plot_kwargs = dict(
+        corr_method=corr_method,
+        n_perm=N_PERM_CORR,
+        xlabel=cfg.PLOT_LABELS[x],
+        add_sample_size=False,
+        subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
+        # scatter_kws=dict(size=10),
+        # line_kws=dict(lw=.3),
+        )
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
+    plot_corr(axes[0], df_abs_off, x, Y, leg_kws=leg_kws1,
+              ylabel='UPDRS hemibody',
+              **plot_kwargs)
+    plot_corr(axes[1], df_abs_on, x, Y, leg_kws=leg_kws2,
+              **plot_kwargs)
+    for ax in axes:
+        ax.tick_params(axis='both', labelsize=fontsize)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=fontsize)
+        ax.set_xlabel(ax.get_xlabel(), fontsize=fontsize)
+    axes[1].set_ylabel(None)
+    plt.tight_layout()
+    _save_fig(fig, fname, join(cfg.FIG_PAPER, fig_dir),
+              bbox_inches=None, transparent=True)
+
+
+def aperiodic_within_hemi(df_per, fig_dir='Figure8', prefix='', fontsize=6):
+    df_per = df_per[~df_per.project.isin(['all'])]
+    df_per_off = df_per[df_per.cond == 'off']
+    df_per_on = df_per[df_per.cond.isin(['on'])
+                       & df_per.dominant_side_consistent_BRT]
+    kind = 'periodic'
+    corr_method = 'withinRank'
+    x = 'full_fm_band_aperiodic_log'
+    Y = 'UPDRS_hemi_contra'
+    consistent_str = '_consistent_BRT'
+    fname = f'{prefix}corr_{corr_method}_{kind}_off&on_{x}_{Y}{consistent_str}'
+
+    # leg_kws needs to be passed separately for some reason
+    leg_kws1 = dict(handlelength=0, markerscale=0, frameon=False,
+                    bbox_to_anchor=(-.1, 1))
+    leg_kws2 = leg_kws1.copy()
+    leg_kws2['bbox_to_anchor'] = (-.05, 1)
+
+    plot_kwargs = dict(
+        corr_method=corr_method,
+        n_perm=N_PERM_CORR,
+        # xlabel='Aperiodic power (2-60 Hz)',
+        xlabel='Aperiodic power',
+        add_sample_size=False,
+        subs_special=cfg.EXEMPLARY_SUBS_APERIODIC,
+        # scatter_kws=dict(size=10),
+        # line_kws=dict(lw=.3),
+        )
+
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(2.3, 1.3))
+    plot_corr(axes[0], df_per_off, x, Y, leg_kws=leg_kws1,
+              ylabel='UPDRS hemibody',
               **plot_kwargs)
     plot_corr(axes[1], df_per_on, x, Y, leg_kws=leg_kws2,
               **plot_kwargs)
