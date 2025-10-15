@@ -7,9 +7,11 @@ import scipy.signal as sig
 import scripts.config as cfg
 from specparam import SpectralModel
 from specparam.analysis import get_band_peak
+from specparam.sim import sim_power_spectrum
 from scripts.plot_figures.settings import XTICKS_FREQ_low
 from scripts.utils import elec_phys_signal
 from scripts.utils_plot import _save_fig
+from scipy.stats import pearsonr
 
 
 def _normalize(psd, freqs):
@@ -594,4 +596,156 @@ def simulate_all(fig_dir=None, output_file=None):
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.05)
     _save_fig(fig, join(fig_dir, "F2__sim_exponent_beta"), cfg.FIG_PAPER,
+              bbox_inches=None, facecolor=(1, 1, 1, 0))
+
+
+def simulate_gamma_vs_broadband(fig_dir=None, prefix=''):
+    """Simulate relationship between mid gamma power and aperiodic params."""
+    freq_range = [1, 100]
+    mid_gamma = (45, 60)
+    ap_broadband = (2, 60)
+
+    offsets = [0.5, 1, 1.5, 2]
+    exponent = 1
+
+    fig, ax = plt.subplots(2, 3, figsize=(7, 3.5))
+    power_list = []
+    for offset in offsets:
+        freqs, powers = sim_power_spectrum(freq_range, [offset, exponent], [],
+                                           freq_res=1)
+        power_list.append(powers)
+        ax[0, 0].loglog(freqs, powers, label=f'Offset = {offset:.1f}')
+    powers = np.array(power_list)
+
+    colors = [line.get_color() for line in ax[0, 0].lines]
+    ax[0, 0].set_xlabel("Frequency [Hz]")
+    ax[0, 0].set_ylabel("Spectrum"r' [$\mu V^2/Hz$]')
+    # add blue shading below first power in power_list from 2-60 Hz and label "Aperiodic broadband power"
+    y_min, y_max = ax[0, 0].get_ylim()
+    y_min *= .4
+    ax[0, 0].fill_between(freqs, y_min, power_list[0],
+                          where=(freqs >= 2) & (freqs <= 60), color=colors[0],
+                          alpha=0.2, label='Aperiodic broadband power')
+
+    where = (freqs >= mid_gamma[0]) & (freqs <= mid_gamma[1])
+    ax[0, 0].fill_between(freqs, y_min, power_list[-1], where=where,
+                          color=colors[-1], alpha=0.2, label='Mid gamma power')
+    handles, labels = ax[0, 0].get_legend_handles_labels()
+    legend1 = ax[0, 0].legend(handles[-2:], labels[-2:], ncol=1,
+                              loc='lower left', borderaxespad=0.3)
+    legend2 = ax[0, 0].legend(handles[:-2], labels[:-2], ncol=2,
+                              loc='upper right', handlelength=1,
+                              borderaxespad=0, columnspacing=2)
+    ax[0, 0].add_artist(legend1)
+    ax[0, 0].add_artist(legend2)
+    ax[0, 0].set_ylim(y_min, y_max + 200)
+
+    def extract_band_power(power, f_low, f_max):
+        power_log = np.log10(power)
+        power_band = power_log[(freqs >= f_low) & (freqs <= f_max)]
+        power_band = np.mean(power_band)
+        return power_band
+
+    max_mid_gamma = [extract_band_power(power, *mid_gamma) for power in powers]
+    aperiodic_broadband_power = [extract_band_power(power, *ap_broadband)
+                                 for power in powers]
+
+    # use same colors for dots and for line graph (matplotlib cycle)
+    corr_coef, p_val = pearsonr(np.array(offsets), np.array(max_mid_gamma))
+    stat_string = f'Mid Gamma vs. offset:\nr={corr_coef:.2f}, p={p_val:.3f}'
+    ax[0, 1].scatter(offsets, max_mid_gamma, marker=".", c=colors)
+    ax[0, 1].legend([], [], title=stat_string, loc='upper center',
+                    handletextpad=0, borderaxespad=0)
+    ax[0, 1].set_xlabel("Offset")
+    ax[0, 1].set_xlim(-0.5, 3)
+    ax[0, 1].set_ylim(-2, 1.5)
+    ax[0, 1].set_ylabel(r"Mid $\gamma$ power [log10$(\mu V^2/Hz)$]")
+    ax[0, 1].set_title(f"Offset={offsets}, 1/f exponent={exponent}",
+                       y=1.1)
+
+    corr_coef, p_val = pearsonr(np.array(aperiodic_broadband_power),
+                                np.array(max_mid_gamma))
+    stat_string = ('Mid Gamma vs. aperiodic broadband power:\n'
+                   f'r={corr_coef:.2f}, p={p_val:.3f}')
+    ax[0, 2].scatter(aperiodic_broadband_power, max_mid_gamma, marker=".",
+                     c=colors, label=stat_string)
+    ax[0, 2].legend(markerscale=0, loc='upper center', handlelength=0,
+                    handletextpad=0, borderaxespad=0)
+    ax[0, 2].set_xlim(-1.75, 1.5)
+    ax[0, 2].set_ylim(-2, 1.5)
+
+    ax[0, 2].set_xlabel(r"Aperiodic broadband power [log10$(\mu V^2/Hz)$]")
+    ax[0, 2].set_ylabel(r"Mid $\gamma$ power [log10$(\mu V^2/Hz)$]")
+
+    # Repeat with exponents
+    exponents = [2, 1.5, 1, 0.5]
+    offset = 1
+
+    power_list = []
+    for exponent in exponents:
+        freqs, powers = sim_power_spectrum(freq_range, [offset, exponent], [],
+                                           freq_res=1)
+        power_list.append(powers)
+        ax[1, 0].loglog(freqs, powers, label=f'1/f exponent = {exponent:.1f}')
+    powers = np.array(power_list)
+
+    colors = [line.get_color() for line in ax[1, 0].lines]
+    ax[1, 0].set_xlabel("Frequency [Hz]")
+    ax[1, 0].set_ylabel("Spectrum"r' [$\mu V^2/Hz$]')
+
+    # add blue shading below first power in power_list from 2-60 Hz and
+    # label "Aperiodic broadband power"
+    y_min, y_max = ax[1, 0].get_ylim()
+    ax[1, 0].fill_between(freqs, y_min, power_list[0],
+                          where=(freqs >= 2) & (freqs <= 60), color=colors[0],
+                          alpha=0.2, label='Aperiodic broadband power')
+
+    where = (freqs >= mid_gamma[0]) & (freqs <= mid_gamma[1])
+    ax[1, 0].fill_between(freqs, y_min, power_list[-1], where=where,
+                          color=colors[-1], alpha=0.2, label='Mid gamma power')
+    handles, labels = ax[1, 0].get_legend_handles_labels()
+    legend1 = ax[1, 0].legend(handles[-2:], labels[-2:], ncol=1,
+                              loc='lower left', borderaxespad=0.3)
+    legend2 = ax[1, 0].legend(handles[:-2], labels[:-2], ncol=2,
+                              loc='upper right', handlelength=1,
+                              borderaxespad=0, columnspacing=2)
+    ax[1, 0].add_artist(legend1)
+    ax[1, 0].add_artist(legend2)
+    ax[1, 0].set_ylim(y_min, y_max+200)
+
+    # extract maximum mid gamma (45-60 Hz) power
+    max_mid_gamma = [extract_band_power(power, *mid_gamma) for power in powers]
+    aperiodic_broadband_power = [extract_band_power(power, *ap_broadband)
+                                 for power in powers]
+
+    # use same colors for dots and for line graph (matplotlib cycle)
+    corr_coef, p_val = pearsonr(np.array(exponents), np.array(max_mid_gamma))
+    stat_string = f'Mid Gamma vs. exponent:\nr={corr_coef:.2f}, p={p_val:.3f}'
+    ax[1, 1].scatter(exponents, max_mid_gamma, marker=".", c=colors,
+                     label=stat_string)
+    ax[1, 1].legend([], [], title=stat_string, loc='upper center',
+                    handletextpad=0, borderaxespad=0)
+    ax[1, 1].set_xlim(-.5, 3)
+    ax[1, 1].set_ylim(-3.5, 2)
+    ax[1, 1].set_xlabel("1/f exponent")
+    ax[1, 1].set_ylabel(r"Mid $\gamma$ power [log10$(\mu V^2/Hz)$]")
+    ax[1, 1].set_title(f"Offset={offset}, 1/f exponent={exponents}",
+                       y=1.1)
+
+    corr_coef, p_val = pearsonr(np.array(aperiodic_broadband_power),
+                                np.array(max_mid_gamma))
+    stat_string = ('Mid Gamma vs. aperiodic broadband power:\n'
+                   f'r={corr_coef:.2f}, p={p_val:.3f}')
+    ax[1, 2].scatter(aperiodic_broadband_power, max_mid_gamma, marker=".",
+                     c=colors, label=stat_string)
+    ax[1, 2].legend(markerscale=0, loc='upper center', handlelength=0,
+                    handletextpad=0, borderaxespad=0)
+    ax[1, 2].set_xlim(-3, 1.5)
+    ax[1, 2].set_ylim(-3.5, 2)
+    ax[1, 2].set_xlabel(r"Aperiodic broadband power [log10$(\mu V^2/Hz)$]")
+    ax[1, 2].set_ylabel(r"Mid $\gamma$ power [log10$(\mu V^2/Hz)$]")
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=.7)
+    _save_fig(fig, join(fig_dir, f'{prefix}gamma_vs_broadband'), cfg.FIG_PAPER,
               bbox_inches=None, facecolor=(1, 1, 1, 0))
