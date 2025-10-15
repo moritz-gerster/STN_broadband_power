@@ -76,7 +76,7 @@ def barplot_UPDRS_bands(df_corrs, fig_dir='Figure1', title=False,
         ylabel = r"$r_{rm}$"
     elif corr_method == 'withinRank':
         ylabel = r"$r_{\text{rank rm}}$"
-    if title True:
+    if title == True:
         ax.set_title(ylabel)
         unit_alone = r"$\rho$"
         ax.set_ylabel(unit_alone)

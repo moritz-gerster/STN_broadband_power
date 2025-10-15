@@ -27,7 +27,7 @@ c_norm = cfg.COLOR_DIC['normalized']
 c_insig = 'grey'
 
 
-def barplot_UPDRS_periodic_ax(ax, df_corrs, palette=None, output_file=None):
+def barplot_UPDRS_ax(ax, df_corrs, palette=None, output_file=None):
     """Add barplot to correlation plot over freqs."""
     band_cols = df_corrs.band_nme.unique()
     band_nmes = [band.replace(' mean', '') for band in band_cols]
@@ -52,10 +52,13 @@ def barplot_UPDRS_periodic_ax(ax, df_corrs, palette=None, output_file=None):
     bars_pooled = ax.containers
     ymin, ymax = ax.get_ylim()
     yscale = ymax - ymin
+    sig_threshold = 0.05 / len(band_cols)  # Bonferroni correction
     for bar, band in zip(bars_pooled, band_cols):
         df_band = df_corrs[(df_corrs.band_nme == band)]
         pvalue = df_band.pval.values[0]
+        significant = True if pvalue <= sig_threshold else False
         text = convert_pvalue_to_asterisks(pvalue, stack_vertically=False)
+        text = text if significant else ''
         x_bar = bar[0].get_x() + bar[0].get_width() / 2
         y_bar = bar[0].get_height()
         offset = max(y_bar, 0) - 0.06 * yscale
@@ -102,6 +105,8 @@ def df_corr_freq(df_plot, x, y, average_hemispheres=None, rolling_mean=None,
 
 def plot_psd_updrs_correlation(df_corrs, x, y, kind, fig_dir=None, prefix='',
                                xlabel=True, output_file=None,
+                               xticks=XTICKS_FREQ_low,
+                               xticklabels=XTICKS_FREQ_low_labels,
                                figsize=(1.9, 1.3)):
     projects = [proj for proj in cfg.PROJECT_ORDER_SLIM
                 if proj in df_corrs.project.unique()]
@@ -161,8 +166,8 @@ def plot_psd_updrs_correlation(df_corrs, x, y, kind, fig_dir=None, prefix='',
     corr_method = df_corrs.corr_method.unique()[0]
     ylabel = _get_ylabel(corr_method)
     ax.set_ylabel(ylabel)
-    ax.set_xticks(XTICKS_FREQ_low)
-    ax.set_xticklabels(XTICKS_FREQ_low_labels)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticklabels)
     xlabel = 'Frequency [Hz]' if xlabel else None
     ax.set_xlabel(xlabel)
     plt.tight_layout()
@@ -277,7 +282,7 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
 
     # bar plot
     asymmetric_subjects = df_corrs.asymmetric_subjects.unique()[0]
-    if asymmetric_subjects:
+    if asymmetric_subjects == True:
         consistent_str = '_consistent'
     elif asymmetric_subjects == False:
         consistent_str = '_inconsistent'
@@ -286,9 +291,8 @@ def plot_psd_updrs_correlation_and_bar(df_corrs, df_corrs_bar,
     log = '_log' if x.endswith('_log') else ''
     if df_corrs_bar is not None:
         bar_str = 'Hz+bar'
-        barplot_UPDRS_periodic_ax(axes[1], df_corrs_bar,
-                                  palette=palette_barplot,
-                                  output_file=output_file)
+        barplot_UPDRS_ax(axes[1], df_corrs_bar, palette=palette_barplot,
+                         output_file=output_file)
     else:
         bar_str = ''
     kind_str = '_'.join(kinds)
