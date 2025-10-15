@@ -5,7 +5,7 @@ import numpy as np
 import scipy.signal as sig
 from scipy.stats import pearsonr
 from specparam import SpectralModel
-from specparam.analysis import get_band_peak
+from specparam.data.periodic import get_band_peak
 from specparam.sim import sim_power_spectrum
 
 import scripts.config as cfg
