@@ -2308,7 +2308,7 @@ def _get_study_df(df):
     df_studies.reset_index(drop=True, inplace=True)
 
     # Load other studies excel sheet with extracted publication info
-    fname = join('sourcedata', 'study_comparison',
+    fname = join(cfg.SOURCEDATA, 'study_comparison',
                  'patient_demography_all.xlsx')
     df_study = pd.read_excel(fname)
 
