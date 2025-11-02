@@ -1,9 +1,9 @@
-[![DOI](https://img.shields.io/badge/Paper-Gerster%20et%20al.%202025-brightgreen)](https://doi.org/10.1101/2025.03.11.642600)
+[![DOI](https://img.shields.io/badge/Paper-Gerster%20et%20al.%202025-brightgreen)](https://doi.org/10.1016/j.ebiom.2025.105988)
 ![DOI](https://img.shields.io/badge/python-3.12-blue)
 [![PyPI license](https://img.shields.io/pypi/l/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
 
 # Beyond beta rhythms: Subthalamic aperiodic broadband power reflects Parkinson’s disease severity–a multicenter study
-**Moritz Gerster**, Gunnar Waterstraat, Thomas S. Binns, Natasha Darcy, Christoph Wiest, Richard M. Köhler, Jojo Vanhoecke, Timothy O. West, Matthias Sure, Dmitrii Todorov, Lukasz Radzinski, Jeroen Habets, Johannes L. Busch, Lucia K. Feldmann, Patricia Krause, Katharina Faust, Gerd-Helge Schneider, Keyoumars Ashkan, Erlick Pereira, Harith Akram, Ludvic Zrinzo, Benjamin Blankertz, Arno Villringer, Huiling Tan,  Jan Hirschmann, Andrea A. Kühn, Esther Florin, Alfons Schnitzler, Ashwini Oswal, Vladimir Litvak, Wolf-Julian Neumann, Gabriel Curio, and Vadim Nikulin, _bioRxiv_ (2025). https://doi.org/10.1101/2025.03.11.642600
+**Moritz Gerster**, Gunnar Waterstraat, Thomas S. Binns, Natasha Darcy, Christoph Wiest, Richard M. Köhler, Jojo Vanhoecke, Timothy O. West, Matthias Sure, Dmitrii Todorov, Lukasz Radzinski, Jeroen Habets, Johannes L. Busch, Lucia K. Feldmann, Patricia Krause, Katharina Faust, Gerd-Helge Schneider, Keyoumars Ashkan, Erlick Pereira, Harith Akram, Ludvic Zrinzo, Benjamin Blankertz, Arno Villringer, Huiling Tan,  Jan Hirschmann, Andrea A. Kühn, Esther Florin, Alfons Schnitzler, Ashwini Oswal, Vladimir Litvak, Wolf-Julian Neumann, Gabriel Curio, and Vadim Nikulin, _eBioMedicine_ (2025). https://doi.org/10.1016/j.ebiom.2025.105988
 
 #### Files:
 - [environment.yml](environment.yml): YAML file to create conda environment
